@@ -315,15 +315,19 @@ namespace matplotlibcpp {
 			bool operator()(const IterableX& x, const IterableY& y, const std::string& format)
 			{
 				// It's annoying that we have to repeat the code of plot() above
-				auto xs = std::distance(std::begin(x), std::end(x));
-				auto ys = std::distance(std::begin(y), std::end(y));
+				using std::distance;
+				using std::begin;
+				using std::end;
+
+				auto xs = distance(begin(x), end(x));
+				auto ys = distance(begin(y), end(y));
 				assert(xs == ys && "x and y data must have the same number of elements!");
 
 				PyObject* xlist = PyList_New(xs);
 				PyObject* ylist = PyList_New(ys);
 				PyObject* pystring = PyString_FromString(format.c_str());
 
-				auto itx = std::begin(x), ity = std::begin(y);
+				auto itx = begin(x), ity = begin(y);
 				for(size_t i = 0; i < xs; ++i) {
 					PyList_SetItem(xlist, i, PyFloat_FromDouble(*itx++));
 					PyList_SetItem(ylist, i, PyFloat_FromDouble(*ity++));
