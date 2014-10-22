@@ -11,8 +11,7 @@ Complete minimal example:
     #include "matplotlibcpp.h"
     namespace plt = matplotlibcpp;
     int main() {
-        std::vector<double> v {1,2,3,4};
-        plt::plot(v);
+        plt::plot({1,2,3,4});
         plt::show();
     }
     
@@ -53,7 +52,40 @@ A more comprehensive example:
         plt::show();
     }
 
+    // g++ basic.cpp -lpython2.7
+
 Result: ![Basic example](./examples/basic.png)
+
+matplotlib-cpp doesn't require C++11, but will enable some additional syntactic sugar when available:
+
+    #include <cmath>
+    #include "matplotlibcpp.h"
+
+    using namespace std;
+    namespace plt = matplotlibcpp;
+
+    int main() 
+    {    
+        // Prepare data.
+        int n = 5000; // number of data points
+        vector<double> x(n),y(n); 
+        for(int i=0; i<n; ++i) {
+            double t = 2*M_PI*i/n;
+            x.at(i) = 16*sin(t)*sin(t)*sin(t);
+            y.at(i) = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t);
+        }
+
+        // plot() takes an arbitrary number of (x,y,format)-triples. 
+        // x must be iterable (that is, anything providing begin(x) and end(x)),
+        // y must either be callable (providing operator() const) or iterable. 
+        plt::plot(x, y, "r-", x, [](double d) { return 12.5+abs(sin(d)); }, "k-");
+
+
+        // show plots
+        plt::show();
+    }    
+
+Result: ![Modern example](./examples/modern.png)
 
 Installation
 ------------
@@ -63,9 +95,9 @@ On Ubuntu:
 
     sudo aptitude install python-matplotlib python2.7-dev
 
-The C++-part of the library consists of the single header file matplotlibcpp.h which can be placed
+The C++-part of the library consists of the single header file `matplotlibcpp.h` which can be placed
 anywhere.
-Since a python interpreter is opened internally, it is necessary to link against libpython2.7 in order to use
+Since a python interpreter is opened internally, it is necessary to link against `libpython2.7` in order to use
 matplotlib-cpp.
 (There should be no problems using python3 instead of python2.7, if desired)
 
@@ -75,5 +107,5 @@ Todo/Issues/Wishlist
 * It would be nice to have a more object-oriented design with a Plot class which would allow
   multiple independent plots per program.
 
-* Right now, only a small subset of matplotlibs functionality is exposed. Stuff like xlabel()/ylabel() etc. should
+* Right now, only a small subset of matplotlibs functionality is exposed. Stuff like save()/xlabel()/ylabel() etc. should
   be easy to add.
