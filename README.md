@@ -109,3 +109,5 @@ Todo/Issues/Wishlist
 
 * Right now, only a small subset of matplotlibs functionality is exposed. Stuff like save()/xlabel()/ylabel() etc. should
   be easy to add.
+
+* A lot of copying could be avoided if we generate numpy arrays directly instead of python lists
