@@ -15,7 +15,7 @@
 namespace matplotlibcpp {
 
 	namespace detail {
-		struct _pyplot_global {
+		struct _interpreter {
 			PyObject *s_python_function_show;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
@@ -24,13 +24,20 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_ylim;
 			PyObject *s_python_empty_tuple;
 
-			static _pyplot_global& get() {
-				static _pyplot_global ctx;
+			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
+			   multiple independent embedded python interpreters without patching the python source code
+			   or starting a seperate process for each. 
+			   
+				http://bytes.com/topic/python/answers/793370-multiple-independent-python-interpreters-c-c-program
+			   */
+
+			static _interpreter& get() {
+				static _interpreter ctx;
 				return ctx;
 			}
 
 			private:
-			_pyplot_global() {
+			_interpreter() {
 				char name[] = "plotting"; // silence compiler warning abount const strings
 				Py_SetProgramName(name);  // optional but recommended
 				Py_Initialize();
@@ -68,7 +75,7 @@ namespace matplotlibcpp {
 				s_python_empty_tuple = PyTuple_New(0);
 			}
 
-			~_pyplot_global() {
+			~_interpreter() {
 				Py_Finalize();
 			}
 		};
@@ -105,7 +112,7 @@ namespace matplotlibcpp {
 			PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
 		}
 
-		PyObject* res = PyObject_Call(detail::_pyplot_global::get().s_python_function_plot, args, kwargs);
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, args, kwargs);
 
 		Py_DECREF(args);
 		Py_DECREF(kwargs);
@@ -136,7 +143,7 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(plot_args, 1, ylist);
 		PyTuple_SetItem(plot_args, 2, pystring);
 
-		PyObject* res = PyObject_CallObject(detail::_pyplot_global::get().s_python_function_plot, plot_args);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
 
 		Py_DECREF(xlist);
 		Py_DECREF(ylist);
@@ -166,7 +173,7 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(plot_args, 1, ylist);
 		PyTuple_SetItem(plot_args, 2, pystring);
 
-		PyObject* res = PyObject_Call(detail::_pyplot_global::get().s_python_function_plot, plot_args, kwargs);
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
 
 		Py_DECREF(kwargs);
 		Py_DECREF(xlist);
@@ -205,119 +212,8 @@ namespace matplotlibcpp {
 		return named_plot<double>(name,x,y,format);
 	}
 
-#if __cplusplus > 199711L
-
-	template<typename T>
-	using is_function = typename std::is_function<std::remove_pointer<std::remove_reference<T>>>::type;
-
-	template<bool obj, typename T>
-	struct is_callable_impl;
-
-	template<typename T>
-	struct is_callable_impl<false, T>
-	{
-		typedef is_function<T> type;		
-	}; // a non-object is callable iff it is a function
-
-	template<typename T>
-	struct is_callable_impl<true, T>
-	{
-		struct Fallback { void operator()(); };
-		struct Derived : T, Fallback { };
-
-		template<typename U, U> struct Check;
-
-		template<typename U>
-		static std::true_type test( ... ); // use a variadic function to make use (1) it accepts everything and (2) its always the worst match
-
-		template<typename U>
-		static std::false_type test( Check<void(Fallback::*)(), &U::operator()>* );
-
-	public:
-		typedef decltype(test<Derived>(nullptr)) type;
-		typedef decltype(&Fallback::operator()) dtype;
-		static constexpr bool value = type::value;
-	}; // an object is callable iff it defines operator()
-
-	template<typename T>
-	struct is_callable
-	{
-		// dispatch to is_callable_impl<true, T> or is_callable_impl<false, T> depending on whether T is of class type or not
-		typedef typename is_callable_impl<std::is_class<T>::value, T>::type type; // todo: restore remove_reference
-	};
-
-	template<typename IsYDataCallable>
-	struct plot_impl { };
-
-	template<>
-	struct plot_impl<std::false_type>
-	{
-		template<typename IterableX, typename IterableY>
-		bool operator()(const IterableX& x, const IterableY& y, const std::string& format)
-		{
-			// It's annoying that we have to repeat the code of plot() above
-			auto xs = std::distance(std::begin(x), std::end(x));
-			auto ys = std::distance(std::begin(y), std::end(y));
-			assert(xs == ys && "x and y data must have the same number of elements!");
-
-			PyObject* xlist = PyList_New(xs);
-			PyObject* ylist = PyList_New(ys);
-			PyObject* pystring = PyString_FromString(format.c_str());
-
-			auto itx = std::begin(x), ity = std::begin(y);
-			for(size_t i = 0; i < xs; ++i) {
-				PyList_SetItem(xlist, i, PyFloat_FromDouble(*itx++));
-				PyList_SetItem(ylist, i, PyFloat_FromDouble(*ity++));
-			}
-
-			PyObject* plot_args = PyTuple_New(3);
-			PyTuple_SetItem(plot_args, 0, xlist);
-			PyTuple_SetItem(plot_args, 1, ylist);
-			PyTuple_SetItem(plot_args, 2, pystring);
-
-			PyObject* res = PyObject_CallObject(detail::_pyplot_global::get().s_python_function_plot, plot_args);
-
-			Py_DECREF(xlist);
-			Py_DECREF(ylist);
-			Py_DECREF(plot_args);
-			if(res) Py_DECREF(res);
-
-			return res;
-		}
-	};
-
-	template<>
-	struct plot_impl<std::true_type>
-	{
-		template<typename Iterable, typename Callable>
-		bool operator()(const Iterable& ticks, const Callable& f, const std::string& format)
-		{
-			//std::cout << "Callable impl called" << std::endl;
-
-			if(begin(ticks) == end(ticks)) return true;
-
-			// We could use additional meta-programming to deduce the correct element type of y, 
-			// but all values have to be convertible to double anyways
-			std::vector<double> y;
-			for(auto x : ticks) y.push_back(f(x)); 
-			return plot_impl<std::false_type>()(ticks,y,format);
-		}
-	};
-
-	// recursion stop for the above
-	template<typename... Args>
-	bool plot() { return true; }
-
-	template<typename A, typename B, typename... Args>
-	bool plot(const A& a, const B& b, const std::string& format, Args... args)
-	{
-		return plot_impl<typename is_callable<B>::type>()(a,b,format) && plot(args...);
-	}
-
-#endif
-
-	inline void legend() {
-		PyObject* res = PyObject_CallObject(detail::_pyplot_global::get().s_python_function_legend, detail::_pyplot_global::get().s_python_empty_tuple);
+		inline void legend() {
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to legend() failed.");
 
 		Py_DECREF(res);
@@ -333,7 +229,7 @@ namespace matplotlibcpp {
 		PyObject* args = PyTuple_New(1);
 		PyTuple_SetItem(args, 0, list);
 
-		PyObject* res = PyObject_CallObject(detail::_pyplot_global::get().s_python_function_ylim, args);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
 		if(!res) throw std::runtime_error("Call to ylim() failed.");
 
 		Py_DECREF(list);
@@ -351,7 +247,7 @@ namespace matplotlibcpp {
 		PyObject* args = PyTuple_New(1);
 		PyTuple_SetItem(args, 0, list);
 
-		PyObject* res = PyObject_CallObject(detail::_pyplot_global::get().s_python_function_xlim, args);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
 		if(!res) throw std::runtime_error("Call to xlim() failed.");
 
 		Py_DECREF(list);
@@ -360,11 +256,127 @@ namespace matplotlibcpp {
 	}
 
 	inline void show() {
-		PyObject* res = PyObject_CallObject(detail::_pyplot_global::get().s_python_function_show, detail::_pyplot_global::get().s_python_empty_tuple);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to show() failed.");
 
 		Py_DECREF(res);
 	}
+
+#if __cplusplus > 199711L
+	// C++11-exclusive content starts here, in particular the variadic plot()
+
+	namespace detail {
+		template<typename T>
+		using is_function = typename std::is_function<std::remove_pointer<std::remove_reference<T>>>::type;
+
+		template<bool obj, typename T>
+		struct is_callable_impl;
+
+		template<typename T>
+		struct is_callable_impl<false, T>
+		{
+			typedef is_function<T> type;		
+		}; // a non-object is callable iff it is a function
+
+		template<typename T>
+		struct is_callable_impl<true, T>
+		{
+			struct Fallback { void operator()(); };
+			struct Derived : T, Fallback { };
+
+			template<typename U, U> struct Check;
+
+			template<typename U>
+			static std::true_type test( ... ); // use a variadic function to make sure (1) it accepts everything and (2) its always the worst match
+
+			template<typename U>
+			static std::false_type test( Check<void(Fallback::*)(), &U::operator()>* );
+
+		public:
+			typedef decltype(test<Derived>(nullptr)) type;
+			typedef decltype(&Fallback::operator()) dtype;
+			static constexpr bool value = type::value;
+		}; // an object is callable iff it defines operator()
+
+		template<typename T>
+		struct is_callable
+		{
+			// dispatch to is_callable_impl<true, T> or is_callable_impl<false, T> depending on whether T is of class type or not
+			typedef typename is_callable_impl<std::is_class<T>::value, T>::type type; // todo: restore remove_reference
+		};
+
+		template<typename IsYDataCallable>
+		struct plot_impl { };
+
+		template<>
+		struct plot_impl<std::false_type>
+		{
+			template<typename IterableX, typename IterableY>
+			bool operator()(const IterableX& x, const IterableY& y, const std::string& format)
+			{
+				// It's annoying that we have to repeat the code of plot() above
+				auto xs = std::distance(std::begin(x), std::end(x));
+				auto ys = std::distance(std::begin(y), std::end(y));
+				assert(xs == ys && "x and y data must have the same number of elements!");
+
+				PyObject* xlist = PyList_New(xs);
+				PyObject* ylist = PyList_New(ys);
+				PyObject* pystring = PyString_FromString(format.c_str());
+
+				auto itx = std::begin(x), ity = std::begin(y);
+				for(size_t i = 0; i < xs; ++i) {
+					PyList_SetItem(xlist, i, PyFloat_FromDouble(*itx++));
+					PyList_SetItem(ylist, i, PyFloat_FromDouble(*ity++));
+				}
+
+				PyObject* plot_args = PyTuple_New(3);
+				PyTuple_SetItem(plot_args, 0, xlist);
+				PyTuple_SetItem(plot_args, 1, ylist);
+				PyTuple_SetItem(plot_args, 2, pystring);
+
+				PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
+
+				Py_DECREF(xlist);
+				Py_DECREF(ylist);
+				Py_DECREF(plot_args);
+				if(res) Py_DECREF(res);
+
+				return res;
+			}
+		};
+
+		template<>
+		struct plot_impl<std::true_type>
+		{
+			template<typename Iterable, typename Callable>
+			bool operator()(const Iterable& ticks, const Callable& f, const std::string& format)
+			{
+				//std::cout << "Callable impl called" << std::endl;
+
+				if(begin(ticks) == end(ticks)) return true;
+
+				// We could use additional meta-programming to deduce the correct element type of y, 
+				// but all values have to be convertible to double anyways
+				std::vector<double> y;
+				for(auto x : ticks) y.push_back(f(x)); 
+				return plot_impl<std::false_type>()(ticks,y,format);
+			}
+		};
+	}
+
+	// recursion stop for the above
+	template<typename... Args>
+	bool plot() { return true; }
+
+	template<typename A, typename B, typename... Args>
+	bool plot(const A& a, const B& b, const std::string& format, Args... args)
+	{
+		return detail::plot_impl<typename detail::is_callable<B>::type>()(a,b,format) && plot(args...);
+	}
+
+#endif
+
+
 
 
 }
