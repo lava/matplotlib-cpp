@@ -1,7 +1,7 @@
 matplotlib-cpp
 ==============
 
-Welcome to matplotlib-cpp, probably the simplest C++ plotting library.
+Welcome to matplotlib-cpp, possibly the simplest C++ plotting library.
 It is built to resemble the plotting API used by Matlab and matplotlib.
 
 
@@ -94,9 +94,9 @@ Result: ![Modern example](./examples/modern.png)
 Why?
 ----
 I initially started this library during my diploma thesis. My previous approach of 
-writing data from my c++ algorithm to a yaml file, and afterwards parsing and plotting
-it in python using matplotlib proved insufficient: Mainly, keeping the algorithm
-and plotting code in sync is cumbersome when the C++ code frequently and substantially 
+writing data from my c++ algorithm to a yaml file and afterwards parsing and plotting
+it in python using matplotlib proved insufficient: Keeping the algorithm
+and plotting code in sync requires a lot of effort when the C++ code frequently and substantially 
 changes. Additionally, the python yaml parser is not able to cope with files that
 exceed a few hundred megabytes in size.
 
