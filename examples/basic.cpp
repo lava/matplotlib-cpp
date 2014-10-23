@@ -27,5 +27,5 @@ int main()
 	// Enable legend.
 	plt::legend();
 	// Show plot
-	plt::show();
+	plt::save("./basic.png");
 }

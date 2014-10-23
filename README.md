@@ -1,8 +1,10 @@
 matplotlib-cpp
 ==============
 
-This is matplotlib-cpp, probably the simplest C++ plotting library.
+Welcome to matplotlib-cpp, probably the simplest C++ plotting library.
 It is built to resemble the plotting API used by Matlab and matplotlib.
+
+
 
 Usage
 -----
@@ -48,8 +50,8 @@ A more comprehensive example:
         plt::xlim(0, 1000*1000);
         // Enable legend.
         plt::legend();
-        // Show plot
-        plt::show();
+        // Save the image (file format is determined by the extension)
+        plt::save("./basic.png");
     }
 
     // g++ basic.cpp -lpython2.7
@@ -83,9 +85,26 @@ matplotlib-cpp doesn't require C++11, but will enable some additional syntactic 
 
         // show plots
         plt::show();
-    }    
+    } 
+    
+    // g++ modern.cpp -std=c++11 -lpython
 
 Result: ![Modern example](./examples/modern.png)
+
+Why?
+----
+I initially started this library during my diploma thesis. My previous approach of 
+writing data from my c++ algorithm to a yaml file, and afterwards parsing and plotting
+it in python using matplotlib proved insufficient: Mainly, keeping the algorithm
+and plotting code in sync is cumbersome when the C++ code frequently and substantially 
+changes. Additionally, the python yaml parser is not able to cope with files that
+exceed a few hundred megabytes in size.
+
+Therefore, I was looking for a C++ plotting library that was extremely to use
+and easy to add into an existing codebase, preferrably header-only. When I found
+none, I decided to create this library, which is basically a C++ wrapper around
+matplotlib. As you can see from the above examples, plotting data and saving it
+to an image file can be done is as few as two lines of code.
 
 Installation
 ------------
@@ -107,7 +126,7 @@ Todo/Issues/Wishlist
 * It would be nice to have a more object-oriented design with a Plot class which would allow
   multiple independent plots per program.
 
-* Right now, only a small subset of matplotlibs functionality is exposed. Stuff like save()/xlabel()/ylabel() etc. should
+* Right now, only a small subset of matplotlibs functionality is exposed. Stuff like xlabel()/ylabel() etc. should
   be easy to add.
 
 * A lot of copying could be avoided if we generate numpy arrays directly instead of python lists

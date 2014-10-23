@@ -17,6 +17,7 @@ namespace matplotlibcpp {
 	namespace detail {
 		struct _interpreter {
 			PyObject *s_python_function_show;
+			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
 			PyObject *s_python_function_legend;
@@ -42,12 +43,17 @@ namespace matplotlibcpp {
 				Py_SetProgramName(name);  // optional but recommended
 				Py_Initialize();
 
-				PyObject* pyname = PyString_FromString("matplotlib.pyplot");
-				if(!pyname) { throw std::runtime_error("couldnt create string"); }
+				PyObject* pyplotname = PyString_FromString("matplotlib.pyplot");
+				PyObject* pylabname  = PyString_FromString("pylab"); 
+				if(!pyplotname || !pylabname) { throw std::runtime_error("couldnt create string"); }
 
-				PyObject* pymod = PyImport_Import(pyname);
-				Py_DECREF(pyname);
-				if(!pymod) { throw std::runtime_error("Error loading module!"); }
+				PyObject* pymod = PyImport_Import(pyplotname);
+				Py_DECREF(pyplotname);
+				if(!pymod) { throw std::runtime_error("Error loading module matplotlib.pyplot!"); }
+
+				PyObject* pylabmod = PyImport_Import(pylabname);
+				Py_DECREF(pylabname);
+				if(!pymod) { throw std::runtime_error("Error loading module pylab!"); }
 
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
@@ -56,7 +62,10 @@ namespace matplotlibcpp {
 				s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
 
+				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
+
 				if(!s_python_function_show 
+						|| !s_python_function_save
 						|| !s_python_function_figure 
 						|| !s_python_function_plot 
 						|| !s_python_function_legend
@@ -65,6 +74,7 @@ namespace matplotlibcpp {
 				{ throw std::runtime_error("Couldnt find required function!"); }
 
 				if(!PyFunction_Check(s_python_function_show)
+					|| !PyFunction_Check(s_python_function_save)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
 					|| !PyFunction_Check(s_python_function_legend)
@@ -126,8 +136,6 @@ namespace matplotlibcpp {
 	bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
 	{
 		assert(x.size() == y.size());
-
-		//std::string format(s);
 
 		PyObject* xlist = PyList_New(x.size());
 		PyObject* ylist = PyList_New(y.size());
@@ -192,25 +200,6 @@ namespace matplotlibcpp {
 		return plot(x,y,format);
 	}
 
-	/*
-	 * This group of plot() functions is needed to support initializer lists, i.e. calling
-	 *    plot( {1,2,3,4} )
-	 */
-	bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
-		return plot<double,double>(x,y,format);
-	}
-
-	bool plot(const std::vector<double>& y, const std::string& format = "") {
-		return plot<double>(y,format);
-	}
-
-	bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
-		return plot<double>(x,y,keywords);
-	}
-
-	bool named_plot(const std::string& name, const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
-		return named_plot<double>(name,x,y,format);
-	}
 
 		inline void legend() {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
@@ -255,15 +244,31 @@ namespace matplotlibcpp {
 		Py_DECREF(res);
 	}
 
-	inline void show() {
+	inline void show()
+	{
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to show() failed.");
 
 		Py_DECREF(res);
 	}
 
+	inline void save(const std::string& filename)
+	{
+		PyObject* pyfilename = PyString_FromString(filename.c_str());
+
+		PyObject* args = PyTuple_New(1);
+		PyTuple_SetItem(args, 0, pyfilename);
+
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_save, args);
+		if(!res) throw std::runtime_error("Call to save() failed.");
+
+		Py_DECREF(pyfilename);
+		Py_DECREF(args);
+		Py_DECREF(res);
+	}
+
 #if __cplusplus > 199711L
-	// C++11-exclusive content starts here, in particular the variadic plot()
+	// C++11-exclusive content starts here (variadic plot() and initializer list support)
 
 	namespace detail {
 		template<typename T>
@@ -302,7 +307,7 @@ namespace matplotlibcpp {
 		struct is_callable
 		{
 			// dispatch to is_callable_impl<true, T> or is_callable_impl<false, T> depending on whether T is of class type or not
-			typedef typename is_callable_impl<std::is_class<T>::value, T>::type type; // todo: restore remove_reference
+			typedef typename is_callable_impl<std::is_class<T>::value, T>::type type;
 		};
 
 		template<typename IsYDataCallable>
@@ -314,7 +319,7 @@ namespace matplotlibcpp {
 			template<typename IterableX, typename IterableY>
 			bool operator()(const IterableX& x, const IterableY& y, const std::string& format)
 			{
-				// It's annoying that we have to repeat the code of plot() above
+				// 2-phase lookup for distance, begin, end
 				using std::distance;
 				using std::begin;
 				using std::end;
@@ -376,6 +381,26 @@ namespace matplotlibcpp {
 	bool plot(const A& a, const B& b, const std::string& format, Args... args)
 	{
 		return detail::plot_impl<typename detail::is_callable<B>::type>()(a,b,format) && plot(args...);
+	}
+
+	/*
+	 * This group of plot() functions is needed to support initializer lists, i.e. calling
+	 *    plot( {1,2,3,4} )
+	 */
+	bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
+		return plot<double,double>(x,y,format);
+	}
+
+	bool plot(const std::vector<double>& y, const std::string& format = "") {
+		return plot<double>(y,format);
+	}
+
+	bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
+		return plot<double>(x,y,keywords);
+	}
+
+	bool named_plot(const std::string& name, const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
+		return named_plot<double>(name,x,y,format);
 	}
 
 #endif
