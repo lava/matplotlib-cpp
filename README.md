@@ -91,21 +91,6 @@ matplotlib-cpp doesn't require C++11, but will enable some additional syntactic 
 
 Result: ![Modern example](./examples/modern.png)
 
-Why?
-----
-I initially started this library during my diploma thesis. My previous approach of 
-writing data from my c++ algorithm to a yaml file and afterwards parsing and plotting
-it in python using matplotlib proved insufficient: Keeping the algorithm
-and plotting code in sync requires a lot of effort when the C++ code frequently and substantially 
-changes. Additionally, the python yaml parser is not able to cope with files that
-exceed a few hundred megabytes in size.
-
-Therefore, I was looking for a C++ plotting library that was extremely to use
-and easy to add into an existing codebase, preferrably header-only. When I found
-none, I decided to create this library, which is basically a C++ wrapper around
-matplotlib. As you can see from the above examples, plotting data and saving it
-to an image file can be done is as few as two lines of code.
-
 Installation
 ------------
 matplotlib-cpp works by wrapping the popular python plotting library matplotlib. (matplotlib.org)
@@ -120,9 +105,32 @@ Since a python interpreter is opened internally, it is necessary to link against
 matplotlib-cpp.
 (There should be no problems using python3 instead of python2.7, if desired)
 
+Why?
+----
+I initially started this library during my diploma thesis. The usual approach of 
+writing data from the c++ algorithm to a file and afterwards parsing and plotting
+it in python using matplotlib proved insufficient: Keeping the algorithm
+and plotting code in sync requires a lot of effort when the C++ code frequently and substantially 
+changes. Additionally, the python yaml parser was not able to cope with files that
+exceed a few hundred megabytes in size.
+
+Therefore, I was looking for a C++ plotting library that was extremely to use
+and easy to add into an existing codebase, preferrably header-only. When I found
+none, I decided to write one myself, which is basically a C++ wrapper around
+matplotlib. As you can see from the above examples, plotting data and saving it
+to an image file can be done is as few as two lines of code.
+
+The general approach of providing a simple C++ API for utilizing python code
+was later generalized and extracted into a separate, more powerful
+library in another project of mine, [wrappy](http://www.github.com/lava/wrappy).
+
 
 Todo/Issues/Wishlist
 --------------------
+* This library is not thread safe. Protect all concurrent access with a mutex.
+  Sadly, this is not easy to fix since it is not caused by the library itself but
+  by the python interpreter, which is itself not thread-safe.
+
 * It would be nice to have a more object-oriented design with a Plot class which would allow
   multiple independent plots per program.
 
