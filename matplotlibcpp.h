@@ -248,7 +248,8 @@ namespace matplotlibcpp {
 		Py_DECREF(res);
 	}
 
-    inline void title(const std::string &titlestr)
+  
+	inline void title(const std::string &titlestr)
 	{
 		PyObject* pytitlestr = PyString_FromString(titlestr.c_str());
 		PyObject* args = PyTuple_New(1);
@@ -257,7 +258,7 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_title, args);
 		if(!res) throw std::runtime_error("Call to title() failed.");
 
-        //if PyDeCRFF, the show function doesn't wook on Mac OS
+	  //if PyDeCRFF, the show function doesn't wook on Mac OS
 	}
 
 	inline void show()
