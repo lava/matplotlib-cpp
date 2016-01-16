@@ -258,9 +258,8 @@ namespace matplotlibcpp {
         args);
 		if(!res) throw std::runtime_error("Call to title() failed.");
 
-		// if(pytitlestr) Py_DECREF(pytitlestr);
-		// if(args) Py_DECREF(args);
-		// if(res) Py_DECREF(res);
+    //if PyDeCRFF, the show function doesn't wook on Mac OS
+
 	}
 
 	inline void show()
