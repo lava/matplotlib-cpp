@@ -24,8 +24,10 @@ int main()
 
 	// Set x-axis to interval [0,1000000]
 	plt::xlim(0, 1000*1000);
+  // Add graph title
+  plt::title("sample figure");
 	// Enable legend.
 	plt::legend();
-	// Show plot
+	// save figure
 	plt::save("./basic.png");
 }

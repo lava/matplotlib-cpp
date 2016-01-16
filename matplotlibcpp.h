@@ -23,6 +23,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_legend;
 			PyObject *s_python_function_xlim;
 			PyObject *s_python_function_ylim;
+			PyObject *s_python_function_title;
 			PyObject *s_python_empty_tuple;
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
@@ -60,6 +61,7 @@ namespace matplotlibcpp {
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
 				s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
 				s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
+				s_python_function_title = PyObject_GetAttrString(pymod, "title");
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
 
 				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
@@ -70,6 +72,7 @@ namespace matplotlibcpp {
 						|| !s_python_function_plot 
 						|| !s_python_function_legend
 						|| !s_python_function_xlim
+						|| !s_python_function_title
 						|| !s_python_function_ylim) 
 				{ throw std::runtime_error("Couldnt find required function!"); }
 
@@ -79,6 +82,7 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_plot)
 					|| !PyFunction_Check(s_python_function_legend)
 					|| !PyFunction_Check(s_python_function_xlim)
+					|| !PyFunction_Check(s_python_function_title)
 					|| !PyFunction_Check(s_python_function_ylim)) 
 				{ throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
@@ -242,6 +246,19 @@ namespace matplotlibcpp {
 		Py_DECREF(list);
 		Py_DECREF(args);
 		Py_DECREF(res);
+	}
+
+  
+	inline void title(const std::string &titlestr)
+	{
+		PyObject* pytitlestr = PyString_FromString(titlestr.c_str());
+		PyObject* args = PyTuple_New(1);
+		PyTuple_SetItem(args, 0, pytitlestr);
+
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_title, args);
+		if(!res) throw std::runtime_error("Call to title() failed.");
+
+	  //if PyDeCRFF, the show function doesn't wook on Mac OS
 	}
 
 	inline void show()
