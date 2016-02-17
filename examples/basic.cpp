@@ -30,6 +30,5 @@ int main()
 	// Enable legend.
 	plt::legend();
 	// save figure
-	// plt::save("./basic.png");
-  plt::show();
+  plt::save("./basic.png");
 }
