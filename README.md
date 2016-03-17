@@ -172,11 +172,11 @@ and plotting code in sync requires a lot of effort when the C++ code frequently 
 changes. Additionally, the python yaml parser was not able to cope with files that
 exceed a few hundred megabytes in size.
 
-Therefore, I was looking for a C++ plotting library that was extremely to use
-and easy to add into an existing codebase, preferrably header-only. When I found
+Therefore, I was looking for a C++ plotting library that was extremely easy to use
+and to add into an existing codebase, preferrably header-only. When I found
 none, I decided to write one myself, which is basically a C++ wrapper around
 matplotlib. As you can see from the above examples, plotting data and saving it
-to an image file can be done is as few as two lines of code.
+to an image file can be done as few as two lines of code.
 
 The general approach of providing a simple C++ API for utilizing python code
 was later generalized and extracted into a separate, more powerful
