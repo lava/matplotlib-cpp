@@ -20,6 +20,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
+			PyObject *s_python_function_subplot;
 			PyObject *s_python_function_legend;
 			PyObject *s_python_function_xlim;
 			PyObject *s_python_function_ylim;
@@ -63,6 +64,7 @@ namespace matplotlibcpp {
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+				s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
 				s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
 				s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
 				s_python_function_title = PyObject_GetAttrString(pymod, "title");
@@ -76,6 +78,7 @@ namespace matplotlibcpp {
 				if(        !s_python_function_show
 						|| !s_python_function_figure
 						|| !s_python_function_plot
+						|| !s_python_function_subplot
 				   		|| !s_python_function_legend
 						|| !s_python_function_ylim
 						|| !s_python_function_title
@@ -91,6 +94,7 @@ namespace matplotlibcpp {
 				if(    !PyFunction_Check(s_python_function_show)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
+					|| !PyFunction_Check(s_python_function_subplot)
 				    || !PyFunction_Check(s_python_function_legend)
 					|| !PyFunction_Check(s_python_function_ylim)
 					|| !PyFunction_Check(s_python_function_title)
@@ -260,6 +264,20 @@ namespace matplotlibcpp {
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
+
+    inline void subplot(long nrows, long ncols, long plot_number) {
+        // construct positional args
+        PyObject* args = PyTuple_New(3);
+        PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
+        PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
+        PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
+
+        PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
+        if(!res) throw std::runtime_error("Call to subplot() failed.");
+
+        Py_DECREF(args);
+        Py_DECREF(res);
+    }
 
 	inline void title(const std::string &titlestr)
 	{
