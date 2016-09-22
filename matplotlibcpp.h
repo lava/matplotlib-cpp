@@ -20,6 +20,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
+			PyObject *s_python_function_subplot;
 			PyObject *s_python_function_legend;
 			PyObject *s_python_function_xlim;
 			PyObject *s_python_function_ylim;
@@ -32,8 +33,8 @@ namespace matplotlibcpp {
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
-			   or starting a seperate process for each. 
-			   
+			   or starting a separate process for each.
+
 				http://bytes.com/topic/python/answers/793370-multiple-independent-python-interpreters-c-c-program
 			   */
 
@@ -44,12 +45,12 @@ namespace matplotlibcpp {
 
 			private:
 			_interpreter() {
-				char name[] = "plotting"; // silence compiler warning abount const strings
+				char name[] = "plotting"; // silence compiler warning about const strings
 				Py_SetProgramName(name);  // optional but recommended
 				Py_Initialize();
 
 				PyObject* pyplotname = PyString_FromString("matplotlib.pyplot");
-				PyObject* pylabname  = PyString_FromString("pylab"); 
+				PyObject* pylabname  = PyString_FromString("pylab");
 				if(!pyplotname || !pylabname) { throw std::runtime_error("couldnt create string"); }
 
 				PyObject* pymod = PyImport_Import(pyplotname);
@@ -63,6 +64,7 @@ namespace matplotlibcpp {
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+				s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
 				s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
 				s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
 				s_python_function_title = PyObject_GetAttrString(pymod, "title");
@@ -71,36 +73,37 @@ namespace matplotlibcpp {
 				s_python_function_ylabel = PyObject_GetAttrString(pymod, "ylabel");
 				s_python_function_grid = PyObject_GetAttrString(pymod, "grid");
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
-
 				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
 
-				if(!s_python_function_show 
-						|| !s_python_function_save
-						|| !s_python_function_figure 
-						|| !s_python_function_plot 
-						|| !s_python_function_legend
-						|| !s_python_function_xlim
+				if(        !s_python_function_show
+						|| !s_python_function_figure
+						|| !s_python_function_plot
+						|| !s_python_function_subplot
+				   		|| !s_python_function_legend
 						|| !s_python_function_ylim
 						|| !s_python_function_title
 						|| !s_python_function_axis
 						|| !s_python_function_xlabel
 						|| !s_python_function_ylabel
 						|| !s_python_function_grid
-            ) 
-				{ throw std::runtime_error("Couldnt find required function!"); }
+						|| !s_python_function_xlim
+						|| !s_python_function_save
+            )
+				{ throw std::runtime_error("Couldn't find required function!"); }
 
-				if(!PyFunction_Check(s_python_function_show)
-					|| !PyFunction_Check(s_python_function_save)
+				if(    !PyFunction_Check(s_python_function_show)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
-					|| !PyFunction_Check(s_python_function_legend)
-					|| !PyFunction_Check(s_python_function_xlim)
-					|| !PyFunction_Check(s_python_function_ylim) 
+					|| !PyFunction_Check(s_python_function_subplot)
+				    || !PyFunction_Check(s_python_function_legend)
+					|| !PyFunction_Check(s_python_function_ylim)
 					|| !PyFunction_Check(s_python_function_title)
 					|| !PyFunction_Check(s_python_function_axis)
 					|| !PyFunction_Check(s_python_function_xlabel)
 					|| !PyFunction_Check(s_python_function_ylabel)
 					|| !PyFunction_Check(s_python_function_grid)
+					|| !PyFunction_Check(s_python_function_xlim)
+					|| !PyFunction_Check(s_python_function_save)
           )
 				{ throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
@@ -112,8 +115,6 @@ namespace matplotlibcpp {
 			}
 		};
 	}
-
-	
 
 	template<typename Numeric>
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
@@ -153,7 +154,6 @@ namespace matplotlibcpp {
 		return res;
 	}
 
-
 	template<typename NumericX, typename NumericY>
 	bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
 	{
@@ -182,7 +182,6 @@ namespace matplotlibcpp {
 
 		return res;
 	}
-
 
 	template<typename Numeric>
 	bool named_plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "") {
@@ -223,7 +222,7 @@ namespace matplotlibcpp {
 	}
 
 
-		inline void legend() {
+    inline void legend() {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to legend() failed.");
 
@@ -266,7 +265,20 @@ namespace matplotlibcpp {
 		Py_DECREF(res);
 	}
 
-  
+    inline void subplot(long nrows, long ncols, long plot_number) {
+        // construct positional args
+        PyObject* args = PyTuple_New(3);
+        PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
+        PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
+        PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
+
+        PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
+        if(!res) throw std::runtime_error("Call to subplot() failed.");
+
+        Py_DECREF(args);
+        Py_DECREF(res);
+    }
+
 	inline void title(const std::string &titlestr)
 	{
 		PyObject* pytitlestr = PyString_FromString(titlestr.c_str());
@@ -290,8 +302,6 @@ namespace matplotlibcpp {
 
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
-
-
 
   inline void xlabel(const std::string &str)
 	{
@@ -330,8 +340,6 @@ namespace matplotlibcpp {
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
 
-
-
 	inline void show()
 	{
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple);
@@ -368,7 +376,7 @@ namespace matplotlibcpp {
 		template<typename T>
 		struct is_callable_impl<false, T>
 		{
-			typedef is_function<T> type;		
+			typedef is_function<T> type;
 		}; // a non-object is callable iff it is a function
 
 		template<typename T>
@@ -452,10 +460,10 @@ namespace matplotlibcpp {
 
 				if(begin(ticks) == end(ticks)) return true;
 
-				// We could use additional meta-programming to deduce the correct element type of y, 
+				// We could use additional meta-programming to deduce the correct element type of y,
 				// but all values have to be convertible to double anyways
 				std::vector<double> y;
-				for(auto x : ticks) y.push_back(f(x)); 
+				for(auto x : ticks) y.push_back(f(x));
 				return plot_impl<std::false_type>()(ticks,y,format);
 			}
 		};
@@ -492,8 +500,5 @@ namespace matplotlibcpp {
 	}
 
 #endif
-
-
-
 
 }
