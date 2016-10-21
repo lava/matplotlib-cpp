@@ -20,6 +20,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
+			PyObject *s_python_function_hist;
 			PyObject *s_python_function_subplot;
 			PyObject *s_python_function_legend;
 			PyObject *s_python_function_xlim;
@@ -34,7 +35,6 @@ namespace matplotlibcpp {
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
 			   or starting a separate process for each.
-
 				http://bytes.com/topic/python/answers/793370-multiple-independent-python-interpreters-c-c-program
 			   */
 
@@ -64,6 +64,7 @@ namespace matplotlibcpp {
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+				s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
 				s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
 				s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
 				s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
@@ -154,6 +155,63 @@ namespace matplotlibcpp {
 		return res;
 	}
 
+	template< typename Numeric>
+	bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0){
+
+		PyObject* ylist = PyList_New(y.size());
+		
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "bins" ,PyFloat_FromDouble(bins));
+		PyDict_SetItemString(kwargs,"color",PyString_FromString(color.c_str()));  
+	  PyDict_SetItemString(kwargs, "alpha" ,PyFloat_FromDouble(alpha));
+		
+		for(size_t i = 0; i < y.size(); ++i) {
+			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+		}
+
+		PyObject* plot_args = PyTuple_New(1);
+
+		PyTuple_SetItem(plot_args, 0, ylist);
+
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
+
+
+		Py_DECREF(ylist);
+		Py_DECREF(plot_args);
+		Py_DECREF(kwargs);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+	template< typename Numeric>
+	bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0){
+
+		PyObject* ylist = PyList_New(y.size());
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs,"label",PyString_FromString(label.c_str()));
+		PyDict_SetItemString(kwargs, "bins" ,PyFloat_FromDouble(bins));
+		PyDict_SetItemString(kwargs,"color",PyString_FromString(color.c_str()));  
+		PyDict_SetItemString(kwargs, "alpha" ,PyFloat_FromDouble(alpha));
+		
+		for(size_t i = 0; i < y.size(); ++i) {
+			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+		}
+
+		PyObject* plot_args = PyTuple_New(1);
+		PyTuple_SetItem(plot_args, 0, ylist);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
+
+
+		Py_DECREF(ylist);
+		Py_DECREF(plot_args);
+		Py_DECREF(kwargs);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+	
 	template<typename NumericX, typename NumericY>
 	bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
 	{
@@ -176,6 +234,32 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
 
 		Py_DECREF(xlist);
+		Py_DECREF(ylist);
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+  template<typename Numeric>
+	bool named_plot(const std::string& name, const std::vector<Numeric>& y, const std::string& format = "") {
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+		PyObject* ylist = PyList_New(y.size());
+		PyObject* pystring = PyString_FromString(format.c_str());
+
+		for(size_t i = 0; i < y.size(); ++i) {
+			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+		}
+
+		PyObject* plot_args = PyTuple_New(2);
+
+		PyTuple_SetItem(plot_args, 0, ylist);
+		PyTuple_SetItem(plot_args, 1, pystring);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
+
+		Py_DECREF(kwargs);
 		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
@@ -221,7 +305,13 @@ namespace matplotlibcpp {
 		return plot(x,y,format);
 	}
 
+  inline void figure(){
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
+		if(!res) throw std::runtime_error("Call to legend() failed.");
 
+		Py_DECREF(res);
+  
+  }
     inline void legend() {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to legend() failed.");
