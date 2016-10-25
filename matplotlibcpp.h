@@ -161,9 +161,9 @@ namespace matplotlibcpp {
 		PyObject* ylist = PyList_New(y.size());
 		
 		PyObject* kwargs = PyDict_New();
-		PyDict_SetItemString(kwargs, "bins" ,PyFloat_FromDouble(bins));
-		PyDict_SetItemString(kwargs,"color",PyString_FromString(color.c_str()));  
-	  PyDict_SetItemString(kwargs, "alpha" ,PyFloat_FromDouble(alpha));
+		PyDict_SetItemString(kwargs, "bins", PyFloat_FromDouble(bins));
+		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
+	  PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
 		for(size_t i = 0; i < y.size(); ++i) {
 			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
@@ -189,10 +189,10 @@ namespace matplotlibcpp {
 
 		PyObject* ylist = PyList_New(y.size());
 		PyObject* kwargs = PyDict_New();
-		PyDict_SetItemString(kwargs,"label",PyString_FromString(label.c_str()));
-		PyDict_SetItemString(kwargs, "bins" ,PyFloat_FromDouble(bins));
-		PyDict_SetItemString(kwargs,"color",PyString_FromString(color.c_str()));  
-		PyDict_SetItemString(kwargs, "alpha" ,PyFloat_FromDouble(alpha));
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
+		PyDict_SetItemString(kwargs, "bins", PyFloat_FromDouble(bins));
+		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
+		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
 		for(size_t i = 0; i < y.size(); ++i) {
 			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
