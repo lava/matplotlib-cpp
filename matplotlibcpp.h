@@ -307,7 +307,7 @@ namespace matplotlibcpp {
 
   inline void figure(){
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
-		if(!res) throw std::runtime_error("Call to legend() failed.");
+		if(!res) throw std::runtime_error("Call to figure() failed.");
 
 		Py_DECREF(res);
   
