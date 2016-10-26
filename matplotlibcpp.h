@@ -161,7 +161,7 @@ namespace matplotlibcpp {
 		PyObject* ylist = PyList_New(y.size());
 		
 		PyObject* kwargs = PyDict_New();
-		PyDict_SetItemString(kwargs, "bins", PyFloat_FromDouble(bins));
+		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
 		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
 	  PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
@@ -190,7 +190,7 @@ namespace matplotlibcpp {
 		PyObject* ylist = PyList_New(y.size());
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
-		PyDict_SetItemString(kwargs, "bins", PyFloat_FromDouble(bins));
+    PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
 		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
 		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
