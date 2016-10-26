@@ -31,6 +31,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_ylabel;
 			PyObject *s_python_function_grid;
 			PyObject *s_python_empty_tuple;
+      PyObject *s_python_function_annotate;
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
@@ -75,12 +76,13 @@ namespace matplotlibcpp {
 				s_python_function_grid = PyObject_GetAttrString(pymod, "grid");
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
 				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
+				s_python_function_annotate = PyObject_GetAttrString(pymod,"annotate");
 
 				if(        !s_python_function_show
 						|| !s_python_function_figure
 						|| !s_python_function_plot
 						|| !s_python_function_subplot
-				   		|| !s_python_function_legend
+				   	|| !s_python_function_legend
 						|| !s_python_function_ylim
 						|| !s_python_function_title
 						|| !s_python_function_axis
@@ -89,6 +91,7 @@ namespace matplotlibcpp {
 						|| !s_python_function_grid
 						|| !s_python_function_xlim
 						|| !s_python_function_save
+            || !s_python_function_annotate
             )
 				{ throw std::runtime_error("Couldn't find required function!"); }
 
@@ -96,7 +99,8 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
 					|| !PyFunction_Check(s_python_function_subplot)
-				    || !PyFunction_Check(s_python_function_legend)
+				  || !PyFunction_Check(s_python_function_legend)
+          || !PyFunction_Check(s_python_function_annotate)
 					|| !PyFunction_Check(s_python_function_ylim)
 					|| !PyFunction_Check(s_python_function_title)
 					|| !PyFunction_Check(s_python_function_axis)
@@ -116,6 +120,31 @@ namespace matplotlibcpp {
 			}
 		};
 	}
+  
+  bool annotate(std::string annotation, double x, double y)
+  {
+    PyObject * xy = PyTuple_New(2);
+    PyObject * str = PyString_FromString(annotation.c_str());
+    
+    PyTuple_SetItem(xy,0,PyFloat_FromDouble(x));
+    PyTuple_SetItem(xy,1,PyFloat_FromDouble(y));
+    
+    PyObject* kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "xy", xy);
+    
+		PyObject* args = PyTuple_New(1);
+		PyTuple_SetItem(args, 0, str);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_annotate, args, kwargs);
+		
+    Py_DECREF(xy);
+		Py_DECREF(args);
+		Py_DECREF(kwargs);
+
+		if(res) Py_DECREF(res);
+
+		return res;
+  }
 
 	template<typename Numeric>
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
