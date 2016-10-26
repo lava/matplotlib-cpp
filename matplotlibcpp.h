@@ -354,6 +354,38 @@ namespace matplotlibcpp {
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
+  
+  
+  double * xlim()
+  {
+    PyObject* args = PyTuple_New(0);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
+    PyObject * left = PyTuple_GetItem(res,0);
+    PyObject * right = PyTuple_GetItem(res,1);
+    double * arr = new double[2];
+    arr[0] = PyFloat_AsDouble(left);
+    arr[1] = PyFloat_AsDouble(right);
+    
+		if(!res) throw std::runtime_error("Call to xlim() failed."); 
+    Py_DECREF(res);
+    return arr;
+  }
+  
+  
+  double * ylim()
+  {
+    PyObject* args = PyTuple_New(0);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
+    PyObject * left = PyTuple_GetItem(res,0);
+    PyObject * right = PyTuple_GetItem(res,1);
+    double * arr = new double[2];
+    arr[0] = PyFloat_AsDouble(left);
+    arr[1] = PyFloat_AsDouble(right);
+    
+		if(!res) throw std::runtime_error("Call to ylim() failed."); 
+    Py_DECREF(res);
+    return arr;
+  }
 
     inline void subplot(long nrows, long ncols, long plot_number) {
         // construct positional args
