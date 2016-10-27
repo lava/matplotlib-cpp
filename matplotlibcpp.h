@@ -137,7 +137,6 @@ namespace matplotlibcpp {
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_annotate, args, kwargs);
 		
-    Py_DECREF(xy);
 		Py_DECREF(args);
 		Py_DECREF(kwargs);
 
@@ -206,7 +205,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
 
 
-		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		Py_DECREF(kwargs);
 		if(res) Py_DECREF(res);
@@ -233,7 +231,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
 
 
-		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		Py_DECREF(kwargs);
 		if(res) Py_DECREF(res);
@@ -262,8 +259,6 @@ namespace matplotlibcpp {
 
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
 
-		Py_DECREF(xlist);
-		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
 
@@ -289,7 +284,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
 
 		Py_DECREF(kwargs);
-		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
 
@@ -318,8 +312,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
 
 		Py_DECREF(kwargs);
-		Py_DECREF(xlist);
-		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
 
@@ -361,7 +353,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
 		if(!res) throw std::runtime_error("Call to ylim() failed.");
 
-		Py_DECREF(list);
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
@@ -379,7 +370,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
 		if(!res) throw std::runtime_error("Call to xlim() failed.");
 
-		Py_DECREF(list);
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
