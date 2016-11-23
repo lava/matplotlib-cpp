@@ -20,6 +20,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
+			PyObject *s_python_function_hist;
 			PyObject *s_python_function_subplot;
 			PyObject *s_python_function_legend;
 			PyObject *s_python_function_xlim;
@@ -30,11 +31,11 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_ylabel;
 			PyObject *s_python_function_grid;
 			PyObject *s_python_empty_tuple;
+      PyObject *s_python_function_annotate;
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
 			   or starting a separate process for each.
-
 				http://bytes.com/topic/python/answers/793370-multiple-independent-python-interpreters-c-c-program
 			   */
 
@@ -64,6 +65,7 @@ namespace matplotlibcpp {
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+				s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
 				s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
 				s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
 				s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
@@ -74,12 +76,13 @@ namespace matplotlibcpp {
 				s_python_function_grid = PyObject_GetAttrString(pymod, "grid");
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
 				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
+				s_python_function_annotate = PyObject_GetAttrString(pymod,"annotate");
 
 				if(        !s_python_function_show
 						|| !s_python_function_figure
 						|| !s_python_function_plot
 						|| !s_python_function_subplot
-				   		|| !s_python_function_legend
+				   	|| !s_python_function_legend
 						|| !s_python_function_ylim
 						|| !s_python_function_title
 						|| !s_python_function_axis
@@ -88,6 +91,7 @@ namespace matplotlibcpp {
 						|| !s_python_function_grid
 						|| !s_python_function_xlim
 						|| !s_python_function_save
+            || !s_python_function_annotate
             )
 				{ throw std::runtime_error("Couldn't find required function!"); }
 
@@ -95,7 +99,8 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
 					|| !PyFunction_Check(s_python_function_subplot)
-				    || !PyFunction_Check(s_python_function_legend)
+				  || !PyFunction_Check(s_python_function_legend)
+          || !PyFunction_Check(s_python_function_annotate)
 					|| !PyFunction_Check(s_python_function_ylim)
 					|| !PyFunction_Check(s_python_function_title)
 					|| !PyFunction_Check(s_python_function_axis)
@@ -115,6 +120,30 @@ namespace matplotlibcpp {
 			}
 		};
 	}
+  
+  bool annotate(std::string annotation, double x, double y)
+  {
+    PyObject * xy = PyTuple_New(2);
+    PyObject * str = PyString_FromString(annotation.c_str());
+    
+    PyTuple_SetItem(xy,0,PyFloat_FromDouble(x));
+    PyTuple_SetItem(xy,1,PyFloat_FromDouble(y));
+    
+    PyObject* kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "xy", xy);
+    
+		PyObject* args = PyTuple_New(1);
+		PyTuple_SetItem(args, 0, str);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_annotate, args, kwargs);
+		
+		Py_DECREF(args);
+		Py_DECREF(kwargs);
+
+		if(res) Py_DECREF(res);
+
+		return res;
+  }
 
 	template<typename Numeric>
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
@@ -154,6 +183,61 @@ namespace matplotlibcpp {
 		return res;
 	}
 
+	template< typename Numeric>
+	bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0){
+
+		PyObject* ylist = PyList_New(y.size());
+		
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
+		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
+	  PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
+		
+		for(size_t i = 0; i < y.size(); ++i) {
+			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+		}
+
+		PyObject* plot_args = PyTuple_New(1);
+
+		PyTuple_SetItem(plot_args, 0, ylist);
+
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
+
+
+		Py_DECREF(plot_args);
+		Py_DECREF(kwargs);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+	template< typename Numeric>
+	bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0){
+
+		PyObject* ylist = PyList_New(y.size());
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
+    PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
+		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
+		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
+		
+		for(size_t i = 0; i < y.size(); ++i) {
+			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+		}
+
+		PyObject* plot_args = PyTuple_New(1);
+		PyTuple_SetItem(plot_args, 0, ylist);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
+
+
+		Py_DECREF(plot_args);
+		Py_DECREF(kwargs);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+	
 	template<typename NumericX, typename NumericY>
 	bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
 	{
@@ -175,8 +259,31 @@ namespace matplotlibcpp {
 
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
 
-		Py_DECREF(xlist);
-		Py_DECREF(ylist);
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+  template<typename Numeric>
+	bool named_plot(const std::string& name, const std::vector<Numeric>& y, const std::string& format = "") {
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+		PyObject* ylist = PyList_New(y.size());
+		PyObject* pystring = PyString_FromString(format.c_str());
+
+		for(size_t i = 0; i < y.size(); ++i) {
+			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+		}
+
+		PyObject* plot_args = PyTuple_New(2);
+
+		PyTuple_SetItem(plot_args, 0, ylist);
+		PyTuple_SetItem(plot_args, 1, pystring);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
+
+		Py_DECREF(kwargs);
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
 
@@ -205,8 +312,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
 
 		Py_DECREF(kwargs);
-		Py_DECREF(xlist);
-		Py_DECREF(ylist);
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
 
@@ -221,7 +326,13 @@ namespace matplotlibcpp {
 		return plot(x,y,format);
 	}
 
+  inline void figure(){
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
+		if(!res) throw std::runtime_error("Call to figure() failed.");
 
+		Py_DECREF(res);
+  
+  }
     inline void legend() {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to legend() failed.");
@@ -242,7 +353,6 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
 		if(!res) throw std::runtime_error("Call to ylim() failed.");
 
-		Py_DECREF(list);
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
@@ -260,10 +370,41 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
 		if(!res) throw std::runtime_error("Call to xlim() failed.");
 
-		Py_DECREF(list);
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
+  
+  
+  double * xlim()
+  {
+    PyObject* args = PyTuple_New(0);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
+    PyObject * left = PyTuple_GetItem(res,0);
+    PyObject * right = PyTuple_GetItem(res,1);
+    double * arr = new double[2];
+    arr[0] = PyFloat_AsDouble(left);
+    arr[1] = PyFloat_AsDouble(right);
+    
+		if(!res) throw std::runtime_error("Call to xlim() failed."); 
+    Py_DECREF(res);
+    return arr;
+  }
+  
+  
+  double * ylim()
+  {
+    PyObject* args = PyTuple_New(0);
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
+    PyObject * left = PyTuple_GetItem(res,0);
+    PyObject * right = PyTuple_GetItem(res,1);
+    double * arr = new double[2];
+    arr[0] = PyFloat_AsDouble(left);
+    arr[1] = PyFloat_AsDouble(right);
+    
+		if(!res) throw std::runtime_error("Call to ylim() failed."); 
+    Py_DECREF(res);
+    return arr;
+  }
 
     inline void subplot(long nrows, long ncols, long plot_number) {
         // construct positional args
