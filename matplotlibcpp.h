@@ -30,8 +30,9 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_xlabel;
 			PyObject *s_python_function_ylabel;
 			PyObject *s_python_function_grid;
+			PyObject *s_python_function_clf;
 			PyObject *s_python_empty_tuple;
-      PyObject *s_python_function_annotate;
+			PyObject *s_python_function_annotate;
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
@@ -77,30 +78,31 @@ namespace matplotlibcpp {
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
 				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
 				s_python_function_annotate = PyObject_GetAttrString(pymod,"annotate");
+				s_python_function_clf = PyObject_GetAttrString(pymod, "clf");
 
 				if(        !s_python_function_show
-						|| !s_python_function_figure
-						|| !s_python_function_plot
-						|| !s_python_function_subplot
+					|| !s_python_function_figure
+					|| !s_python_function_plot
+					|| !s_python_function_subplot
 				   	|| !s_python_function_legend
-						|| !s_python_function_ylim
-						|| !s_python_function_title
-						|| !s_python_function_axis
-						|| !s_python_function_xlabel
-						|| !s_python_function_ylabel
-						|| !s_python_function_grid
-						|| !s_python_function_xlim
-						|| !s_python_function_save
-            || !s_python_function_annotate
-            )
-				{ throw std::runtime_error("Couldn't find required function!"); }
+					|| !s_python_function_ylim
+					|| !s_python_function_title
+					|| !s_python_function_axis
+					|| !s_python_function_xlabel
+					|| !s_python_function_ylabel
+					|| !s_python_function_grid
+					|| !s_python_function_xlim
+					|| !s_python_function_save
+					|| !s_python_function_clf
+					|| !s_python_function_annotate
+				) { throw std::runtime_error("Couldn't find required function!"); }
 
-				if(    !PyFunction_Check(s_python_function_show)
+				if (       !PyFunction_Check(s_python_function_show)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
 					|| !PyFunction_Check(s_python_function_subplot)
-				  || !PyFunction_Check(s_python_function_legend)
-          || !PyFunction_Check(s_python_function_annotate)
+					|| !PyFunction_Check(s_python_function_legend)
+					|| !PyFunction_Check(s_python_function_annotate)
 					|| !PyFunction_Check(s_python_function_ylim)
 					|| !PyFunction_Check(s_python_function_title)
 					|| !PyFunction_Check(s_python_function_axis)
@@ -109,8 +111,8 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_grid)
 					|| !PyFunction_Check(s_python_function_xlim)
 					|| !PyFunction_Check(s_python_function_save)
-          )
-				{ throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
+					|| !PyFunction_Check(s_python_function_clf)
+				) { throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
 				s_python_empty_tuple = PyTuple_New(0);
 			}
@@ -164,9 +166,6 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(args, 0, xlist);
 		PyTuple_SetItem(args, 1, ylist);
 
-		Py_DECREF(xlist);
-		Py_DECREF(ylist);
-
 		// construct keyword args
 		PyObject* kwargs = PyDict_New();
 		for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
@@ -217,7 +216,7 @@ namespace matplotlibcpp {
 		PyObject* ylist = PyList_New(y.size());
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
-    PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
+		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
 		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
 		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
@@ -264,7 +263,8 @@ namespace matplotlibcpp {
 
 		return res;
 	}
-  template<typename Numeric>
+
+	template<typename Numeric>
 	bool named_plot(const std::string& name, const std::vector<Numeric>& y, const std::string& format = "") {
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
@@ -499,8 +499,15 @@ namespace matplotlibcpp {
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_save, args);
 		if(!res) throw std::runtime_error("Call to save() failed.");
 
-		Py_DECREF(pyfilename);
 		Py_DECREF(args);
+		Py_DECREF(res);
+	}
+
+	inline void clf() {
+		PyObject *res = PyObject_CallObject(detail::_interpreter::get().s_python_function_clf,
+                                            detail::_interpreter::get().s_python_empty_tuple);
+		if (!res) throw std::runtime_error("Call to clf() failed.");
+
 		Py_DECREF(res);
 	}
 
@@ -582,8 +589,6 @@ namespace matplotlibcpp {
 
 				PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
 
-				Py_DECREF(xlist);
-				Py_DECREF(ylist);
 				Py_DECREF(plot_args);
 				if(res) Py_DECREF(res);
 
