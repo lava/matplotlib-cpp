@@ -33,6 +33,7 @@ namespace matplotlibcpp {
             PyObject *s_python_function_ylabel;
             PyObject *s_python_function_grid;
             PyObject *s_python_function_clf;
+            PyObject *s_python_function_errorbar;
             PyObject *s_python_empty_tuple;
             PyObject *s_python_function_annotate;
 
@@ -81,6 +82,7 @@ namespace matplotlibcpp {
                 s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
                 s_python_function_annotate = PyObject_GetAttrString(pymod, "annotate");
                 s_python_function_clf = PyObject_GetAttrString(pymod, "clf");
+                s_python_function_errorbar = PyObject_GetAttrString(pymod, "errorbar");
 
                 if (!s_python_function_show
                     || !s_python_function_figure
@@ -97,6 +99,7 @@ namespace matplotlibcpp {
                     || !s_python_function_save
                     || !s_python_function_clf
                     || !s_python_function_annotate
+                    || !s_python_function_errorbar
                         ) { throw std::runtime_error("Couldn't find required function!"); }
 
                 if (!PyFunction_Check(s_python_function_show)
@@ -114,6 +117,7 @@ namespace matplotlibcpp {
                     || !PyFunction_Check(s_python_function_xlim)
                     || !PyFunction_Check(s_python_function_save)
                     || !PyFunction_Check(s_python_function_clf)
+                    || !PyFunction_Check(s_python_function_errorbar)
                         ) { throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
                 s_python_empty_tuple = PyTuple_New(0);
@@ -261,6 +265,45 @@ namespace matplotlibcpp {
 
         Py_DECREF(plot_args);
         if (res) Py_DECREF(res);
+
+        return res;
+    }
+
+    template<typename NumericX, typename NumericY>
+    bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, const std::vector<NumericX> &yerr, const std::string &s = "") {
+        assert(x.size() == y.size());
+
+        PyObject *kwargs = PyDict_New();
+        PyObject *xlist = PyList_New(x.size());
+        PyObject *ylist = PyList_New(y.size());
+        PyObject *yerrlist = PyList_New(yerr.size());
+
+        for (size_t i = 0; i < yerr.size(); ++i)
+            PyList_SetItem(yerrlist, i, PyFloat_FromDouble(yerr.at(i)));
+
+        PyDict_SetItemString(kwargs, "yerr", yerrlist);
+
+        PyObject *pystring = PyString_FromString(s.c_str());
+
+        for (size_t i = 0; i < x.size(); ++i) {
+            PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
+            PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
+        }
+
+        PyObject *plot_args = PyTuple_New(2);
+        PyTuple_SetItem(plot_args, 0, xlist);
+        PyTuple_SetItem(plot_args, 1, ylist);
+
+
+        PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_errorbar, plot_args, kwargs);
+
+        Py_DECREF(kwargs);
+        Py_DECREF(plot_args);
+
+        if (res)
+            Py_DECREF(res);
+        else
+            throw std::runtime_error("Call to errorbar() failed.");
 
         return res;
     }
