@@ -127,21 +127,21 @@ namespace matplotlibcpp {
 		};
 	}
   
-  bool annotate(std::string annotation, double x, double y)
-  {
-    PyObject * xy = PyTuple_New(2);
-    PyObject * str = PyString_FromString(annotation.c_str());
-    
-    PyTuple_SetItem(xy,0,PyFloat_FromDouble(x));
-    PyTuple_SetItem(xy,1,PyFloat_FromDouble(y));
-    
-    PyObject* kwargs = PyDict_New();
-    PyDict_SetItemString(kwargs, "xy", xy);
-    
+	bool annotate(std::string annotation, double x, double y)
+	{
+		PyObject * xy = PyTuple_New(2);
+		PyObject * str = PyString_FromString(annotation.c_str());
+
+		PyTuple_SetItem(xy,0,PyFloat_FromDouble(x));
+		PyTuple_SetItem(xy,1,PyFloat_FromDouble(y));
+
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "xy", xy);
+
 		PyObject* args = PyTuple_New(1);
 		PyTuple_SetItem(args, 0, str);
 
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_annotate, args, kwargs);
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_annotate, args, kwargs);
 		
 		Py_DECREF(args);
 		Py_DECREF(kwargs);
@@ -149,7 +149,7 @@ namespace matplotlibcpp {
 		if(res) Py_DECREF(res);
 
 		return res;
-  }
+	}
 
 	template<typename Numeric>
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
@@ -187,14 +187,14 @@ namespace matplotlibcpp {
 	}
 
 	template< typename Numeric>
-	bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0){
-
+	bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0)
+	{
 		PyObject* ylist = PyList_New(y.size());
 		
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
-		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
-	  PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
+		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));
+		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
 		for(size_t i = 0; i < y.size(); ++i) {
 			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
@@ -214,9 +214,10 @@ namespace matplotlibcpp {
 
 		return res;
 	}
-	template< typename Numeric>
-	bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0){
 
+	template< typename Numeric>
+	bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
+	{
 		PyObject* ylist = PyList_New(y.size());
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
@@ -232,7 +233,6 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(plot_args, 0, ylist);
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
-
 
 		Py_DECREF(plot_args);
 		Py_DECREF(kwargs);
@@ -269,7 +269,8 @@ namespace matplotlibcpp {
 	}
 
 	template<typename NumericX, typename NumericY>
-	bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, const std::vector<NumericX> &yerr, const std::string &s = "") {
+	bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, const std::vector<NumericX> &yerr, const std::string &s = "")
+	{
 		assert(x.size() == y.size());
 
 		PyObject *kwargs = PyDict_New();
@@ -307,7 +308,8 @@ namespace matplotlibcpp {
 	}
 
 	template<typename Numeric>
-	bool named_plot(const std::string& name, const std::vector<Numeric>& y, const std::string& format = "") {
+	bool named_plot(const std::string& name, const std::vector<Numeric>& y, const std::string& format = "")
+	{
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
@@ -333,7 +335,8 @@ namespace matplotlibcpp {
 	}
 
 	template<typename Numeric>
-	bool named_plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "") {
+	bool named_plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+	{
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
@@ -368,14 +371,16 @@ namespace matplotlibcpp {
 		return plot(x,y,format);
 	}
 
-  inline void figure(){
+	inline void figure()
+	{
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to figure() failed.");
 
 		Py_DECREF(res);
-  
-  }
-    inline void legend() {
+	}
+
+	inline void legend()
+	{
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
 		if(!res) throw std::runtime_error("Call to legend() failed.");
 
@@ -417,50 +422,55 @@ namespace matplotlibcpp {
 	}
   
   
-  double * xlim()
-  {
-    PyObject* args = PyTuple_New(0);
+	inline double* xlim()
+	{
+		PyObject* args = PyTuple_New(0);
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
-    PyObject * left = PyTuple_GetItem(res,0);
-    PyObject * right = PyTuple_GetItem(res,1);
-    double * arr = new double[2];
-    arr[0] = PyFloat_AsDouble(left);
-    arr[1] = PyFloat_AsDouble(right);
+		PyObject* left = PyTuple_GetItem(res,0);
+		PyObject* right = PyTuple_GetItem(res,1);
+
+		double* arr = new double[2];
+		arr[0] = PyFloat_AsDouble(left);
+		arr[1] = PyFloat_AsDouble(right);
     
-		if(!res) throw std::runtime_error("Call to xlim() failed."); 
-    Py_DECREF(res);
-    return arr;
-  }
+		if(!res) throw std::runtime_error("Call to xlim() failed.");
+
+		Py_DECREF(res);
+		return arr;
+	}
   
   
-  double * ylim()
-  {
-    PyObject* args = PyTuple_New(0);
+	inline double* ylim()
+	{
+		PyObject* args = PyTuple_New(0);
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
-    PyObject * left = PyTuple_GetItem(res,0);
-    PyObject * right = PyTuple_GetItem(res,1);
-    double * arr = new double[2];
-    arr[0] = PyFloat_AsDouble(left);
-    arr[1] = PyFloat_AsDouble(right);
+		PyObject* left = PyTuple_GetItem(res,0);
+		PyObject* right = PyTuple_GetItem(res,1);
+
+		double* arr = new double[2];
+		arr[0] = PyFloat_AsDouble(left);
+		arr[1] = PyFloat_AsDouble(right);
     
 		if(!res) throw std::runtime_error("Call to ylim() failed."); 
-    Py_DECREF(res);
-    return arr;
-  }
 
-    inline void subplot(long nrows, long ncols, long plot_number) {
-        // construct positional args
-        PyObject* args = PyTuple_New(3);
-        PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
-        PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
-        PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
+		Py_DECREF(res);
+		return arr;
+	}
 
-        PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
-        if(!res) throw std::runtime_error("Call to subplot() failed.");
+	inline void subplot(long nrows, long ncols, long plot_number)
+	{
+		// construct positional args
+		PyObject* args = PyTuple_New(3);
+		PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
+		PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
+		PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
 
-        Py_DECREF(args);
-        Py_DECREF(res);
-    }
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
+		if(!res) throw std::runtime_error("Call to subplot() failed.");
+
+		Py_DECREF(args);
+		Py_DECREF(res);
+	}
 
 	inline void title(const std::string &titlestr)
 	{
@@ -474,7 +484,7 @@ namespace matplotlibcpp {
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
 
-  inline void axis(const std::string &axisstr)
+	inline void axis(const std::string &axisstr)
 	{
 		PyObject* str = PyString_FromString(axisstr.c_str());
 		PyObject* args = PyTuple_New(1);
@@ -486,7 +496,7 @@ namespace matplotlibcpp {
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
 
-  inline void xlabel(const std::string &str)
+	inline void xlabel(const std::string &str)
 	{
 		PyObject* pystr = PyString_FromString(str.c_str());
 		PyObject* args = PyTuple_New(1);
@@ -498,7 +508,7 @@ namespace matplotlibcpp {
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
 
-  inline void ylabel(const std::string &str)
+	inline void ylabel(const std::string &str)
 	{
 		PyObject* pystr = PyString_FromString(str.c_str());
 		PyObject* args = PyTuple_New(1);
@@ -510,7 +520,7 @@ namespace matplotlibcpp {
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
 
-  inline void grid(bool flag)
+	inline void grid(bool flag)
 	{
 		PyObject* pyflag = flag ? Py_True : Py_False;
 
@@ -525,8 +535,11 @@ namespace matplotlibcpp {
 
 	inline void show()
 	{
-		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple);
-		if(!res) throw std::runtime_error("Call to show() failed.");
+		PyObject* res = PyObject_CallObject(
+			detail::_interpreter::get().s_python_function_show,
+			detail::_interpreter::get().s_python_empty_tuple);
+
+		if (!res) throw std::runtime_error("Call to show() failed.");
 
 		Py_DECREF(res);
 	}
@@ -539,15 +552,17 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(args, 0, pyfilename);
 
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_save, args);
-		if(!res) throw std::runtime_error("Call to save() failed.");
+		if (!res) throw std::runtime_error("Call to save() failed.");
 
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
 
 	inline void clf() {
-		PyObject *res = PyObject_CallObject(detail::_interpreter::get().s_python_function_clf,
-                                            detail::_interpreter::get().s_python_empty_tuple);
+		PyObject *res = PyObject_CallObject(
+			detail::_interpreter::get().s_python_function_clf,
+			detail::_interpreter::get().s_python_empty_tuple);
+
 		if (!res) throw std::runtime_error("Call to clf() failed.");
 
 		Py_DECREF(res);
