@@ -10,7 +10,16 @@
 #include <functional>
 #endif
 
+#ifdef PY_INCLUDE
+#include <Python.h>
+#else
 #include <python2.7/Python.h>
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#define PyString_FromString PyUnicode_FromString
+#endif
+
 
 namespace matplotlibcpp {
 
@@ -48,8 +57,14 @@ namespace matplotlibcpp {
 
 			private:
 			_interpreter() {
-				char name[] = "plotting"; // silence compiler warning about const strings
-				Py_SetProgramName(name);  // optional but recommended
+                
+                // optional but recommended
+#if PY_MAJOR_VERSION >= 3
+                wchar_t name[] = L"plotting";
+#else
+                char name[] = "plotting";
+#endif
+				Py_SetProgramName(name);
 				Py_Initialize();
 
 				PyObject* pyplotname = PyString_FromString("matplotlib.pyplot");
@@ -62,7 +77,7 @@ namespace matplotlibcpp {
 
 				PyObject* pylabmod = PyImport_Import(pylabname);
 				Py_DECREF(pylabname);
-				if(!pymod) { throw std::runtime_error("Error loading module pylab!"); }
+				if(!pylabmod) { throw std::runtime_error("Error loading module pylab!"); }
 
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
