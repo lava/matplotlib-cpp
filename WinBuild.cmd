@@ -1,4 +1,4 @@
-REM @echo off
+@echo off
 @setlocal EnableDelayedExpansion
 
 if NOT DEFINED MSVC_VERSION set MSVC_VERSION=14
