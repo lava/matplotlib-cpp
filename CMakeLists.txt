@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(${PYTHONHOME}/include)
 link_directories(${PYTHONHOME}/libs)
-link_libraries(python36)
+
 # message(STATUS "*** dump start cmake variables ***")
 # get_cmake_property(_variableNames VARIABLES)
 # foreach(_variableName ${_variableNames})
