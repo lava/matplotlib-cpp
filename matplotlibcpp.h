@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <iostream>
 
-#if __cplusplus > 199711L
+#if __cplusplus > 199711L || _MSC_VER > 1800
 #include <functional>
 #endif
 
@@ -583,7 +583,7 @@ namespace matplotlibcpp {
 		Py_DECREF(res);
 	}
 
-#if __cplusplus > 199711L
+#if __cplusplus > 199711L || _MSC_VER > 1800
 	// C++11-exclusive content starts here (variadic plot() and initializer list support)
 
 	namespace detail {

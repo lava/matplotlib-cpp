@@ -30,3 +30,6 @@
 # Logfiles
 *.tlog
 *.log
+
+# Build
+/examples/build/*
