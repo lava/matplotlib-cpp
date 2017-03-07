@@ -30,3 +30,5 @@
 # Logfiles
 *.tlog
 *.log
+
+# Build
