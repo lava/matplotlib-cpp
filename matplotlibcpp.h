@@ -10,7 +10,11 @@
 #include <functional>
 #endif
 
+#ifdef PY_INCLUDE
 #include <Python.h>
+#else
+#include <python2.7/Python.h>
+#endif
 
 #if PY_MAJOR_VERSION >= 3
 #define PyString_FromString PyUnicode_FromString
