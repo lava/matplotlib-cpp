@@ -103,7 +103,22 @@ The C++-part of the library consists of the single header file `matplotlibcpp.h`
 anywhere.
 Since a python interpreter is opened internally, it is necessary to link against `libpython2.7` in order to use
 matplotlib-cpp.
-(There should be no problems using python3 instead of python2.7, if desired)
+
+# Python 3
+
+The code is written in a way that should support both python2 and python3.
+By default, matplotlib-cpp will try to "just work" and include the header `python2.7/Python.h`.
+
+To modify this behaviour the define `MATPLOTLIBCPP_PYTHON_HEADER`,
+can be set to an absolute or relative path: 
+
+     #define MATPLOTLIBCPP_PYTHON_HEADER /usr/include/python3.6/Python.h
+     #include "matplotlibcpp.h"
+
+or
+
+    g++ -DMATPLOTLIBCPP_PYTHON_HEADER=Python.h -I/usr/include/python3.6 <...>
+
 
 Why?
 ----

@@ -10,9 +10,12 @@
 #include <functional>
 #endif
 
-#ifdef PY_INCLUDE
-#include <Python.h>
-#else
+// i.e. g++ -DMATPLOTLIBCPP_PYTHON_HEADER=/usr/include/python3.6/Python.h [...]
+#ifdef MATPLOTLIBCPP_PYTHON_HEADER
+#define STRINGIFY_(x) #x
+#define STRINGIFY(x) STRINGIFY_(x)
+#include STRINGIFY(MATPLOTLIBCPP_PYTHON_HEADER)
+#else // This should stay the default for backwards compatibility
 #include <python2.7/Python.h>
 #endif
 
