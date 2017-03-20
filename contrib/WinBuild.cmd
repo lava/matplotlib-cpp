@@ -31,7 +31,7 @@ pushd build
 cmake -G"!CMAKE_GENERATOR!" ^
       -DPYTHONHOME:STRING=%PYTHONHOME%^
       -DCMAKE_BUILD_TYPE:STRING=%CMAKE_CONFIG% ^
-      ../../Win/
+      %~dp0
 cmake --build . --config %CMAKE_CONFIG%  
 
 pushd %CMAKE_CONFIG%  
@@ -39,7 +39,7 @@ if not EXIST platforms mkdir platforms
 if EXIST %PYTHONHOME%/Library/plugins/platforms/qwindows.dll ^
 cp %PYTHONHOME%/Library/plugins/platforms/qwindows.dll ./platforms/
 popd
-move ./%CMAKE_CONFIG% ../
+REM move ./%CMAKE_CONFIG% ../
 popd
 popd
 popd

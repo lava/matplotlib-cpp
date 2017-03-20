@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(${PYTHONHOME}/include)
 link_directories(${PYTHONHOME}/libs)
 
-add_definitions(-DPY_INCLUDE)
+add_definitions(-DMATPLOTLIBCPP_PYTHON_HEADER=Python.h)
 
 # message(STATUS "*** dump start cmake variables ***")
 # get_cmake_property(_variableNames VARIABLES)
