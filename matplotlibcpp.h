@@ -32,6 +32,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
+			PyObject *s_python_function_fill_between;
 			PyObject *s_python_function_hist;
 			PyObject *s_python_function_subplot;
 			PyObject *s_python_function_legend;
@@ -85,6 +86,7 @@ namespace matplotlibcpp {
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+				s_python_function_fill_between = PyObject_GetAttrString(pymod, "fill_between");
 				s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
 				s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
 				s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
@@ -103,6 +105,7 @@ namespace matplotlibcpp {
 				if(        !s_python_function_show
 					|| !s_python_function_figure
 					|| !s_python_function_plot
+					|| !s_python_function_fill_between
 					|| !s_python_function_subplot
 				   	|| !s_python_function_legend
 					|| !s_python_function_ylim
@@ -121,6 +124,7 @@ namespace matplotlibcpp {
 				if (       !PyFunction_Check(s_python_function_show)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
+					|| !PyFunction_Check(s_python_function_fill_between)
 					|| !PyFunction_Check(s_python_function_subplot)
 					|| !PyFunction_Check(s_python_function_legend)
 					|| !PyFunction_Check(s_python_function_annotate)
@@ -196,6 +200,45 @@ namespace matplotlibcpp {
 		}
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, args, kwargs);
+
+		Py_DECREF(args);
+		Py_DECREF(kwargs);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template< typename Numeric >
+	bool fill_between(const std::vector<Numeric>& x, const std::vector<Numeric>& y1, const std::vector<Numeric>& y2, const std::map<std::string, std::string>& keywords)
+	{
+		assert(x.size() == y1.size());
+		assert(x.size() == y2.size());
+
+		// using python lists
+		PyObject* xlist = PyList_New(x.size());
+		PyObject* y1list = PyList_New(y1.size());
+		PyObject* y2list = PyList_New(y2.size());
+
+		for(size_t i = 0; i < x.size(); ++i) {
+			PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
+			PyList_SetItem(y1list, i, PyFloat_FromDouble(y1.at(i)));
+			PyList_SetItem(y2list, i, PyFloat_FromDouble(y2.at(i)));
+		}
+
+		// construct positional args
+		PyObject* args = PyTuple_New(3);
+		PyTuple_SetItem(args, 0, xlist);
+		PyTuple_SetItem(args, 1, y1list);
+		PyTuple_SetItem(args, 2, y2list);
+
+		// construct keyword args
+		PyObject* kwargs = PyDict_New();
+		for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+		{
+			PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+		}
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_fill_between, args, kwargs);
 
 		Py_DECREF(args);
 		Py_DECREF(kwargs);
