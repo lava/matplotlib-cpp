@@ -23,6 +23,8 @@
 #define PyString_FromString PyUnicode_FromString
 #endif
 
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
 
 namespace matplotlibcpp {
 
@@ -70,6 +72,8 @@ namespace matplotlibcpp {
 #endif
 				Py_SetProgramName(name);
 				Py_Initialize();
+
+				import_array(); // initialize numpy C-API
 
 				PyObject* pyplotname = PyString_FromString("matplotlib.pyplot");
 				PyObject* pylabname  = PyString_FromString("pylab");
@@ -177,20 +181,19 @@ namespace matplotlibcpp {
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
 	{
 		assert(x.size() == y.size());
+		detail::_interpreter::get();	//interpreter needs to be initialized for the numpy commands to work
 
-		// using python lists
-		PyObject* xlist = PyList_New(x.size());
-		PyObject* ylist = PyList_New(y.size());
+		// using numpy arrays
+		npy_intp xsize = x.size();
+		npy_intp ysize = y.size();
 
-		for(size_t i = 0; i < x.size(); ++i) {
-			PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
+		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
 
 		// construct positional args
 		PyObject* args = PyTuple_New(2);
-		PyTuple_SetItem(args, 0, xlist);
-		PyTuple_SetItem(args, 1, ylist);
+		PyTuple_SetItem(args, 0, xarray);
+		PyTuple_SetItem(args, 1, yarray);
 
 		// construct keyword args
 		PyObject* kwargs = PyDict_New();
@@ -214,22 +217,22 @@ namespace matplotlibcpp {
 		assert(x.size() == y1.size());
 		assert(x.size() == y2.size());
 
-		// using python lists
-		PyObject* xlist = PyList_New(x.size());
-		PyObject* y1list = PyList_New(y1.size());
-		PyObject* y2list = PyList_New(y2.size());
+		detail::_interpreter::get();
 
-		for(size_t i = 0; i < x.size(); ++i) {
-			PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
-			PyList_SetItem(y1list, i, PyFloat_FromDouble(y1.at(i)));
-			PyList_SetItem(y2list, i, PyFloat_FromDouble(y2.at(i)));
-		}
+		// using numpy arrays
+		npy_intp xsize = x.size();
+		npy_intp y1size = y1.size();
+		npy_intp y2size = y2.size();
+
+		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
+		PyObject* y1array = PyArray_SimpleNewFromData(1, &y1size, NPY_DOUBLE, (void*)(y1.data()));
+		PyObject* y2array = PyArray_SimpleNewFromData(1, &y2size, NPY_DOUBLE, (void*)(y2.data()));
 
 		// construct positional args
 		PyObject* args = PyTuple_New(3);
-		PyTuple_SetItem(args, 0, xlist);
-		PyTuple_SetItem(args, 1, y1list);
-		PyTuple_SetItem(args, 2, y2list);
+		PyTuple_SetItem(args, 0, xarray);
+		PyTuple_SetItem(args, 1, y1array);
+		PyTuple_SetItem(args, 2, y2array);
 
 		// construct keyword args
 		PyObject* kwargs = PyDict_New();
@@ -250,20 +253,20 @@ namespace matplotlibcpp {
 	template< typename Numeric>
 	bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0)
 	{
-		PyObject* ylist = PyList_New(y.size());
-		
+		detail::_interpreter::get();
+
+		npy_intp ysize = y.size();
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
 		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));
 		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
 		
-		for(size_t i = 0; i < y.size(); ++i) {
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
 
 		PyObject* plot_args = PyTuple_New(1);
 
-		PyTuple_SetItem(plot_args, 0, ylist);
+		PyTuple_SetItem(plot_args, 0, yarray);
 
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
@@ -279,19 +282,20 @@ namespace matplotlibcpp {
 	template< typename Numeric>
 	bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
 	{
-		PyObject* ylist = PyList_New(y.size());
+		detail::_interpreter::get();
+
+		npy_intp ysize = y.size();
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
 		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
-		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));  
+		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));
 		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
-		
-		for(size_t i = 0; i < y.size(); ++i) {
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
+
 
 		PyObject* plot_args = PyTuple_New(1);
-		PyTuple_SetItem(plot_args, 0, ylist);
+		PyTuple_SetItem(plot_args, 0, yarray);
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_hist, plot_args, kwargs);
 
@@ -307,18 +311,18 @@ namespace matplotlibcpp {
 	{
 		assert(x.size() == y.size());
 
-		PyObject* xlist = PyList_New(x.size());
-		PyObject* ylist = PyList_New(y.size());
+		detail::_interpreter::get();
+
+		npy_intp xsize = x.size();
+		npy_intp ysize = y.size();
+		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+
 		PyObject* pystring = PyString_FromString(s.c_str());
 
-		for(size_t i = 0; i < x.size(); ++i) {
-			PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
-
 		PyObject* plot_args = PyTuple_New(3);
-		PyTuple_SetItem(plot_args, 0, xlist);
-		PyTuple_SetItem(plot_args, 1, ylist);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
 		PyTuple_SetItem(plot_args, 2, pystring);
 
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
@@ -334,26 +338,26 @@ namespace matplotlibcpp {
 	{
 		assert(x.size() == y.size());
 
+		detail::_interpreter::get();
+
 		PyObject *kwargs = PyDict_New();
-		PyObject *xlist = PyList_New(x.size());
-		PyObject *ylist = PyList_New(y.size());
-		PyObject *yerrlist = PyList_New(yerr.size());
 
-		for (size_t i = 0; i < yerr.size(); ++i)
-			PyList_SetItem(yerrlist, i, PyFloat_FromDouble(yerr.at(i)));
 
-		PyDict_SetItemString(kwargs, "yerr", yerrlist);
+		npy_intp xsize = x.size();
+		npy_intp ysize = y.size();
+		npy_intp yerrsize = yerr.size();
+
+		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		PyObject* yerrarray = PyArray_SimpleNewFromData(1, &yerrsize, NPY_DOUBLE, (void*)(yerr.data()));
+
+		PyDict_SetItemString(kwargs, "yerr", yerrarray);
 
 		PyObject *pystring = PyString_FromString(s.c_str());
 
-		for (size_t i = 0; i < x.size(); ++i) {
-			PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
-
 		PyObject *plot_args = PyTuple_New(2);
-		PyTuple_SetItem(plot_args, 0, xlist);
-		PyTuple_SetItem(plot_args, 1, ylist);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
 
 		PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_errorbar, plot_args, kwargs);
 
@@ -374,16 +378,16 @@ namespace matplotlibcpp {
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-		PyObject* ylist = PyList_New(y.size());
-		PyObject* pystring = PyString_FromString(format.c_str());
+		detail::_interpreter::get();
 
-		for(size_t i = 0; i < y.size(); ++i) {
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
+		npy_intp ysize = y.size();
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+
+		PyObject* pystring = PyString_FromString(format.c_str());
 
 		PyObject* plot_args = PyTuple_New(2);
 
-		PyTuple_SetItem(plot_args, 0, ylist);
+		PyTuple_SetItem(plot_args, 0, yarray);
 		PyTuple_SetItem(plot_args, 1, pystring);
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
@@ -401,18 +405,19 @@ namespace matplotlibcpp {
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-		PyObject* xlist = PyList_New(x.size());
-		PyObject* ylist = PyList_New(y.size());
+		detail::_interpreter::get();
+
+		npy_intp xsize = x.size();
+		npy_intp ysize = y.size();
+
+		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
+		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		
 		PyObject* pystring = PyString_FromString(format.c_str());
 
-		for(size_t i = 0; i < x.size(); ++i) {
-			PyList_SetItem(xlist, i, PyFloat_FromDouble(x.at(i)));
-			PyList_SetItem(ylist, i, PyFloat_FromDouble(y.at(i)));
-		}
-
 		PyObject* plot_args = PyTuple_New(3);
-		PyTuple_SetItem(plot_args, 0, xlist);
-		PyTuple_SetItem(plot_args, 1, ylist);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
 		PyTuple_SetItem(plot_args, 2, pystring);
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
