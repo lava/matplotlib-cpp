@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <numeric>
+#include <algorithm>
 #include <stdexcept>
 #include <iostream>
 
@@ -176,19 +177,47 @@ namespace matplotlibcpp {
 
 		return res;
 	}
+	// Type selector for numpy array conversion
+	template <typename T> struct select_npy_type { const static NPY_TYPES type = NPY_NOTYPE; }; //Default
+	template <> struct select_npy_type<double> { const static NPY_TYPES type = NPY_DOUBLE; };
+	template <> struct select_npy_type<float> { const static NPY_TYPES type = NPY_FLOAT; };
+	template <> struct select_npy_type<bool> { const static NPY_TYPES type = NPY_BOOL; };
+	template <> struct select_npy_type<std::int8_t> { const static NPY_TYPES type = NPY_INT8; };
+	template <> struct select_npy_type<std::int16_t> { const static NPY_TYPES type = NPY_SHORT; };
+	template <> struct select_npy_type<std::int32_t> { const static NPY_TYPES type = NPY_INT; };
+	template <> struct select_npy_type<std::int64_t> { const static NPY_TYPES type = NPY_INT64; };
+	template <> struct select_npy_type<std::uint8_t> { const static NPY_TYPES type = NPY_UINT8; };
+	template <> struct select_npy_type<std::uint16_t> { const static NPY_TYPES type = NPY_USHORT; };
+	template <> struct select_npy_type<std::uint32_t> { const static NPY_TYPES type = NPY_ULONG; };
+	template <> struct select_npy_type<std::uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
+
+	template<typename Numeric>
+	PyObject* get_array(const std::vector<Numeric>& v)
+	{
+		detail::_interpreter::get();	//interpreter needs to be initialized for the numpy commands to work
+		NPY_TYPES type = select_npy_type<Numeric>::type; 
+		if (type == NPY_NOTYPE)
+		{
+				std::vector<double> vd(v.size());
+				npy_intp vsize = v.size();
+				std::copy(v.begin(),v.end(),vd.begin());
+				PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, (void*)(vd.data()));
+				return varray;
+		}
+
+		npy_intp vsize = v.size();
+		PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(v.data()));
+		return varray;
+	}
 
 	template<typename Numeric>
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
 	{
 		assert(x.size() == y.size());
-		detail::_interpreter::get();	//interpreter needs to be initialized for the numpy commands to work
 
 		// using numpy arrays
-		npy_intp xsize = x.size();
-		npy_intp ysize = y.size();
-
-		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
 
 		// construct positional args
 		PyObject* args = PyTuple_New(2);
@@ -217,16 +246,10 @@ namespace matplotlibcpp {
 		assert(x.size() == y1.size());
 		assert(x.size() == y2.size());
 
-		detail::_interpreter::get();
-
 		// using numpy arrays
-		npy_intp xsize = x.size();
-		npy_intp y1size = y1.size();
-		npy_intp y2size = y2.size();
-
-		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
-		PyObject* y1array = PyArray_SimpleNewFromData(1, &y1size, NPY_DOUBLE, (void*)(y1.data()));
-		PyObject* y2array = PyArray_SimpleNewFromData(1, &y2size, NPY_DOUBLE, (void*)(y2.data()));
+		PyObject* xarray = get_array(x);
+		PyObject* y1array = get_array(y1);
+		PyObject* y2array = get_array(y2);
 
 		// construct positional args
 		PyObject* args = PyTuple_New(3);
@@ -253,10 +276,8 @@ namespace matplotlibcpp {
 	template< typename Numeric>
 	bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0)
 	{
-		detail::_interpreter::get();
 
-		npy_intp ysize = y.size();
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		PyObject* yarray = get_array(y);
 
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
@@ -282,10 +303,7 @@ namespace matplotlibcpp {
 	template< typename Numeric>
 	bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
 	{
-		detail::_interpreter::get();
-
-		npy_intp ysize = y.size();
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		PyObject* yarray = get_array(y);
 
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
@@ -311,12 +329,8 @@ namespace matplotlibcpp {
 	{
 		assert(x.size() == y.size());
 
-		detail::_interpreter::get();
-
-		npy_intp xsize = x.size();
-		npy_intp ysize = y.size();
-		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
 
 		PyObject* pystring = PyString_FromString(s.c_str());
 
@@ -338,18 +352,11 @@ namespace matplotlibcpp {
 	{
 		assert(x.size() == y.size());
 
-		detail::_interpreter::get();
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+		PyObject* yerrarray = get_array(yerr);
 
 		PyObject *kwargs = PyDict_New();
-
-
-		npy_intp xsize = x.size();
-		npy_intp ysize = y.size();
-		npy_intp yerrsize = yerr.size();
-
-		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
-		PyObject* yerrarray = PyArray_SimpleNewFromData(1, &yerrsize, NPY_DOUBLE, (void*)(yerr.data()));
 
 		PyDict_SetItemString(kwargs, "yerr", yerrarray);
 
@@ -378,10 +385,7 @@ namespace matplotlibcpp {
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-		detail::_interpreter::get();
-
-		npy_intp ysize = y.size();
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
+		PyObject* yarray = get_array(y);
 
 		PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -405,14 +409,9 @@ namespace matplotlibcpp {
 		PyObject* kwargs = PyDict_New();
 		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-		detail::_interpreter::get();
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
 
-		npy_intp xsize = x.size();
-		npy_intp ysize = y.size();
-
-		PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, NPY_DOUBLE, (void*)(x.data()));
-		PyObject* yarray = PyArray_SimpleNewFromData(1, &ysize, NPY_DOUBLE, (void*)(y.data()));
-		
 		PyObject* pystring = PyString_FromString(format.c_str());
 
 		PyObject* plot_args = PyTuple_New(3);
