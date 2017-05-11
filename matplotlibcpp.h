@@ -45,8 +45,9 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_grid;
 			PyObject *s_python_function_clf;
 			PyObject *s_python_function_errorbar;
-			PyObject *s_python_empty_tuple;
 			PyObject *s_python_function_annotate;
+			PyObject *s_python_function_tight_layout;
+			PyObject *s_python_empty_tuple;
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
@@ -101,6 +102,7 @@ namespace matplotlibcpp {
 				s_python_function_annotate = PyObject_GetAttrString(pymod,"annotate");
 				s_python_function_clf = PyObject_GetAttrString(pymod, "clf");
 				s_python_function_errorbar = PyObject_GetAttrString(pymod, "errorbar");
+				s_python_function_tight_layout = PyObject_GetAttrString(pymod, "tight_layout");
 
 				if(        !s_python_function_show
 					|| !s_python_function_figure
@@ -119,6 +121,8 @@ namespace matplotlibcpp {
 					|| !s_python_function_clf
 					|| !s_python_function_annotate
 					|| !s_python_function_errorbar
+					|| !s_python_function_errorbar
+					|| !s_python_function_tight_layout
 				) { throw std::runtime_error("Couldn't find required function!"); }
 
 				if (       !PyFunction_Check(s_python_function_show)
@@ -137,6 +141,7 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_xlim)
 					|| !PyFunction_Check(s_python_function_save)
 					|| !PyFunction_Check(s_python_function_clf)
+					|| !PyFunction_Check(s_python_function_tight_layout)
 					|| !PyFunction_Check(s_python_function_errorbar)
 				) { throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
@@ -625,6 +630,17 @@ namespace matplotlibcpp {
 			detail::_interpreter::get().s_python_empty_tuple);
 
 		if (!res) throw std::runtime_error("Call to clf() failed.");
+
+		Py_DECREF(res);
+	}
+
+	// Actually, is there any reason not to call this automatically for every plot?
+	inline void tight_layout() {
+		PyObject *res = PyObject_CallObject(
+			detail::_interpreter::get().s_python_function_tight_layout,
+			detail::_interpreter::get().s_python_empty_tuple);
+
+		if (!res) throw std::runtime_error("Call to tight_layout() failed.");
 
 		Py_DECREF(res);
 	}
