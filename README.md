@@ -17,7 +17,7 @@ Complete minimal example:
         plt::show();
     }
     
-    // g++ minimal.cpp -std=c++11 -lpython2.7
+    // g++ minimal.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
 
 Result: ![Minimal example](./examples/minimal.png)
 
@@ -54,7 +54,7 @@ A more comprehensive example:
         plt::save("./basic.png");
     }
 
-    // g++ basic.cpp -lpython2.7
+    // g++ basic.cpp -I/usr/include/python2.7 -lpython2.7
 
 Result: ![Basic example](./examples/basic.png)
 
@@ -87,37 +87,39 @@ matplotlib-cpp doesn't require C++11, but will enable some additional syntactic 
         plt::show();
     } 
     
-    // g++ modern.cpp -std=c++11 -lpython
+    // g++ modern.cpp -std=c++11 -I/usr/include/python2.7 -lpython
 
 Result: ![Modern example](./examples/modern.png)
 
 Installation
 ------------
+
 matplotlib-cpp works by wrapping the popular python plotting library matplotlib. (matplotlib.org)
 This means you have to have a working python installation, including development headers.
 On Ubuntu:
 
-    sudo aptitude install python-matplotlib python2.7-dev
+    sudo aptitude install python-matplotlib python-numpy python2.7-dev
+
+If, for some reason, you're unable to get a working installation of numpy on your system,
+you can add the define `WITHOUT_NUMPY` to erase this dependency.
 
 The C++-part of the library consists of the single header file `matplotlibcpp.h` which can be placed
 anywhere.
+
 Since a python interpreter is opened internally, it is necessary to link against `libpython2.7` in order to use
 matplotlib-cpp.
 
 # Python 3
 
-The code is written in a way that should support both python2 and python3.
-By default, matplotlib-cpp will try to "just work" and include the header `python2.7/Python.h`.
+This library supports both python2 and python3 (although the python3 support is probably far less tested,
+so it is recommended to prefer python2.7). To switch the used python version, simply change
+the compiler flags accordingly.
 
-To modify this behaviour the define `MATPLOTLIBCPP_PYTHON_HEADER`,
-can be set to an absolute or relative path: 
+    g++ example.cpp -I/usr/include/python3.6 -lpython3.6
 
-     #define MATPLOTLIBCPP_PYTHON_HEADER /usr/include/python3.6/Python.h
-     #include "matplotlibcpp.h"
+The same technique can be used for linking against a custom build of python
 
-or
-
-    g++ -DMATPLOTLIBCPP_PYTHON_HEADER=Python.h -I/usr/include/python3.6 <...>
+    g++ example.cpp -I/usr/local/include/fancy-python4 -L/usr/local/lib -lfancy-python4
 
 
 Why?
@@ -151,8 +153,6 @@ Todo/Issues/Wishlist
 
 * Right now, only a small subset of matplotlibs functionality is exposed. Stuff like xlabel()/ylabel() etc. should
   be easy to add.
-
-* A lot of copying could be avoided if we generate numpy arrays directly instead of python lists
 
 * If you use Anaconda on Windows, you might need to set PYTHONHOME to Anaconda home directory and QT_QPA_PLATFORM_PLUGIN_PATH to %PYTHONHOME%Library/plugins/platforms. The latter is for especially when you get the error which says 'This application failed to start because it could not find or load the Qt platform plugin "windows"
 in "".'

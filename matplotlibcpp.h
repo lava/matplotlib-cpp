@@ -6,26 +6,23 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <stdint.h> // <cstdint> requires c++11 support
 
 #if __cplusplus > 199711L || _MSC_VER > 1800
 #include <functional>
 #endif
 
-// i.e. g++ -DMATPLOTLIBCPP_PYTHON_HEADER=/usr/include/python3.6/Python.h [...]
-#ifdef MATPLOTLIBCPP_PYTHON_HEADER
-#define STRINGIFY_(x) #x
-#define STRINGIFY(x) STRINGIFY_(x)
-#include STRINGIFY(MATPLOTLIBCPP_PYTHON_HEADER)
-#else // This should stay the default for backwards compatibility
-#include <python2.7/Python.h>
-#endif
+#include <Python.h>
+
+#ifndef WITHOUT_NUMPY
+  #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+  #include <numpy/arrayobject.h>
+#endif // WITHOUT_NUMPY
 
 #if PY_MAJOR_VERSION >= 3
 #define PyString_FromString PyUnicode_FromString
 #endif
 
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
 
 namespace matplotlibcpp {
 
@@ -68,14 +65,16 @@ namespace matplotlibcpp {
                 
                 // optional but recommended
 #if PY_MAJOR_VERSION >= 3
-                wchar_t name[] = L"plotting";
+				wchar_t name[] = L"plotting";
 #else
-                char name[] = "plotting";
+				char name[] = "plotting";
 #endif
 				Py_SetProgramName(name);
 				Py_Initialize();
 
+#ifndef WITHOUT_NUMPY
 				import_array(); // initialize numpy C-API
+#endif
 
 				PyObject* pyplotname = PyString_FromString("matplotlib.pyplot");
 				PyObject* pylabname  = PyString_FromString("pylab");
@@ -182,19 +181,21 @@ namespace matplotlibcpp {
 
 		return res;
 	}
+
+#ifndef WITHOUT_NUMPY
 	// Type selector for numpy array conversion
 	template <typename T> struct select_npy_type { const static NPY_TYPES type = NPY_NOTYPE; }; //Default
 	template <> struct select_npy_type<double> { const static NPY_TYPES type = NPY_DOUBLE; };
 	template <> struct select_npy_type<float> { const static NPY_TYPES type = NPY_FLOAT; };
 	template <> struct select_npy_type<bool> { const static NPY_TYPES type = NPY_BOOL; };
-	template <> struct select_npy_type<std::int8_t> { const static NPY_TYPES type = NPY_INT8; };
-	template <> struct select_npy_type<std::int16_t> { const static NPY_TYPES type = NPY_SHORT; };
-	template <> struct select_npy_type<std::int32_t> { const static NPY_TYPES type = NPY_INT; };
-	template <> struct select_npy_type<std::int64_t> { const static NPY_TYPES type = NPY_INT64; };
-	template <> struct select_npy_type<std::uint8_t> { const static NPY_TYPES type = NPY_UINT8; };
-	template <> struct select_npy_type<std::uint16_t> { const static NPY_TYPES type = NPY_USHORT; };
-	template <> struct select_npy_type<std::uint32_t> { const static NPY_TYPES type = NPY_ULONG; };
-	template <> struct select_npy_type<std::uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
+	template <> struct select_npy_type<int8_t> { const static NPY_TYPES type = NPY_INT8; };
+	template <> struct select_npy_type<int16_t> { const static NPY_TYPES type = NPY_SHORT; };
+	template <> struct select_npy_type<int32_t> { const static NPY_TYPES type = NPY_INT; };
+	template <> struct select_npy_type<int64_t> { const static NPY_TYPES type = NPY_INT64; };
+	template <> struct select_npy_type<uint8_t> { const static NPY_TYPES type = NPY_UINT8; };
+	template <> struct select_npy_type<uint16_t> { const static NPY_TYPES type = NPY_USHORT; };
+	template <> struct select_npy_type<uint32_t> { const static NPY_TYPES type = NPY_ULONG; };
+	template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
 
 	template<typename Numeric>
 	PyObject* get_array(const std::vector<Numeric>& v)
@@ -203,17 +204,31 @@ namespace matplotlibcpp {
 		NPY_TYPES type = select_npy_type<Numeric>::type; 
 		if (type == NPY_NOTYPE)
 		{
-				std::vector<double> vd(v.size());
-				npy_intp vsize = v.size();
-				std::copy(v.begin(),v.end(),vd.begin());
-				PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, (void*)(vd.data()));
-				return varray;
+			std::vector<double> vd(v.size());
+			npy_intp vsize = v.size();
+			std::copy(v.begin(),v.end(),vd.begin());
+			PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, (void*)(vd.data()));
+			return varray;
 		}
 
 		npy_intp vsize = v.size();
 		PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(v.data()));
 		return varray;
 	}
+
+#else // fallback if we don't have numpy: copy every element of the given vector
+
+	template<typename Numeric>
+	PyObject* get_array(const std::vector<Numeric>& v)
+	{
+		PyObject* list = PyList_New(v.size());
+		for(size_t i = 0; i < v.size(); ++i) {
+			PyList_SetItem(list, i, PyFloat_FromDouble(v.at(i)));
+		}
+		return list;
+	}
+
+#endif // WITHOUT_NUMPY
 
 	template<typename Numeric>
 	bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
