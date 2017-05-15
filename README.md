@@ -109,6 +109,15 @@ anywhere.
 Since a python interpreter is opened internally, it is necessary to link against `libpython2.7` in order to use
 matplotlib-cpp.
 
+# CMake
+
+If you prefer to use CMake as build system, you will want to add something like this to your
+CMakeLists.txt:
+
+    find_package(PythonLibs 2.7)
+    target_include_directories(myproject ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(myproject ${PYTHON_LIBRARIES)
+
 # Python 3
 
 This library supports both python2 and python3 (although the python3 support is probably far less tested,
