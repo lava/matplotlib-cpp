@@ -27,6 +27,8 @@
 namespace matplotlibcpp {
 
 	namespace detail {
+		static std::string s_backend;
+
 		struct _interpreter {
 			PyObject *s_python_function_show;
 			PyObject *s_python_function_save;
@@ -76,13 +78,27 @@ namespace matplotlibcpp {
 				import_array(); // initialize numpy C-API
 #endif
 
+				PyObject* matplotlibname = PyString_FromString("matplotlib");
 				PyObject* pyplotname = PyString_FromString("matplotlib.pyplot");
 				PyObject* pylabname  = PyString_FromString("pylab");
-				if(!pyplotname || !pylabname) { throw std::runtime_error("couldnt create string"); }
+				if (!pyplotname || !pylabname || !matplotlibname) {
+					throw std::runtime_error("couldnt create string");
+				}
+
+				PyObject* matplotlib = PyImport_Import(matplotlibname);
+				Py_DECREF(matplotlibname);
+				if(!matplotlib) { throw std::runtime_error("Error loading module matplotlib!"); }
+
+				// matplotlib.use() must be called *before* pylab, matplotlib.pyplot,
+				// or matplotlib.backends is imported for the first time
+				if (!s_backend.empty()) {
+					PyObject_CallMethod(matplotlib, "use", "s", s_backend.c_str());
+				}
 
 				PyObject* pymod = PyImport_Import(pyplotname);
 				Py_DECREF(pyplotname);
 				if(!pymod) { throw std::runtime_error("Error loading module matplotlib.pyplot!"); }
+
 
 				PyObject* pylabmod = PyImport_Import(pylabname);
 				Py_DECREF(pylabname);
@@ -156,6 +172,12 @@ namespace matplotlibcpp {
 				Py_Finalize();
 			}
 		};
+	}
+
+	// must be called before the first regular call to matplotlib to have any effect
+	void backend(const std::string& name)
+	{
+		detail::s_backend = name;
 	}
   
 	bool annotate(std::string annotation, double x, double y)
