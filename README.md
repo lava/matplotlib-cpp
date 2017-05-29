@@ -98,7 +98,7 @@ matplotlib-cpp works by wrapping the popular python plotting library matplotlib.
 This means you have to have a working python installation, including development headers.
 On Ubuntu:
 
-    sudo aptitude install python-matplotlib python-numpy python2.7-dev
+    sudo apt-get install python-matplotlib python-numpy python2.7-dev
 
 If, for some reason, you're unable to get a working installation of numpy on your system,
 you can add the define `WITHOUT_NUMPY` to erase this dependency.
@@ -115,8 +115,8 @@ If you prefer to use CMake as build system, you will want to add something like 
 CMakeLists.txt:
 
     find_package(PythonLibs 2.7)
-    target_include_directories(myproject ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(myproject ${PYTHON_LIBRARIES)
+    target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(myproject ${PYTHON_LIBRARIES})
 
 # Python 3
 
