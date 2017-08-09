@@ -92,7 +92,7 @@ namespace matplotlibcpp {
 				// matplotlib.use() must be called *before* pylab, matplotlib.pyplot,
 				// or matplotlib.backends is imported for the first time
 				if (!s_backend.empty()) {
-					PyObject_CallMethod(matplotlib, "use", "s", s_backend.c_str());
+					PyObject_CallMethod(matplotlib, const_cast<char*>("use"), const_cast<char*>("s"), s_backend.c_str());
 				}
 
 				PyObject* pymod = PyImport_Import(pyplotname);
