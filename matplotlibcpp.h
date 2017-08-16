@@ -31,6 +31,8 @@ namespace matplotlibcpp {
 
 		struct _interpreter {
 			PyObject *s_python_function_show;
+			PyObject *s_python_function_draw;
+			PyObject *s_python_function_pause;
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
@@ -105,6 +107,8 @@ namespace matplotlibcpp {
 				if(!pylabmod) { throw std::runtime_error("Error loading module pylab!"); }
 
 				s_python_function_show = PyObject_GetAttrString(pymod, "show");
+				s_python_function_draw = PyObject_GetAttrString(pymod, "draw");
+				s_python_function_pause = PyObject_GetAttrString(pymod, "pause");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
 				s_python_function_fill_between = PyObject_GetAttrString(pymod, "fill_between");
@@ -125,6 +129,8 @@ namespace matplotlibcpp {
 				s_python_function_tight_layout = PyObject_GetAttrString(pymod, "tight_layout");
 
 				if(        !s_python_function_show
+					|| !s_python_function_draw
+					|| !s_python_function_pause
 					|| !s_python_function_figure
 					|| !s_python_function_plot
 					|| !s_python_function_fill_between
@@ -146,6 +152,8 @@ namespace matplotlibcpp {
 				) { throw std::runtime_error("Couldn't find required function!"); }
 
 				if (       !PyFunction_Check(s_python_function_show)
+					|| !PyFunction_Check(s_python_function_draw)
+					|| !PyFunction_Check(s_python_function_pause)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
 					|| !PyFunction_Check(s_python_function_fill_between)
@@ -648,6 +656,30 @@ namespace matplotlibcpp {
 
 		if (!res) throw std::runtime_error("Call to show() failed.");
 
+		Py_DECREF(res);
+	}
+
+	inline void draw()
+	{
+		PyObject* res = PyObject_CallObject(
+			detail::_interpreter::get().s_python_function_draw,
+			detail::_interpreter::get().s_python_empty_tuple);
+
+		if (!res) throw std::runtime_error("Call to draw() failed.");
+
+		Py_DECREF(res);
+	}
+
+	template<typename Numeric>
+	void pause(Numeric interval)
+	{
+		PyObject* args = PyTuple_New(1);
+		PyTuple_SetItem(args, 0, PyFloat_FromDouble(interval));
+
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_pause, args);
+		if(!res) throw std::runtime_error("Call to pause() failed.");
+
+		Py_DECREF(args);
 		Py_DECREF(res);
 	}
 
