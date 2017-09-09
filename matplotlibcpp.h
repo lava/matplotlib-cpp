@@ -648,16 +648,27 @@ namespace matplotlibcpp {
 		// if PyDeCRFF, the function doesn't work on Mac OS
 	}
 
-	inline void show()
-	{
-		PyObject* res = PyObject_CallObject(
-			detail::_interpreter::get().s_python_function_show,
-			detail::_interpreter::get().s_python_empty_tuple);
+    inline void show(const bool bBlock = true)
+    {
+        PyObject* res;
+        if(bBlock)
+        {
+            res = PyObject_CallObject(
+                    detail::_interpreter::get().s_python_function_show,
+                    detail::_interpreter::get().s_python_empty_tuple);
+        }
+        else
+        {
+            PyObject *kwargs = PyDict_New();
+            PyDict_SetItemString(kwargs, "block", Py_False);
+            res = PyObject_Call( detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple, kwargs);
+        }
 
-		if (!res) throw std::runtime_error("Call to show() failed.");
 
-		Py_DECREF(res);
-	}
+        if (!res) throw std::runtime_error("Call to show() failed.");
+
+        Py_DECREF(res);
+    }
 
 	inline void draw()
 	{
@@ -743,7 +754,7 @@ namespace matplotlibcpp {
 			template<typename U, U> struct Check;
 
 			template<typename U>
-			static std::true_type test( ... ); // use a variadic function to make sure (1) it accepts everything and (2) its always the worst match
+			static std::true_type test( ... ); // use a variadic function to makemake sure (1) it accepts everything and (2) its always the worst match
 
 			template<typename U>
 			static std::false_type test( Check<void(Fallback::*)(), &U::operator()>* );
