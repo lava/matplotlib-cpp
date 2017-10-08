@@ -9,85 +9,87 @@ It is built to resemble the plotting API used by Matlab and matplotlib.
 Usage
 -----
 Complete minimal example:
+```cpp
+#include "matplotlibcpp.h"
+namespace plt = matplotlibcpp;
+int main() {
+    plt::plot({1,2,3,4});
+    plt::show();
+}
+```
+    g++ minimal.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
 
-    #include "matplotlibcpp.h"
-    namespace plt = matplotlibcpp;
-    int main() {
-        plt::plot({1,2,3,4});
-        plt::show();
-    }
-    
-    // g++ minimal.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+**Result:**
 
-Result: ![Minimal example](./examples/minimal.png)
+![Minimal example](./examples/minimal.png)
 
 A more comprehensive example:
+```cpp
+#include "matplotlibcpp.h"
+#include <cmath>
 
-    #include "matplotlibcpp.h"
-    #include <cmath>
+namespace plt = matplotlibcpp;
 
-    namespace plt = matplotlibcpp;
-
-    int main() 
-    {
-        // Prepare data.
-        int n = 5000;
-        std::vector<double> x(n), y(n), z(n), w(n,2);
-        for(int i=0; i<n; ++i) {
-            x.at(i) = i*i;
-            y.at(i) = sin(2*M_PI*i/360.0);
-            z.at(i) = log(i);
-        }
-
-        // Plot line from given x and y data. Color is selected automatically.
-        plt::plot(x, y);
-        // Plot a red dashed line from given x and y data.
-        plt::plot(x, w,"r--");
-        // Plot a line whose name will show up as "log(x)" in the legend.
-        plt::named_plot("log(x)", x, z);
-
-        // Set x-axis to interval [0,1000000]
-        plt::xlim(0, 1000*1000);
-        // Enable legend.
-        plt::legend();
-        // Save the image (file format is determined by the extension)
-        plt::save("./basic.png");
+int main() 
+{
+    // Prepare data.
+    int n = 5000;
+    std::vector<double> x(n), y(n), z(n), w(n,2);
+    for(int i=0; i<n; ++i) {
+        x.at(i) = i*i;
+        y.at(i) = sin(2*M_PI*i/360.0);
+        z.at(i) = log(i);
     }
 
-    // g++ basic.cpp -I/usr/include/python2.7 -lpython2.7
+    // Plot line from given x and y data. Color is selected automatically.
+    plt::plot(x, y);
+    // Plot a red dashed line from given x and y data.
+    plt::plot(x, w,"r--");
+    // Plot a line whose name will show up as "log(x)" in the legend.
+    plt::named_plot("log(x)", x, z);
+
+    // Set x-axis to interval [0,1000000]
+    plt::xlim(0, 1000*1000);
+    // Enable legend.
+    plt::legend();
+    // Save the image (file format is determined by the extension)
+    plt::save("./basic.png");
+}
+```
+    g++ basic.cpp -I/usr/include/python2.7 -lpython2.7
 
 Result: ![Basic example](./examples/basic.png)
 
 matplotlib-cpp doesn't require C++11, but will enable some additional syntactic sugar when available:
+```cpp
+#include <cmath>
+#include "matplotlibcpp.h"
 
-    #include <cmath>
-    #include "matplotlibcpp.h"
+using namespace std;
+namespace plt = matplotlibcpp;
 
-    using namespace std;
-    namespace plt = matplotlibcpp;
+int main() 
+{    
+    // Prepare data.
+    int n = 5000; // number of data points
+    vector<double> x(n),y(n); 
+    for(int i=0; i<n; ++i) {
+        double t = 2*M_PI*i/n;
+        x.at(i) = 16*sin(t)*sin(t)*sin(t);
+        y.at(i) = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t);
+    }
 
-    int main() 
-    {    
-        // Prepare data.
-        int n = 5000; // number of data points
-        vector<double> x(n),y(n); 
-        for(int i=0; i<n; ++i) {
-            double t = 2*M_PI*i/n;
-            x.at(i) = 16*sin(t)*sin(t)*sin(t);
-            y.at(i) = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t);
-        }
-
-        // plot() takes an arbitrary number of (x,y,format)-triples. 
-        // x must be iterable (that is, anything providing begin(x) and end(x)),
-        // y must either be callable (providing operator() const) or iterable. 
-        plt::plot(x, y, "r-", x, [](double d) { return 12.5+abs(sin(d)); }, "k-");
+    // plot() takes an arbitrary number of (x,y,format)-triples. 
+    // x must be iterable (that is, anything providing begin(x) and end(x)),
+    // y must either be callable (providing operator() const) or iterable. 
+    plt::plot(x, y, "r-", x, [](double d) { return 12.5+abs(sin(d)); }, "k-");
 
 
-        // show plots
-        plt::show();
-    } 
-    
-    // g++ modern.cpp -std=c++11 -I/usr/include/python2.7 -lpython
+    // show plots
+    plt::show();
+} 
+```
+    g++ modern.cpp -std=c++11 -I/usr/include/python2.7 -lpython
 
 Result: ![Modern example](./examples/modern.png)
 
@@ -113,11 +115,11 @@ matplotlib-cpp.
 
 If you prefer to use CMake as build system, you will want to add something like this to your
 CMakeLists.txt:
-
-    find_package(PythonLibs 2.7)
-    target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(myproject ${PYTHON_LIBRARIES})
-
+```cmake
+find_package(PythonLibs 2.7)
+target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
+target_link_libraries(myproject ${PYTHON_LIBRARIES})
+```
 # Python 3
 
 This library supports both python2 and python3 (although the python3 support is probably far less tested,
