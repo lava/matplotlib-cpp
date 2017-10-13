@@ -71,8 +71,17 @@ namespace matplotlibcpp {
 			}
 
 			private:
+#if PY_MAJOR_VERSION >= 3
+			int import_numpy() {
+				import_array(); // initialize C-API
+			}
+#else
+			void import_numpy() {
+				import_array(); // initialize C-API
+			}
+#endif
 			_interpreter() {
-                
+
                 // optional but recommended
 #if PY_MAJOR_VERSION >= 3
 				wchar_t name[] = L"plotting";
@@ -83,7 +92,7 @@ namespace matplotlibcpp {
 				Py_Initialize();
 
 #ifndef WITHOUT_NUMPY
-				import_array(); // initialize numpy C-API
+				import_numpy(); // initialize numpy C-API
 #endif
 
 				PyObject* matplotlibname = PyString_FromString("matplotlib");
@@ -211,7 +220,7 @@ namespace matplotlibcpp {
 	{
 		detail::s_backend = name;
 	}
-  
+
 	bool annotate(std::string annotation, double x, double y)
 	{
 		PyObject * xy = PyTuple_New(2);
@@ -227,7 +236,7 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(args, 0, str);
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_annotate, args, kwargs);
-		
+
 		Py_DECREF(args);
 		Py_DECREF(kwargs);
 
@@ -255,7 +264,7 @@ namespace matplotlibcpp {
 	PyObject* get_array(const std::vector<Numeric>& v)
 	{
 		detail::_interpreter::get();	//interpreter needs to be initialized for the numpy commands to work
-		NPY_TYPES type = select_npy_type<Numeric>::type; 
+		NPY_TYPES type = select_npy_type<Numeric>::type;
 		if (type == NPY_NOTYPE)
 		{
 			std::vector<double> vd(v.size());
@@ -390,7 +399,7 @@ namespace matplotlibcpp {
 		PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
 		PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));
 		PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
-		
+
 
 		PyObject* plot_args = PyTuple_New(1);
 
@@ -430,7 +439,7 @@ namespace matplotlibcpp {
 
 		return res;
 	}
-	
+
 	template<typename NumericX, typename NumericY>
 	bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
 	{
@@ -769,8 +778,8 @@ namespace matplotlibcpp {
 		Py_DECREF(args);
 		Py_DECREF(res);
 	}
-  
-  
+
+
 	inline double* xlim()
 	{
 		PyObject* args = PyTuple_New(0);
@@ -781,14 +790,14 @@ namespace matplotlibcpp {
 		double* arr = new double[2];
 		arr[0] = PyFloat_AsDouble(left);
 		arr[1] = PyFloat_AsDouble(right);
-    
+
 		if(!res) throw std::runtime_error("Call to xlim() failed.");
 
 		Py_DECREF(res);
 		return arr;
 	}
-  
-  
+
+
 	inline double* ylim()
 	{
 		PyObject* args = PyTuple_New(0);
@@ -799,8 +808,8 @@ namespace matplotlibcpp {
 		double* arr = new double[2];
 		arr[0] = PyFloat_AsDouble(left);
 		arr[1] = PyFloat_AsDouble(right);
-    
-		if(!res) throw std::runtime_error("Call to ylim() failed."); 
+
+		if(!res) throw std::runtime_error("Call to ylim() failed.");
 
 		Py_DECREF(res);
 		return arr;
