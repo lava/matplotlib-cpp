@@ -36,6 +36,9 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_save;
 			PyObject *s_python_function_figure;
 			PyObject *s_python_function_plot;
+			PyObject *s_python_function_semilogx;
+			PyObject *s_python_function_semilogy;
+			PyObject *s_python_function_loglog;
 			PyObject *s_python_function_fill_between;
 			PyObject *s_python_function_hist;
 			PyObject *s_python_function_subplot;
@@ -111,6 +114,9 @@ namespace matplotlibcpp {
 				s_python_function_pause = PyObject_GetAttrString(pymod, "pause");
 				s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
 				s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+				s_python_function_semilogx = PyObject_GetAttrString(pymod, "semilogx");
+				s_python_function_semilogy = PyObject_GetAttrString(pymod, "semilogy");
+				s_python_function_loglog = PyObject_GetAttrString(pymod, "loglog");
 				s_python_function_fill_between = PyObject_GetAttrString(pymod, "fill_between");
 				s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
 				s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
@@ -133,6 +139,9 @@ namespace matplotlibcpp {
 					|| !s_python_function_pause
 					|| !s_python_function_figure
 					|| !s_python_function_plot
+					|| !s_python_function_semilogx
+					|| !s_python_function_semilogy
+					|| !s_python_function_loglog
 					|| !s_python_function_fill_between
 					|| !s_python_function_subplot
 				   	|| !s_python_function_legend
@@ -156,6 +165,9 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_pause)
 					|| !PyFunction_Check(s_python_function_figure)
 					|| !PyFunction_Check(s_python_function_plot)
+					|| !PyFunction_Check(s_python_function_semilogx)
+					|| !PyFunction_Check(s_python_function_semilogy)
+					|| !PyFunction_Check(s_python_function_loglog)
 					|| !PyFunction_Check(s_python_function_fill_between)
 					|| !PyFunction_Check(s_python_function_subplot)
 					|| !PyFunction_Check(s_python_function_legend)
@@ -398,6 +410,75 @@ namespace matplotlibcpp {
 	}
 
 	template<typename NumericX, typename NumericY>
+	bool semilogx(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
+	{
+		assert(x.size() == y.size());
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(s.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_semilogx, plot_args);
+
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename NumericX, typename NumericY>
+	bool semilogy(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
+	{
+		assert(x.size() == y.size());
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(s.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_semilogy, plot_args);
+
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename NumericX, typename NumericY>
+	bool loglog(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
+	{
+		assert(x.size() == y.size());
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(s.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_loglog, plot_args);
+
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename NumericX, typename NumericY>
 	bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, const std::vector<NumericX> &yerr, const std::string &s = "")
 	{
 		assert(x.size() == y.size());
@@ -470,6 +551,81 @@ namespace matplotlibcpp {
 		PyTuple_SetItem(plot_args, 2, pystring);
 
 		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
+
+		Py_DECREF(kwargs);
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename Numeric>
+	bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+	{
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(format.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_semilogx, plot_args, kwargs);
+
+		Py_DECREF(kwargs);
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename Numeric>
+	bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+	{
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(format.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_semilogy, plot_args, kwargs);
+
+		Py_DECREF(kwargs);
+		Py_DECREF(plot_args);
+		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename Numeric>
+	bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+	{
+		PyObject* kwargs = PyDict_New();
+		PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(format.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_loglog, plot_args, kwargs);
 
 		Py_DECREF(kwargs);
 		Py_DECREF(plot_args);
