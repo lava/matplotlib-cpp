@@ -72,15 +72,19 @@ namespace matplotlibcpp {
 			}
 
 			private:
+#ifndef WITHOUT_NUMPY
 #if PY_MAJOR_VERSION >= 3
-			int import_numpy() {
+			void *import_numpy() {
 				import_array(); // initialize C-API
+				return NULL;
 			}
 #else
 			void import_numpy() {
 				import_array(); // initialize C-API
 			}
 #endif
+#endif
+
 			_interpreter() {
 
                 // optional but recommended
