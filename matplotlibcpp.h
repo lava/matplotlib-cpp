@@ -68,6 +68,14 @@ namespace matplotlibcpp {
 			}
 
 			private:
+#if PY_MAJOR_VERSION >= 3
+				int init_numpy(){
+#else
+				void init_numpy(){
+#endif
+					import_array()
+				}
+
 			_interpreter() {
                 
                 // optional but recommended
@@ -80,7 +88,7 @@ namespace matplotlibcpp {
 				Py_Initialize();
 
 #ifndef WITHOUT_NUMPY
-				import_array(); // initialize numpy C-API
+				init_numpy(); // initialize numpy C-API
 #endif
 
 				PyObject* matplotlibname = PyString_FromString("matplotlib");
