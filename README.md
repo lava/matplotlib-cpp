@@ -93,6 +93,36 @@ int main()
 
 Result: ![Modern example](./examples/modern.png)
 
+Or some *funny-looking xkcd-styled* example:
+```cpp
+#include "matplotlibcpp.h"
+#include <vector>
+#include <cmath>
+
+namespace plt = matplotlibcpp;
+
+int main() {
+    std::vector<double> t(1000);
+    std::vector<double> x(t.size());
+
+    for(size_t i = 0; i < t.size(); i++) {
+        t[i] = i / 100.0;
+        x[i] = sin(2.0 * M_PI * 1.0 * t[i]);
+    }
+
+    plt::xkcd();
+    plt::plot(t, x);
+    plt::title("AN ORDINARY SIN WAVE");
+    plt::save("xkcd.png");
+}
+
+```
+    g++ minimal.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+
+**Result:**
+
+![Minimal example](./examples/xkcd.png)
+
 Installation
 ------------
 
