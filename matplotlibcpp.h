@@ -55,6 +55,8 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_annotate;
 			PyObject *s_python_function_tight_layout;
 			PyObject *s_python_empty_tuple;
+			PyObject *s_python_function_stem;
+			PyObject *s_python_function_xkcd;
 
 			/* For now, _interpreter is implemented as a singleton since its currently not possible to have
 			   multiple independent embedded python interpreters without patching the python source code
@@ -133,6 +135,8 @@ namespace matplotlibcpp {
 				s_python_function_clf = PyObject_GetAttrString(pymod, "clf");
 				s_python_function_errorbar = PyObject_GetAttrString(pymod, "errorbar");
 				s_python_function_tight_layout = PyObject_GetAttrString(pymod, "tight_layout");
+				s_python_function_stem = PyObject_GetAttrString(pymod, "stem");
+				s_python_function_xkcd = PyObject_GetAttrString(pymod, "xkcd");
 
 				if(        !s_python_function_show
 					|| !s_python_function_draw
@@ -158,6 +162,8 @@ namespace matplotlibcpp {
 					|| !s_python_function_errorbar
 					|| !s_python_function_errorbar
 					|| !s_python_function_tight_layout
+					|| !s_python_function_stem
+					|| !s_python_function_xkcd
 				) { throw std::runtime_error("Couldn't find required function!"); }
 
 				if (       !PyFunction_Check(s_python_function_show)
@@ -183,6 +189,8 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_clf)
 					|| !PyFunction_Check(s_python_function_tight_layout)
 					|| !PyFunction_Check(s_python_function_errorbar)
+					|| !PyFunction_Check(s_python_function_stem)
+					|| !PyFunction_Check(s_python_function_xkcd)
 				) { throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
 				s_python_empty_tuple = PyTuple_New(0);
@@ -302,6 +310,39 @@ namespace matplotlibcpp {
 		return res;
 	}
 
+	template<typename Numeric>
+	bool stem(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
+	{
+		assert(x.size() == y.size());
+
+		// using numpy arrays
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		// construct positional args
+		PyObject* args = PyTuple_New(2);
+		PyTuple_SetItem(args, 0, xarray);
+		PyTuple_SetItem(args, 1, yarray);
+
+		// construct keyword args
+		PyObject* kwargs = PyDict_New();
+		for (std::map<std::string, std::string>::const_iterator it =
+				keywords.begin(); it != keywords.end(); ++it) {
+			PyDict_SetItemString(kwargs, it->first.c_str(),
+					PyString_FromString(it->second.c_str()));
+		}
+
+		PyObject* res = PyObject_Call(
+				detail::_interpreter::get().s_python_function_stem, args, kwargs);
+
+		Py_DECREF(args);
+		Py_DECREF(kwargs);
+		if (res)
+			Py_DECREF(res);
+
+		return res;
+	}
+
 	template< typename Numeric >
 	bool fill_between(const std::vector<Numeric>& x, const std::vector<Numeric>& y1, const std::vector<Numeric>& y2, const std::map<std::string, std::string>& keywords)
 	{
@@ -405,6 +446,31 @@ namespace matplotlibcpp {
 
 		Py_DECREF(plot_args);
 		if(res) Py_DECREF(res);
+
+		return res;
+	}
+
+	template<typename NumericX, typename NumericY>
+	bool stem(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
+	{
+		assert(x.size() == y.size());
+
+		PyObject* xarray = get_array(x);
+		PyObject* yarray = get_array(y);
+
+		PyObject* pystring = PyString_FromString(s.c_str());
+
+		PyObject* plot_args = PyTuple_New(3);
+		PyTuple_SetItem(plot_args, 0, xarray);
+		PyTuple_SetItem(plot_args, 1, yarray);
+		PyTuple_SetItem(plot_args, 2, pystring);
+
+		PyObject* res = PyObject_CallObject(
+				detail::_interpreter::get().s_python_function_stem, plot_args);
+
+		Py_DECREF(plot_args);
+		if (res)
+			Py_DECREF(res);
 
 		return res;
 	}
@@ -642,6 +708,14 @@ namespace matplotlibcpp {
 		return plot(x,y,format);
 	}
 
+	template<typename Numeric>
+	bool stem(const std::vector<Numeric>& y, const std::string& format = "")
+	{
+		std::vector<Numeric> x(y.size());
+		for (size_t i = 0; i < x.size(); ++i) x.at(i) = i;
+		return stem(x, y, format);
+	}
+
 	inline void figure()
 	{
 		PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
@@ -824,6 +898,19 @@ namespace matplotlibcpp {
         if (!res) throw std::runtime_error("Call to show() failed.");
 
         Py_DECREF(res);
+    }
+
+    inline void xkcd() {
+    	PyObject* res;
+    	PyObject *kwargs = PyDict_New();
+
+    	res = PyObject_Call(detail::_interpreter::get().s_python_function_xkcd,
+    			detail::_interpreter::get().s_python_empty_tuple, kwargs);
+
+    	if (!res)
+    		throw std::runtime_error("Call to show() failed.");
+
+    	Py_DECREF(res);
     }
 
 	inline void draw()
@@ -1013,6 +1100,21 @@ namespace matplotlibcpp {
 
 	bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
 		return plot<double>(x,y,keywords);
+	}
+
+	bool stem(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "")
+	{
+		return stem<double, double>(x, y, format);
+	}
+
+	bool stem(const std::vector<double>& y, const std::string& format = "")
+	{
+		return stem<double>(y, format);
+	}
+
+	bool stem(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords)
+	{
+		return stem<double>(x, y, keywords);
 	}
 
 	bool named_plot(const std::string& name, const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
