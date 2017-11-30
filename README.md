@@ -117,7 +117,7 @@ int main() {
 }
 
 ```
-    g++ minimal.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+    g++ xkcd.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
 
 **Result:**
 
