@@ -44,6 +44,7 @@ namespace matplotlibcpp {
 			PyObject *s_python_function_subplot;
 			PyObject *s_python_function_legend;
 			PyObject *s_python_function_xlim;
+			PyObject *s_python_function_ion;
 			PyObject *s_python_function_ylim;
 			PyObject *s_python_function_title;
 			PyObject *s_python_function_axis;
@@ -128,6 +129,7 @@ namespace matplotlibcpp {
 				s_python_function_ylabel = PyObject_GetAttrString(pymod, "ylabel");
 				s_python_function_grid = PyObject_GetAttrString(pymod, "grid");
 				s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
+				s_python_function_ion = PyObject_GetAttrString(pymod, "ion");
 				s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
 				s_python_function_annotate = PyObject_GetAttrString(pymod,"annotate");
 				s_python_function_clf = PyObject_GetAttrString(pymod, "clf");
@@ -152,6 +154,7 @@ namespace matplotlibcpp {
 					|| !s_python_function_ylabel
 					|| !s_python_function_grid
 					|| !s_python_function_xlim
+					|| !s_python_function_ion
 					|| !s_python_function_save
 					|| !s_python_function_clf
 					|| !s_python_function_annotate
@@ -179,6 +182,7 @@ namespace matplotlibcpp {
 					|| !PyFunction_Check(s_python_function_ylabel)
 					|| !PyFunction_Check(s_python_function_grid)
 					|| !PyFunction_Check(s_python_function_xlim)
+					|| !PyFunction_Check(s_python_function_ion)
 					|| !PyFunction_Check(s_python_function_save)
 					|| !PyFunction_Check(s_python_function_clf)
 					|| !PyFunction_Check(s_python_function_tight_layout)
@@ -870,6 +874,16 @@ namespace matplotlibcpp {
 			detail::_interpreter::get().s_python_empty_tuple);
 
 		if (!res) throw std::runtime_error("Call to clf() failed.");
+
+		Py_DECREF(res);
+	}
+
+		inline void ion() {
+		PyObject *res = PyObject_CallObject(
+			detail::_interpreter::get().s_python_function_ion,
+			detail::_interpreter::get().s_python_empty_tuple);
+
+		if (!res) throw std::runtime_error("Call to ion() failed.");
 
 		Py_DECREF(res);
 	}
