@@ -8,12 +8,29 @@ contributors are not required to and may be unable to check whether their
 changes break any of them.
 
 ## Windows support
+Tested on the following environment
+* Windows 10 - 64bit
+* Anaconda 4.3 (64 bit)
+* Python 3.6.0
+* CMake 3.9.4
+* Visual Studio 2017, 2015, 2013
+
+### Visual Studio 2017
+Set Environment Variable VS150COMNTOOLS to [yourInstallPath]\Common7\Tools
+e.g. C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\Common7\Tools\
 
 ### Configuring and Building Samples
+1. Edit WinBuild.cmd for your environment(Line:4-6)
+    if NOT DEFINED MSVC_VERSION set MSVC_VERSION=[Your Visual Studio Version(12, 14, 15)]
+    if NOT DEFINED CMAKE_CONFIG set CMAKE_CONFIG=Release
+    if NOT DEFINED PYTHONHOME   set PYTHONHOME=[Your Python Path]
 
+2. Run WinBuild.cmd to build
 ```cmd
 > cd contrib
 > WinBuild.cmd
 ```
-
 The `WinBuild.cmd` will set up temporal ENV variables and build binaries in (matplotlib root)/examples with the Release configuration.
+
+3. Find exe files in examples/build/Release
+Note: platforms folder is important to make qt works.
