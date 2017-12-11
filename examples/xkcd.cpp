@@ -16,6 +16,6 @@ int main() {
     plt::xkcd();
     plt::plot(t, x);
     plt::title("AN ORDINARY SIN WAVE");
-    plt::save("xkcd.png");
+    plt::show();
 }
 
