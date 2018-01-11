@@ -230,12 +230,12 @@ private:
 } // end namespace detail
 
 // must be called before the first regular call to matplotlib to have any effect
-void backend(const std::string& name)
+inline void backend(const std::string& name)
 {
     detail::s_backend = name;
 }
 
-bool annotate(std::string annotation, double x, double y)
+inline bool annotate(std::string annotation, double x, double y)
 {
     PyObject * xy = PyTuple_New(2);
     PyObject * str = PyString_FromString(annotation.c_str());
@@ -963,7 +963,7 @@ inline void draw()
 }
 
 template<typename Numeric>
-void pause(Numeric interval)
+inline void pause(Numeric interval)
 {
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(interval));
@@ -1140,35 +1140,16 @@ bool plot(const A& a, const B& b, const std::string& format, Args... args)
  * This group of plot() functions is needed to support initializer lists, i.e. calling
  *    plot( {1,2,3,4} )
  */
-bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
+inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
     return plot<double,double>(x,y,format);
 }
 
-bool plot(const std::vector<double>& y, const std::string& format = "") {
+inline bool plot(const std::vector<double>& y, const std::string& format = "") {
     return plot<double>(y,format);
 }
 
-bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
+inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
     return plot<double>(x,y,keywords);
-}
-
-bool stem(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "")
-{
-    return stem<double, double>(x, y, format);
-}
-
-bool stem(const std::vector<double>& y, const std::string& format = "")
-{
-    return stem<double>(y, format);
-}
-
-bool stem(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords)
-{
-    return stem<double>(x, y, keywords);
-}
-
-bool named_plot(const std::string& name, const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
-    return named_plot<double>(name,x,y,format);
 }
 
 #endif
