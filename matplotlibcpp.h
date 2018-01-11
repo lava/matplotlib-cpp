@@ -622,7 +622,7 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& y, const st
 
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
-    if(res) Py_DECREF(res);
+    if (res) Py_DECREF(res);
 
     return res;
 }
@@ -647,7 +647,7 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& x, const st
 
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
-    if(res) Py_DECREF(res);
+    if (res) Py_DECREF(res);
 
     return res;
 }
@@ -672,7 +672,7 @@ bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, cons
 
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
-    if(res) Py_DECREF(res);
+    if (res) Py_DECREF(res);
 
     return res;
 }
@@ -697,7 +697,7 @@ bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, cons
 
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
-    if(res) Py_DECREF(res);
+    if (res) Py_DECREF(res);
 
     return res;
 }
@@ -722,7 +722,7 @@ bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const 
 
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
-    if(res) Py_DECREF(res);
+    if (res) Py_DECREF(res);
 
     return res;
 }
@@ -853,7 +853,8 @@ inline void title(const std::string &titlestr)
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_title, args);
     if(!res) throw std::runtime_error("Call to title() failed.");
 
-    // if PyDeCRFF, the function doesn't work on Mac OS
+    Py_DECREF(args);
+    Py_DECREF(res);
 }
 
 inline void axis(const std::string &axisstr)
@@ -865,7 +866,8 @@ inline void axis(const std::string &axisstr)
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_axis, args);
     if(!res) throw std::runtime_error("Call to title() failed.");
 
-    // if PyDeCRFF, the function doesn't work on Mac OS
+    Py_DECREF(args);
+    Py_DECREF(res);
 }
 
 inline void xlabel(const std::string &str)
@@ -877,7 +879,8 @@ inline void xlabel(const std::string &str)
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlabel, args);
     if(!res) throw std::runtime_error("Call to xlabel() failed.");
 
-    // if PyDeCRFF, the function doesn't work on Mac OS
+    Py_DECREF(args);
+    Py_DECREF(res);
 }
 
 inline void ylabel(const std::string &str)
@@ -889,12 +892,14 @@ inline void ylabel(const std::string &str)
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylabel, args);
     if(!res) throw std::runtime_error("Call to ylabel() failed.");
 
-    // if PyDeCRFF, the function doesn't work on Mac OS
+    Py_DECREF(args);
+    Py_DECREF(res);
 }
 
 inline void grid(bool flag)
 {
     PyObject* pyflag = flag ? Py_True : Py_False;
+    Py_INCREF(pyflag);
 
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pyflag);
@@ -902,7 +907,8 @@ inline void grid(bool flag)
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_grid, args);
     if(!res) throw std::runtime_error("Call to grid() failed.");
 
-    // if PyDeCRFF, the function doesn't work on Mac OS
+    Py_DECREF(args);
+    Py_DECREF(res);
 }
 
 inline void show(const bool block = true)
@@ -919,6 +925,7 @@ inline void show(const bool block = true)
         PyObject *kwargs = PyDict_New();
         PyDict_SetItemString(kwargs, "block", Py_False);
         res = PyObject_Call( detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple, kwargs);
+	Py_DECREF(kwargs);
     }
 
 
@@ -944,6 +951,8 @@ inline void xkcd() {
 
     res = PyObject_Call(detail::_interpreter::get().s_python_function_xkcd,
             detail::_interpreter::get().s_python_empty_tuple, kwargs);
+
+    Py_DECREF(kwargs);
 
     if (!res)
         throw std::runtime_error("Call to show() failed.");
@@ -1112,8 +1121,6 @@ struct plot_impl<std::true_type>
     template<typename Iterable, typename Callable>
     bool operator()(const Iterable& ticks, const Callable& f, const std::string& format)
     {
-        //std::cout << "Callable impl called" << std::endl;
-
         if(begin(ticks) == end(ticks)) return true;
 
         // We could use additional meta-programming to deduce the correct element type of y,
