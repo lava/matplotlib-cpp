@@ -173,7 +173,7 @@ changes. Additionally, the python yaml parser was not able to cope with files th
 exceed a few hundred megabytes in size.
 
 Therefore, I was looking for a C++ plotting library that was extremely easy to use
-and to add into an existing codebase, preferrably header-only. When I found
+and to add into an existing codebase, preferably header-only. When I found
 none, I decided to write one myself, which is basically a C++ wrapper around
 matplotlib. As you can see from the above examples, plotting data and saving it
 to an image file can be done as few as two lines of code.
