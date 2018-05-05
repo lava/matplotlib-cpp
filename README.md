@@ -50,6 +50,8 @@ int main()
 
     // Set x-axis to interval [0,1000000]
     plt::xlim(0, 1000*1000);
+    // Set size of output image = 1200x780 pixels
+    plt::figure_size(1200, 780)
     // Enable legend.
     plt::legend();
     // Save the image (file format is determined by the extension)
