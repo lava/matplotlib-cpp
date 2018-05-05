@@ -751,6 +751,26 @@ inline void figure()
     Py_DECREF(res);
 }
 
+inline void figure_size(size_t w, size_t h)
+{
+    const size_t dpi = 100;
+    PyObject* size = PyTuple_New(2);
+    PyTuple_SetItem(size, 0, PyFloat_FromDouble((double)w / dpi));
+    PyTuple_SetItem(size, 1, PyFloat_FromDouble((double)h / dpi));
+
+    PyObject* kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "figsize", size);
+    PyDict_SetItemString(kwargs, "dpi", PyLong_FromSize_t(dpi));
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure, 
+            detail::_interpreter::get().s_python_empty_tuple, kwargs);
+
+    Py_DECREF(kwargs);
+
+    if(!res) throw std::runtime_error("Call to figure_size() failed.");
+    Py_DECREF(res);
+}
+
 inline void legend()
 {
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple);
