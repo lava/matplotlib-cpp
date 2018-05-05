@@ -15,9 +15,11 @@ int main()
 		y.at(i) = sin(2*M_PI*i/360.0);
 		z.at(i) = log(i);
 	}
-
-	// Plot line from given x and y data. Color is selected automatically.
-	plt::plot(x, y);
+    
+    // Set the size of output image = 1200x780 pixels
+    plt::figure_size(1200, 780);
+    // Plot line from given x and y data. Color is selected automatically.
+    plt::plot(x, y);
 	// Plot a red dashed line from given x and y data.
 	plt::plot(x, w,"r--");
 	// Plot a line whose name will show up as "log(x)" in the legend.
