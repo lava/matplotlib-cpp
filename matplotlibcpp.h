@@ -37,6 +37,7 @@ struct _interpreter {
     PyObject *s_python_function_save;
     PyObject *s_python_function_figure;
     PyObject *s_python_function_plot;
+    PyObject *s_python_function_quiver;
     PyObject *s_python_function_semilogx;
     PyObject *s_python_function_semilogy;
     PyObject *s_python_function_loglog;
@@ -139,6 +140,7 @@ private:
         s_python_function_pause = PyObject_GetAttrString(pymod, "pause");
         s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
         s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
+        s_python_function_quiver = PyObject_GetAttrString(pymod, "quiver");
         s_python_function_semilogx = PyObject_GetAttrString(pymod, "semilogx");
         s_python_function_semilogy = PyObject_GetAttrString(pymod, "semilogy");
         s_python_function_loglog = PyObject_GetAttrString(pymod, "loglog");
@@ -170,6 +172,7 @@ private:
             || !s_python_function_pause
             || !s_python_function_figure
             || !s_python_function_plot
+            || !s_python_function_quiver
             || !s_python_function_semilogx
             || !s_python_function_semilogy
             || !s_python_function_loglog
@@ -200,6 +203,7 @@ private:
             || !PyFunction_Check(s_python_function_pause)
             || !PyFunction_Check(s_python_function_figure)
             || !PyFunction_Check(s_python_function_plot)
+            || !PyFunction_Check(s_python_function_quiver)
             || !PyFunction_Check(s_python_function_semilogx)
             || !PyFunction_Check(s_python_function_semilogy)
             || !PyFunction_Check(s_python_function_loglog)
@@ -477,6 +481,39 @@ bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const 
 
     Py_DECREF(plot_args);
     if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename NumericX, typename NumericY, typename NumericU, typename NumericW>
+bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericU>& u, const std::vector<NumericW>& w, const std::map<std::string, std::string>& keywords = {})
+{
+    assert(x.size() == y.size() && x.size() == u.size() && u.size() == w.size());
+
+    PyObject* xarray = get_array(x);
+    PyObject* yarray = get_array(y);
+    PyObject* uarray = get_array(u);
+    PyObject* warray = get_array(w);
+
+    PyObject* plot_args = PyTuple_New(4);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+    PyTuple_SetItem(plot_args, 2, uarray);
+    PyTuple_SetItem(plot_args, 3, warray);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(
+            detail::_interpreter::get().s_python_function_quiver, plot_args, kwargs);
+
+    Py_DECREF(plot_args);
+    if (res)
+        Py_DECREF(res);
 
     return res;
 }
