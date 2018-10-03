@@ -576,7 +576,7 @@ bool loglog(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
 }
 
 template<typename NumericX, typename NumericY>
-bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, const std::vector<NumericX> &yerr, const std::string &s = "")
+bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, const std::vector<NumericX> &yerr, const std::map<std::string, std::string> &keywords = {})
 {
     assert(x.size() == y.size());
 
@@ -584,11 +584,14 @@ bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, co
     PyObject* yarray = get_array(y);
     PyObject* yerrarray = get_array(yerr);
 
-    PyObject *kwargs = PyDict_New();
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
 
     PyDict_SetItemString(kwargs, "yerr", yerrarray);
-
-    PyObject *pystring = PyString_FromString(s.c_str());
 
     PyObject *plot_args = PyTuple_New(2);
     PyTuple_SetItem(plot_args, 0, xarray);
@@ -766,7 +769,7 @@ inline void figure_size(size_t w, size_t h)
     PyDict_SetItemString(kwargs, "figsize", size);
     PyDict_SetItemString(kwargs, "dpi", PyLong_FromSize_t(dpi));
 
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure, 
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure,
             detail::_interpreter::get().s_python_empty_tuple, kwargs);
 
     Py_DECREF(kwargs);
@@ -890,7 +893,7 @@ inline void xticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if(!res) throw std::runtime_error("Call to xticks() failed");
-    
+
     Py_DECREF(res);
 }
 
@@ -937,7 +940,7 @@ inline void yticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if(!res) throw std::runtime_error("Call to yticks() failed");
-    
+
     Py_DECREF(res);
 }
 
