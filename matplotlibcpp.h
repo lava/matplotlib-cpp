@@ -62,6 +62,8 @@ struct _interpreter {
     PyObject *s_python_empty_tuple;
     PyObject *s_python_function_stem;
     PyObject *s_python_function_xkcd;
+    PyObject *s_python_function_text;
+    PyObject *s_python_function_suptitle;
 
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
@@ -165,6 +167,8 @@ private:
         s_python_function_tight_layout = PyObject_GetAttrString(pymod, "tight_layout");
         s_python_function_stem = PyObject_GetAttrString(pymod, "stem");
         s_python_function_xkcd = PyObject_GetAttrString(pymod, "xkcd");
+        s_python_function_text = PyObject_GetAttrString(pymod, "text");
+        s_python_function_suptitle = PyObject_GetAttrString(pymod, "suptitle");
 
         if(    !s_python_function_show
             || !s_python_function_close
@@ -195,6 +199,8 @@ private:
             || !s_python_function_tight_layout
             || !s_python_function_stem
             || !s_python_function_xkcd
+            || !s_python_function_text
+            || !s_python_function_suptitle
         ) { throw std::runtime_error("Couldn't find required function!"); }
 
         if (   !PyFunction_Check(s_python_function_show)
@@ -225,6 +231,8 @@ private:
             || !PyFunction_Check(s_python_function_errorbar)
             || !PyFunction_Check(s_python_function_stem)
             || !PyFunction_Check(s_python_function_xkcd)
+            || !PyFunction_Check(s_python_function_text)
+            || !PyFunction_Check(s_python_function_suptitle)
         ) { throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
         s_python_empty_tuple = PyTuple_New(0);
@@ -788,6 +796,22 @@ bool stem(const std::vector<Numeric>& y, const std::string& format = "")
     return stem(x, y, format);
 }
 
+template<typename Numeric>
+void text(Numeric x, Numeric y, const std::string& format = "")
+{
+    PyObject* args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(x));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(y));
+    PyTuple_SetItem(args, 2, PyString_FromString(format.c_str()));
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_text, args);
+    if(!res) throw std::runtime_error("Call to text() failed.");
+
+    Py_DECREF(args);
+    Py_DECREF(res);
+}
+
+
 inline void figure()
 {
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
@@ -807,7 +831,7 @@ inline void figure_size(size_t w, size_t h)
     PyDict_SetItemString(kwargs, "figsize", size);
     PyDict_SetItemString(kwargs, "dpi", PyLong_FromSize_t(dpi));
 
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure,
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure, 
             detail::_interpreter::get().s_python_empty_tuple, kwargs);
 
     Py_DECREF(kwargs);
@@ -931,7 +955,7 @@ inline void xticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if(!res) throw std::runtime_error("Call to xticks() failed");
-
+    
     Py_DECREF(res);
 }
 
@@ -978,7 +1002,7 @@ inline void yticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if(!res) throw std::runtime_error("Call to yticks() failed");
-
+    
     Py_DECREF(res);
 }
 
@@ -1011,6 +1035,19 @@ inline void title(const std::string &titlestr)
 
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_title, args);
     if(!res) throw std::runtime_error("Call to title() failed.");
+
+    Py_DECREF(args);
+    Py_DECREF(res);
+}
+
+inline void suptitle(const std::string &suptitlestr)
+{
+    PyObject* pysuptitlestr = PyString_FromString(suptitlestr.c_str());
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, pysuptitlestr);
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_suptitle, args);
+    if(!res) throw std::runtime_error("Call to suptitle() failed.");
 
     Py_DECREF(args);
     Py_DECREF(res);
