@@ -797,12 +797,12 @@ bool stem(const std::vector<Numeric>& y, const std::string& format = "")
 }
 
 template<typename Numeric>
-void text(Numeric x, Numeric y, const std::string& format = "")
+void text(Numeric x, Numeric y, const std::string& s = "")
 {
     PyObject* args = PyTuple_New(3);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(x));
     PyTuple_SetItem(args, 1, PyFloat_FromDouble(y));
-    PyTuple_SetItem(args, 2, PyString_FromString(format.c_str()));
+    PyTuple_SetItem(args, 2, PyString_FromString(s.c_str()));
 
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_text, args);
     if(!res) throw std::runtime_error("Call to text() failed.");
