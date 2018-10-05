@@ -831,7 +831,7 @@ inline void figure_size(size_t w, size_t h)
     PyDict_SetItemString(kwargs, "figsize", size);
     PyDict_SetItemString(kwargs, "dpi", PyLong_FromSize_t(dpi));
 
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure, 
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_figure,
             detail::_interpreter::get().s_python_empty_tuple, kwargs);
 
     Py_DECREF(kwargs);
@@ -955,7 +955,7 @@ inline void xticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if(!res) throw std::runtime_error("Call to xticks() failed");
-    
+
     Py_DECREF(res);
 }
 
@@ -1002,7 +1002,7 @@ inline void yticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if(!res) throw std::runtime_error("Call to yticks() failed");
-    
+
     Py_DECREF(res);
 }
 
