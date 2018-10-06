@@ -41,7 +41,7 @@ int main()
         z.at(i) = log(i);
     }
 
-    // Set the size of output image = 1200x780 pixels
+    // Set the size of output image to 1200x780 pixels
     plt::figure_size(1200, 780);
     // Plot line from given x and y data. Color is selected automatically.
     plt::plot(x, y);
@@ -49,9 +49,10 @@ int main()
     plt::plot(x, w,"r--");
     // Plot a line whose name will show up as "log(x)" in the legend.
     plt::named_plot("log(x)", x, z);
-
     // Set x-axis to interval [0,1000000]
     plt::xlim(0, 1000*1000);
+    // Add graph title
+    plt::title("Sample figure");
     // Enable legend.
     plt::legend();
     // Save the image (file format is determined by the extension)
@@ -60,7 +61,9 @@ int main()
 ```
     g++ basic.cpp -I/usr/include/python2.7 -lpython2.7
 
-Result: ![Basic example](./examples/basic.png)
+**Result:**
+
+![Basic example](./examples/basic.png)
 
 matplotlib-cpp doesn't require C++11, but will enable some additional syntactic sugar when available:
 ```cpp
@@ -93,7 +96,9 @@ int main()
 ```
     g++ modern.cpp -std=c++11 -I/usr/include/python2.7 -lpython
 
-Result: ![Modern example](./examples/modern.png)
+**Result:**
+
+![Modern example](./examples/modern.png)
 
 Or some *funny-looking xkcd-styled* example:
 ```cpp
@@ -123,7 +128,36 @@ int main() {
 
 **Result:**
 
-![Minimal example](./examples/xkcd.png)
+![xkcd example](./examples/xkcd.png)
+
+When working with vector fields, you might be interested in quiver plots:
+```cpp
+#include "../matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
+
+int main()
+{
+    // u and v are respectively the x and y components of the arrows we're plotting
+    std::vector<int> x, y, u, v;
+    for (int i = -5; i <= 5; i++) {
+        for (int j = -5; j <= 5; j++) {
+            x.push_back(i);
+            u.push_back(-i);
+            y.push_back(j);
+            v.push_back(-j);
+        }
+    }
+
+    plt::quiver(x, y, u, v);
+    plt::show();
+}
+```
+    g++ quiver.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+
+**Result:**
+
+![quiver example](./examples/quiver.png)
 
 Installation
 ------------

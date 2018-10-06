@@ -1,4 +1,4 @@
-examples: minimal basic modern animation nonblock xkcd
+examples: minimal basic modern animation nonblock xkcd quiver
 
 minimal: examples/minimal.cpp matplotlibcpp.h
 	cd examples && g++ -DWITHOUT_NUMPY minimal.cpp -I/usr/include/python2.7 -lpython2.7 -o minimal -std=c++11
@@ -15,8 +15,11 @@ animation: examples/animation.cpp matplotlibcpp.h
 nonblock: examples/nonblock.cpp matplotlibcpp.h
 	cd examples && g++ nonblock.cpp -I/usr/include/python2.7 -lpython2.7 -o nonblock -std=c++11
 
+quiver: examples/quiver.cpp matplotlibcpp.h
+	cd examples && g++ quiver.cpp -I/usr/include/python2.7 -lpython2.7 -o quiver -std=c++11
+
 xkcd: examples/xkcd.cpp matplotlibcpp.h
 	cd examples && g++ xkcd.cpp -I/usr/include/python2.7 -lpython2.7 -o xkcd -std=c++11
 
 clean:
-	rm -f examples/{minimal,basic,modern,animation,nonblock,xkcd}
+	rm -f examples/{minimal,basic,modern,animation,nonblock,xkcd,quiver}
