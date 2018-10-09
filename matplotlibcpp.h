@@ -816,12 +816,20 @@ void text(Numeric x, Numeric y, const std::string& s = "")
 }
 
 
-inline void figure()
+inline long figure()
 {
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
     if(!res) throw std::runtime_error("Call to figure() failed.");
 
+    PyObject* num = PyObject_GetAttrString(res, "number");
+    if (!num) throw std::runtime_error("Could not get number attribute of figure object");
+
+    const long figureNumber = PyLong_AsLong(num);
+
+    Py_DECREF(num);
     Py_DECREF(res);
+
+    return figureNumber;
 }
 
 inline void figure_size(size_t w, size_t h)
