@@ -787,14 +787,27 @@ bool stem(const std::vector<Numeric>& y, const std::string& format = "")
     return stem(x, y, format);
 }
 
-inline long figure()
+inline long figure(long number = -1)
 {
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
+    PyObject *res;
+    if (number == -1)
+        res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
+    else {
+        assert(number > 0);
+
+        // Make sure interpreter is initialised
+        detail::_interpreter::get();
+
+        PyObject *args = PyTuple_New(1);
+        PyTuple_SetItem(args, 0, PyLong_FromLong(number));
+        res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, args);
+        Py_DECREF(args);
+    }
+
     if(!res) throw std::runtime_error("Call to figure() failed.");
 
     PyObject* num = PyObject_GetAttrString(res, "number");
     if (!num) throw std::runtime_error("Could not get number attribute of figure object");
-
     const long figureNumber = PyLong_AsLong(num);
 
     Py_DECREF(num);
