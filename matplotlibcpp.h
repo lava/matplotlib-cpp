@@ -36,6 +36,7 @@ struct _interpreter {
     PyObject *s_python_function_pause;
     PyObject *s_python_function_save;
     PyObject *s_python_function_figure;
+    PyObject *s_python_function_fignum_exists;
     PyObject *s_python_function_plot;
     PyObject *s_python_function_quiver;
     PyObject *s_python_function_semilogx;
@@ -139,6 +140,7 @@ private:
         s_python_function_draw = PyObject_GetAttrString(pymod, "draw");
         s_python_function_pause = PyObject_GetAttrString(pymod, "pause");
         s_python_function_figure = PyObject_GetAttrString(pymod, "figure");
+        s_python_function_fignum_exists = PyObject_GetAttrString(pymod, "fignum_exists");
         s_python_function_plot = PyObject_GetAttrString(pymod, "plot");
         s_python_function_quiver = PyObject_GetAttrString(pymod, "quiver");
         s_python_function_semilogx = PyObject_GetAttrString(pymod, "semilogx");
@@ -171,6 +173,7 @@ private:
             || !s_python_function_draw
             || !s_python_function_pause
             || !s_python_function_figure
+            || !s_python_function_fignum_exists
             || !s_python_function_plot
             || !s_python_function_quiver
             || !s_python_function_semilogx
@@ -202,6 +205,7 @@ private:
             || !PyFunction_Check(s_python_function_draw)
             || !PyFunction_Check(s_python_function_pause)
             || !PyFunction_Check(s_python_function_figure)
+            || !PyFunction_Check(s_python_function_fignum_exists)
             || !PyFunction_Check(s_python_function_plot)
             || !PyFunction_Check(s_python_function_quiver)
             || !PyFunction_Check(s_python_function_semilogx)
@@ -814,6 +818,23 @@ inline long figure(long number = -1)
     Py_DECREF(res);
 
     return figureNumber;
+}
+
+inline bool fignum_exists(long number)
+{
+    // Make sure interpreter is initialised
+    detail::_interpreter::get();
+
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, PyLong_FromLong(number));
+    PyObject *res = PyObject_CallObject(detail::_interpreter::get().s_python_function_fignum_exists, args);
+    if(!res) throw std::runtime_error("Call to fignum_exists() failed.");
+
+    bool ret = PyObject_IsTrue(res);
+    Py_DECREF(res);
+    Py_DECREF(args);
+
+    return ret;
 }
 
 inline void figure_size(size_t w, size_t h)
