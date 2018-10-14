@@ -44,6 +44,7 @@ struct _interpreter {
     PyObject *s_python_function_loglog;
     PyObject *s_python_function_fill_between;
     PyObject *s_python_function_hist;
+    PyObject *s_python_function_scatter;
     PyObject *s_python_function_subplot;
     PyObject *s_python_function_legend;
     PyObject *s_python_function_xlim;
@@ -151,6 +152,7 @@ private:
         s_python_function_loglog = PyObject_GetAttrString(pymod, "loglog");
         s_python_function_fill_between = PyObject_GetAttrString(pymod, "fill_between");
         s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
+        s_python_function_scatter = PyObject_GetAttrString(pymod,"scatter");
         s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
         s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
         s_python_function_ylim = PyObject_GetAttrString(pymod, "ylim");
@@ -449,6 +451,31 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", dou
 
     Py_DECREF(plot_args);
     Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename NumericX, typename NumericY>
+bool scatter(const std::vector<NumericX>& x,
+             const std::vector<NumericY>& y,
+             const double s=1.0) // The marker size in points**2
+{
+    assert(x.size() == y.size());
+
+    PyObject* xarray = get_array(x);
+    PyObject* yarray = get_array(y);
+
+    PyObject* kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
+
+    PyObject* plot_args = PyTuple_New(2);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_scatter, plot_args, kwargs);
+
+    Py_DECREF(plot_args);
     if(res) Py_DECREF(res);
 
     return res;
