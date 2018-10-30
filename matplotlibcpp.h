@@ -511,6 +511,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
     PyObject* res = PyObject_Call(
             detail::_interpreter::get().s_python_function_quiver, plot_args, kwargs);
 
+    Py_DECREF(kwargs);
     Py_DECREF(plot_args);
     if (res)
         Py_DECREF(res);
