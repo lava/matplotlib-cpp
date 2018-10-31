@@ -47,6 +47,7 @@ struct _interpreter {
     PyObject *s_python_function_legend;
     PyObject *s_python_function_xlim;
     PyObject *s_python_function_ion;
+    PyObject *s_python_function_ginput;
     PyObject *s_python_function_ylim;
     PyObject *s_python_function_title;
     PyObject *s_python_function_axis;
@@ -158,6 +159,7 @@ private:
         s_python_function_grid = PyObject_GetAttrString(pymod, "grid");
         s_python_function_xlim = PyObject_GetAttrString(pymod, "xlim");
         s_python_function_ion = PyObject_GetAttrString(pymod, "ion");
+        s_python_function_ginput = PyObject_GetAttrString(pymod, "ginput");
         s_python_function_save = PyObject_GetAttrString(pylabmod, "savefig");
         s_python_function_annotate = PyObject_GetAttrString(pymod,"annotate");
         s_python_function_clf = PyObject_GetAttrString(pymod, "clf");
@@ -187,6 +189,7 @@ private:
             || !s_python_function_grid
             || !s_python_function_xlim
             || !s_python_function_ion
+            || !s_python_function_ginput
             || !s_python_function_save
             || !s_python_function_clf
             || !s_python_function_annotate
@@ -219,6 +222,7 @@ private:
             || !PyFunction_Check(s_python_function_grid)
             || !PyFunction_Check(s_python_function_xlim)
             || !PyFunction_Check(s_python_function_ion)
+            || !PyFunction_Check(s_python_function_ginput)
             || !PyFunction_Check(s_python_function_save)
             || !PyFunction_Check(s_python_function_clf)
             || !PyFunction_Check(s_python_function_tight_layout)
@@ -1174,6 +1178,41 @@ inline void clf() {
     if (!res) throw std::runtime_error("Call to ion() failed.");
 
     Py_DECREF(res);
+}
+
+inline std::vector<std::array<double, 2>> ginput(const int numClicks = 1, const std::map<std::string, std::string>& keywords = {})
+{
+    PyObject *args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, PyLong_FromLong(numClicks));
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(
+        detail::_interpreter::get().s_python_function_ginput, args, kwargs);
+
+    Py_DECREF(kwargs);
+    Py_DECREF(args);
+    if (!res) throw std::runtime_error("Call to ginput() failed.");
+
+    const size_t len = PyList_Size(res);
+    std::vector<std::array<double, 2>> out;
+    std::cout << "len: " << len << std::endl;
+    out.reserve(len);
+    for (size_t i = 0; i < len; i++) {
+        PyObject *current = PyList_GetItem(res, i);
+        std::array<double, 2> position;
+        position[0] = PyFloat_AsDouble(PyTuple_GetItem(current, 0));
+        position[1] = PyFloat_AsDouble(PyTuple_GetItem(current, 1));
+        out.push_back(position);
+    }
+    Py_DECREF(res);
+
+    return out;
 }
 
 // Actually, is there any reason not to call this automatically for every plot?
