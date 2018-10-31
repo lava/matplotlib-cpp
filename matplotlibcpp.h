@@ -1201,7 +1201,6 @@ inline std::vector<std::array<double, 2>> ginput(const int numClicks = 1, const 
 
     const size_t len = PyList_Size(res);
     std::vector<std::array<double, 2>> out;
-    std::cout << "len: " << len << std::endl;
     out.reserve(len);
     for (size_t i = 0; i < len; i++) {
         PyObject *current = PyList_GetItem(res, i);
