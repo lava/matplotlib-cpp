@@ -12,7 +12,12 @@
 #  include <functional>
 #endif
 
+// windows installed python only has release lib
+#ifdef _DEBUG && _MSC_VER
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG
+#endif
 
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -671,8 +676,8 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& y, const st
     return res;
 }
 
-template<typename Numeric>
-bool named_plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_plot(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
@@ -696,8 +701,8 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& x, const st
     return res;
 }
 
-template<typename Numeric>
-bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_semilogx(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
@@ -721,8 +726,8 @@ bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, cons
     return res;
 }
 
-template<typename Numeric>
-bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_semilogy(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
@@ -746,8 +751,8 @@ bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, cons
     return res;
 }
 
-template<typename Numeric>
-bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_loglog(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
