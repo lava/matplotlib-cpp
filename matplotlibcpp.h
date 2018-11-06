@@ -45,6 +45,7 @@ struct _interpreter {
     PyObject *s_python_function_fill;
     PyObject *s_python_function_fill_between;
     PyObject *s_python_function_hist;
+    PyObject *s_python_function_imshow;
     PyObject *s_python_function_scatter;
     PyObject *s_python_function_subplot;
     PyObject *s_python_function_legend;
@@ -165,6 +166,9 @@ private:
         s_python_function_fill = PyObject_GetAttrString(pymod, "fill");
         s_python_function_fill_between = PyObject_GetAttrString(pymod, "fill_between");
         s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
+#ifndef WITHOUT_NUMPY
+        s_python_function_imshow = PyObject_GetAttrString(pymod, "imshow");
+#endif
         s_python_function_scatter = PyObject_GetAttrString(pymod,"scatter");
         s_python_function_subplot = PyObject_GetAttrString(pymod, "subplot");
         s_python_function_legend = PyObject_GetAttrString(pymod, "legend");
@@ -211,6 +215,9 @@ private:
             || !s_python_function_axis
             || !s_python_function_xlabel
             || !s_python_function_ylabel
+#ifndef WITHOUT_NUMPY
+            || !s_python_function_imshow
+#endif
             || !s_python_function_grid
             || !s_python_function_xlim
             || !s_python_function_ion
@@ -246,6 +253,9 @@ private:
             || !PyFunction_Check(s_python_function_legend)
             || !PyFunction_Check(s_python_function_annotate)
             || !PyFunction_Check(s_python_function_ylim)
+#ifndef WITHOUT_NUMPY
+            || !PyFunction_Check(s_python_function_imshow)
+#endif
             || !PyFunction_Check(s_python_function_title)
             || !PyFunction_Check(s_python_function_axis)
             || !PyFunction_Check(s_python_function_xlabel)
@@ -622,6 +632,47 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 
     return res;
 }
+
+#ifndef WITHOUT_NUMPY
+    namespace internal {
+        void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords)
+        {
+            assert(type == NPY_UINT8 || type == NPY_FLOAT);
+            assert(colors == 1 || colors == 3 || colors == 4);
+
+            detail::_interpreter::get();    //interpreter needs to be initialized for the numpy commands to work
+
+            // construct args
+            npy_intp dims[3] = { rows, columns, colors };
+            PyObject *args = PyTuple_New(1);
+            PyTuple_SetItem(args, 0, PyArray_SimpleNewFromData(3, dims, type, ptr));
+
+            // construct keyword args
+            PyObject* kwargs = PyDict_New();
+            for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+            {
+                PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+            }
+
+            PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_imshow, args, kwargs);
+            Py_DECREF(args);
+            Py_DECREF(kwargs);
+            if (!res)
+                throw std::runtime_error("Call to imshow() failed");
+            Py_DECREF(res);
+        }
+    }
+
+    void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
+    {
+        internal::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords);
+    }
+
+    void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
+    {
+        internal::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords);
+    }
+#endif
 
 template<typename NumericX, typename NumericY>
 bool scatter(const std::vector<NumericX>& x,
