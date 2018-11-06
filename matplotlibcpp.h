@@ -15,6 +15,10 @@
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #  include <numpy/arrayobject.h>
+
+#  ifdef WITH_OPENCV
+#  include <opencv2/opencv.hpp>
+#  endif // WITH_OPENCV
 #endif // WITHOUT_NUMPY
 
 #if PY_MAJOR_VERSION >= 3
@@ -45,6 +49,7 @@ struct _interpreter {
     PyObject *s_python_function_fill;
     PyObject *s_python_function_fill_between;
     PyObject *s_python_function_hist;
+    PyObject *s_python_function_imshow;
     PyObject *s_python_function_scatter;
     PyObject *s_python_function_subplot;
     PyObject *s_python_function_legend;
@@ -202,6 +207,9 @@ private:
         s_python_function_suptitle = safe_import(pymod, "suptitle");
         s_python_function_bar = safe_import(pymod,"bar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
+#ifndef WITHOUT_NUMPY
+        s_python_function_imshow = safe_import(pymod, "imshow");
+#endif
 
         s_python_empty_tuple = PyTuple_New(0);
     }
@@ -559,6 +567,78 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 
     return res;
 }
+
+#ifndef WITHOUT_NUMPY
+    namespace internal {
+        void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords)
+        {
+            assert(type == NPY_UINT8 || type == NPY_FLOAT);
+            assert(colors == 1 || colors == 3 || colors == 4);
+
+            detail::_interpreter::get();    //interpreter needs to be initialized for the numpy commands to work
+
+            // construct args
+            npy_intp dims[3] = { rows, columns, colors };
+            PyObject *args = PyTuple_New(1);
+            PyTuple_SetItem(args, 0, PyArray_SimpleNewFromData(colors == 1 ? 2 : 3, dims, type, ptr));
+
+            // construct keyword args
+            PyObject* kwargs = PyDict_New();
+            for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+            {
+                PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+            }
+
+            PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_imshow, args, kwargs);
+            Py_DECREF(args);
+            Py_DECREF(kwargs);
+            if (!res)
+                throw std::runtime_error("Call to imshow() failed");
+            Py_DECREF(res);
+        }
+    }
+
+    void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
+    {
+        internal::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords);
+    }
+
+    void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
+    {
+        internal::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords);
+    }
+
+#ifdef WITH_OPENCV
+    void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keywords = {})
+    {
+        // Convert underlying type of matrix, if needed
+        cv::Mat image2;
+        NPY_TYPES npy_type = NPY_UINT8;
+        switch (image.type() & CV_MAT_DEPTH_MASK) {
+        case CV_8U:
+            image2 = image;
+            break;
+        case CV_32F:
+            image2 = image;
+            npy_type = NPY_FLOAT;
+            break;
+        default:
+            image.convertTo(image2, CV_MAKETYPE(CV_8U, image.channels()));
+        }
+
+        // If color image, convert from BGR to RGB
+        switch (image2.channels()) {
+        case 3:
+            cv::cvtColor(image2, image2, CV_BGR2RGB);
+            break;
+        case 4:
+            cv::cvtColor(image2, image2, CV_BGRA2RGBA);
+        }
+
+        internal::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords);
+    }
+#endif // WITH_OPENCV
+#endif // WITHOUT_NUMPY
 
 template<typename NumericX, typename NumericY>
 bool scatter(const std::vector<NumericX>& x,
