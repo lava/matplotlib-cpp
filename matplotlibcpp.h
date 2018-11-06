@@ -15,6 +15,10 @@
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #  include <numpy/arrayobject.h>
+
+#  ifdef WITH_OPENCV
+#  include <opencv2/opencv.hpp>
+#  endif // WITH_OPENCV
 #endif // WITHOUT_NUMPY
 
 #if PY_MAJOR_VERSION >= 3
@@ -645,7 +649,7 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
             // construct args
             npy_intp dims[3] = { rows, columns, colors };
             PyObject *args = PyTuple_New(1);
-            PyTuple_SetItem(args, 0, PyArray_SimpleNewFromData(3, dims, type, ptr));
+            PyTuple_SetItem(args, 0, PyArray_SimpleNewFromData(colors == 1 ? 2 : 3, dims, type, ptr));
 
             // construct keyword args
             PyObject* kwargs = PyDict_New();
@@ -672,6 +676,37 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
     {
         internal::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords);
     }
+
+#ifdef WITH_OPENCV
+    void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keywords = {})
+    {
+        // Convert underlying type of matrix, if needed
+        cv::Mat image2;
+        NPY_TYPES npy_type = NPY_UINT8;
+        switch (image.type() & CV_MAT_DEPTH_MASK) {
+        case CV_8U:
+            image2 = image;
+            break;
+        case CV_32F:
+            image2 = image;
+            npy_type = NPY_FLOAT;
+            break;
+        default:
+            image.convertTo(image2, CV_MAKETYPE(CV_8U, image.channels()));
+        }
+
+        // If color image, convert from BGR to RGB
+        switch (image2.channels()) {
+        case 3:
+            cv::cvtColor(image2, image2, CV_BGR2RGB);
+            break;
+        case 4:
+            cv::cvtColor(image2, image2, CV_BGRA2RGBA);
+        }
+
+        internal::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords);
+    }
+#endif
 #endif
 
 template<typename NumericX, typename NumericY>
