@@ -62,6 +62,9 @@ struct _interpreter {
     PyObject *s_python_empty_tuple;
     PyObject *s_python_function_stem;
     PyObject *s_python_function_xkcd;
+    PyObject *s_python_function_bar;
+    PyObject *s_python_function_subplots_adjust;
+
 
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
@@ -165,6 +168,8 @@ private:
         s_python_function_tight_layout = PyObject_GetAttrString(pymod, "tight_layout");
         s_python_function_stem = PyObject_GetAttrString(pymod, "stem");
         s_python_function_xkcd = PyObject_GetAttrString(pymod, "xkcd");
+        s_python_function_bar = PyObject_GetAttrString(pymod,"bar");
+        s_python_function_subplots_adjust = PyObject_GetAttrString(pymod,"subplots_adjust");
 
         if(    !s_python_function_show
             || !s_python_function_close
@@ -195,6 +200,8 @@ private:
             || !s_python_function_tight_layout
             || !s_python_function_stem
             || !s_python_function_xkcd
+            || !s_python_function_bar
+            || !s_python_function_subplots_adjust
         ) { throw std::runtime_error("Couldn't find required function!"); }
 
         if (   !PyFunction_Check(s_python_function_show)
@@ -225,6 +232,8 @@ private:
             || !PyFunction_Check(s_python_function_errorbar)
             || !PyFunction_Check(s_python_function_stem)
             || !PyFunction_Check(s_python_function_xkcd)
+            || !PyFunction_Check(s_python_function_bar)
+            || !PyFunction_Check(s_python_function_subplots_adjust)
         ) { throw std::runtime_error("Python object is unexpectedly not a PyFunction."); }
 
         s_python_empty_tuple = PyTuple_New(0);
@@ -437,6 +446,61 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", dou
 
     return res;
 }
+
+template< typename Numeric>
+bool bar(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords = {})
+{
+    PyObject* yarray = get_array(y);
+
+    std::vector<int> x;
+    for (int i = 0; i < y.size(); i++)
+        x.push_back(i);
+
+    PyObject* xarray = get_array(x);
+
+    PyObject* kwargs = PyDict_New();
+
+    PyDict_SetItemString(kwargs, "ec", PyString_FromString("black"));
+    PyDict_SetItemString(kwargs, "ls", PyString_FromString("-"));
+    PyDict_SetItemString(kwargs, "lw", PyString_FromString("1"));
+
+    PyObject* plot_args = PyTuple_New(2);
+
+    PyTuple_SetItem(plot_args, 0, yarray);
+    PyTuple_SetItem(plot_args, 1, xarray);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_bar, plot_args, kwargs);
+
+    Py_DECREF(plot_args);
+    Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+    return res;
+}
+
+
+bool subplots_adjust(const std::map<std::string, double>& keywords = {})
+{
+
+    PyObject* kwargs = PyDict_New();
+    for (std::map<std::string, double>::const_iterator it =
+            keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(),
+                             PyFloat_FromDouble(it->second));
+    }
+
+
+    PyObject* plot_args = PyTuple_New(0);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_subplots_adjust, plot_args, kwargs);
+
+    Py_DECREF(plot_args);
+    Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+    return res;
+}
+
+
+
 
 template< typename Numeric>
 bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
