@@ -421,7 +421,7 @@ bool fill_between(const std::vector<Numeric>& x, const std::vector<Numeric>& y1,
 }
 
 template< typename Numeric>
-bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0)
+bool hist(const std::vector<Numeric>& y, long bins = 5 ,std::string color="b", double alpha=1.0)
 {
 
     PyObject* yarray = get_array(y);
@@ -430,7 +430,6 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", dou
     PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
     PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));
     PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
-
 
     PyObject* plot_args = PyTuple_New(1);
 
@@ -448,7 +447,8 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", dou
 }
 
 template< typename Numeric>
-bool bar(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords = {})
+bool bar(const std::vector<Numeric>& y, std::string ec = "black", std::string ls = "-", double lw = 1.0,
+         const std::map<std::string, std::string>& keywords = {})
 {
     PyObject* yarray = get_array(y);
 
@@ -460,12 +460,11 @@ bool bar(const std::vector<Numeric>& y, const std::map<std::string, std::string>
 
     PyObject* kwargs = PyDict_New();
 
-    PyDict_SetItemString(kwargs, "ec", PyString_FromString("black"));
-    PyDict_SetItemString(kwargs, "ls", PyString_FromString("-"));
-    PyDict_SetItemString(kwargs, "lw", PyString_FromString("1"));
+    PyDict_SetItemString(kwargs, "ec", PyString_FromString(ec.c_str()));
+    PyDict_SetItemString(kwargs, "ls", PyString_FromString(ls.c_str()));
+    PyDict_SetItemString(kwargs, "lw", PyFloat_FromDouble(lw));
 
     PyObject* plot_args = PyTuple_New(2);
-
     PyTuple_SetItem(plot_args, 0, xarray);
     PyTuple_SetItem(plot_args, 1, yarray);
 
@@ -474,6 +473,7 @@ bool bar(const std::vector<Numeric>& y, const std::map<std::string, std::string>
     Py_DECREF(plot_args);
     Py_DECREF(kwargs);
     if(res) Py_DECREF(res);
+
     return res;
 }
 
@@ -496,8 +496,9 @@ bool subplots_adjust(const std::map<std::string, double>& keywords = {})
     Py_DECREF(plot_args);
     Py_DECREF(kwargs);
     if(res) Py_DECREF(res);
-    return res;
-}
+
+        return res;
+    }
 
 
 
