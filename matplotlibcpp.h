@@ -466,8 +466,8 @@ bool bar(const std::vector<Numeric>& y, const std::map<std::string, std::string>
 
     PyObject* plot_args = PyTuple_New(2);
 
-    PyTuple_SetItem(plot_args, 0, yarray);
-    PyTuple_SetItem(plot_args, 1, xarray);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_bar, plot_args, kwargs);
 
