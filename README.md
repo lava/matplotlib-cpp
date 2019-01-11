@@ -173,7 +173,7 @@ int main()
         for (double j = -5; j <= 5; j += 0.25) {
             x_row.push_back(i);
             y_row.push_back(j);
-            z_row.push_back(::std::sin(::std::hypot(x, y)));
+            z_row.push_back(::std::sin(::std::hypot(i, j)));
         }
         x.push_back(x_row);
         y.push_back(y_row);
@@ -184,6 +184,10 @@ int main()
     plt::show();
 }
 ```
+
+**Result:**
+
+![surface example](./examples/surface.png)
 
 Installation
 ------------
