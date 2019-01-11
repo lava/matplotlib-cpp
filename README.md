@@ -65,7 +65,7 @@ int main()
 
 ![Basic example](./examples/basic.png)
 
-matplotlib-cpp doesn't require C++11, but will enable some additional syntactic sugar when available:
+Alternatively, matplotlib-cpp also supports some C++11-powered syntactic sugar:
 ```cpp
 #include <cmath>
 #include "matplotlibcpp.h"
@@ -186,6 +186,16 @@ find_package(PythonLibs 2.7)
 target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(myproject ${PYTHON_LIBRARIES})
 ```
+
+# C++11
+
+Currently, c++11 is required to build matplotlib-cpp. The last working commit that did
+not have this requirement was `717e98e752260245407c5329846f5d62605eff08`.
+
+Note that support for c++98 was dropped more or less accidentally, so if you have to work
+with an ancient compiler and still want to enjoy the latest additional features, I'd
+probably merge a PR that restores support.
+
 # Python 3
 
 This library supports both python2 and python3 (although the python3 support is probably far less tested,

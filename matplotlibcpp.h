@@ -6,11 +6,8 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
-#include <stdint.h> // <cstdint> requires c++11 support
-
-#if __cplusplus > 199711L || _MSC_VER > 1800
-#  include <functional>
-#endif
+#include <cstdint> // <cstdint> requires c++11 support
+#include <functional>
 
 #include <Python.h>
 
@@ -1394,8 +1391,7 @@ inline void tight_layout() {
     Py_DECREF(res);
 }
 
-#if __cplusplus > 199711L || _MSC_VER > 1800
-// C++11-exclusive content starts here (variadic plot() and initializer list support)
+// Support for variadic plot() and initializer lists:
 
 namespace detail {
 
@@ -1523,7 +1519,5 @@ inline bool plot(const std::vector<double>& y, const std::string& format = "") {
 inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
     return plot<double>(x,y,keywords);
 }
-
-#endif
 
 } // end namespace matplotlibcpp
