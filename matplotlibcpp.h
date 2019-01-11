@@ -476,6 +476,7 @@ bool scatter(const std::vector<NumericX>& x,
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_scatter, plot_args, kwargs);
 
     Py_DECREF(plot_args);
+    Py_DECREF(kwargs);
     if(res) Py_DECREF(res);
 
     return res;
