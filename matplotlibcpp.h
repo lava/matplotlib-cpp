@@ -18,6 +18,8 @@
 
 #if PY_MAJOR_VERSION >= 3
 #  define PyString_FromString PyUnicode_FromString
+#  define PyInt_FromLong PyLong_FromLong
+#  define PyString_FromString PyUnicode_FromString
 #endif
 
 
