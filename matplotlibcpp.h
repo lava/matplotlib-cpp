@@ -595,7 +595,8 @@ bool fill_between(const std::vector<Numeric>& x, const std::vector<Numeric>& y1,
 }
 
 template< typename Numeric>
-bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", double alpha=1.0)
+bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
+          double alpha=1.0, bool cumulative=false)
 {
 
     PyObject* yarray = get_array(y);
@@ -604,6 +605,7 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b", dou
     PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
     PyDict_SetItemString(kwargs, "color", PyString_FromString(color.c_str()));
     PyDict_SetItemString(kwargs, "alpha", PyFloat_FromDouble(alpha));
+    PyDict_SetItemString(kwargs, "cumulative", cumulative ? Py_True : Py_False);
 
     PyObject* plot_args = PyTuple_New(1);
 
