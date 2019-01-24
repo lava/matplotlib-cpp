@@ -121,12 +121,15 @@ private:
         PyObject* cmname  = PyString_FromString("matplotlib.cm");
         PyObject* pylabname  = PyString_FromString("pylab");
         if (!pyplotname || !pylabname || !matplotlibname || !cmname) {
-          throw std::runtime_error("couldnt create string");
+            throw std::runtime_error("couldnt create string");
         }
 
         PyObject* matplotlib = PyImport_Import(matplotlibname);
         Py_DECREF(matplotlibname);
-        if (!matplotlib) { throw std::runtime_error("Error loading module matplotlib!"); }
+        if (!matplotlib) {
+            PyErr_Print();
+            throw std::runtime_error("Error loading module matplotlib!");
+        }
 
         // matplotlib.use() must be called *before* pylab, matplotlib.pyplot,
         // or matplotlib.backends is imported for the first time
