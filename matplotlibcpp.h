@@ -39,6 +39,7 @@ struct _interpreter {
     PyObject *s_python_function_semilogx;
     PyObject *s_python_function_semilogy;
     PyObject *s_python_function_loglog;
+    PyObject *s_python_function_fill;
     PyObject *s_python_function_fill_between;
     PyObject *s_python_function_hist;
     PyObject *s_python_function_scatter;
@@ -155,6 +156,7 @@ private:
         s_python_function_semilogx = PyObject_GetAttrString(pymod, "semilogx");
         s_python_function_semilogy = PyObject_GetAttrString(pymod, "semilogy");
         s_python_function_loglog = PyObject_GetAttrString(pymod, "loglog");
+        s_python_function_fill = PyObject_GetAttrString(pymod, "fill");
         s_python_function_fill_between = PyObject_GetAttrString(pymod, "fill_between");
         s_python_function_hist = PyObject_GetAttrString(pymod,"hist");
         s_python_function_scatter = PyObject_GetAttrString(pymod,"scatter");
@@ -194,6 +196,7 @@ private:
             || !s_python_function_semilogx
             || !s_python_function_semilogy
             || !s_python_function_loglog
+            || !s_python_function_fill
             || !s_python_function_fill_between
             || !s_python_function_subplot
             || !s_python_function_legend
@@ -231,6 +234,7 @@ private:
             || !PyFunction_Check(s_python_function_semilogx)
             || !PyFunction_Check(s_python_function_semilogy)
             || !PyFunction_Check(s_python_function_loglog)
+            || !PyFunction_Check(s_python_function_fill)
             || !PyFunction_Check(s_python_function_fill_between)
             || !PyFunction_Check(s_python_function_subplot)
             || !PyFunction_Check(s_python_function_legend)
@@ -519,6 +523,37 @@ bool stem(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     Py_DECREF(kwargs);
     if (res)
         Py_DECREF(res);
+
+    return res;
+}
+
+template< typename Numeric >
+bool fill(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords)
+{
+    assert(x.size() == y.size());
+
+    // using numpy arrays
+    PyObject* xarray = get_array(x);
+    PyObject* yarray = get_array(y);
+    
+    // construct positional args
+    PyObject* args = PyTuple_New(2);
+    PyTuple_SetItem(args, 0, xarray);
+    PyTuple_SetItem(args, 1, yarray);
+    
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for (auto it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+    
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_fill, args, kwargs);
+    
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(res) Py_DECREF(res);
 
     return res;
 }
