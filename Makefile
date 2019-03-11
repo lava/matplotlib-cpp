@@ -1,4 +1,4 @@
-examples: minimal basic modern animation nonblock xkcd quiver bar surface
+examples: minimal basic modern animation nonblock xkcd quiver bar surface fill_inbetween fill
 
 minimal: examples/minimal.cpp matplotlibcpp.h
 	cd examples && g++ -DWITHOUT_NUMPY minimal.cpp -I/usr/include/python2.7 -lpython2.7 -o minimal -std=c++11
@@ -27,5 +27,11 @@ bar: examples/bar.cpp matplotlibcpp.h
 surface: examples/surface.cpp matplotlibcpp.h
 	cd examples && g++ surface.cpp -I/usr/include/python2.7 -lpython2.7 -o surface -std=c++11
 
+fill_inbetween: examples/fill_inbetween.cpp matplotlibcpp.h
+	cd examples && g++ fill_inbetween.cpp -I/usr/include/python2.7 -lpython2.7 -o fill_inbetween -std=c++11
+
+fill: examples/fill.cpp matplotlibcpp.h
+	cd examples && g++ fill.cpp -I/usr/include/python2.7 -lpython2.7 -o fill -std=c++11
+
 clean:
-	rm -f examples/{minimal,basic,modern,animation,nonblock,xkcd,quiver,bar}
+	rm -f examples/{minimal,basic,modern,animation,nonblock,xkcd,quiver,bar,surface,fill_inbetween,fill}
