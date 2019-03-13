@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <array>
 #include <numeric>
 #include <algorithm>
 #include <stdexcept>
