@@ -1414,7 +1414,7 @@ inline void show(const bool block = true)
         PyObject *kwargs = PyDict_New();
         PyDict_SetItemString(kwargs, "block", Py_False);
         res = PyObject_Call( detail::_interpreter::get().s_python_function_show, detail::_interpreter::get().s_python_empty_tuple, kwargs);
-	Py_DECREF(kwargs);
+       Py_DECREF(kwargs);
     }
 
 
@@ -1680,5 +1680,107 @@ inline bool plot(const std::vector<double>& y, const std::string& format = "") {
 inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
     return plot<double>(x,y,keywords);
 }
+
+/*
+ * This class allows dynamic plots, ie changing the plotted data without clearing and re-plotting
+ */
+
+class Plot
+{
+public:
+    // default initialization with plot label, some data and format
+    template<typename Numeric>
+    Plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "") {
+
+        assert(x.size() == y.size());
+
+        PyObject* kwargs = PyDict_New();
+        if(name != "")
+            PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+        PyObject* xarray = get_array(x);
+        PyObject* yarray = get_array(y);
+
+        PyObject* pystring = PyString_FromString(format.c_str());
+
+        PyObject* plot_args = PyTuple_New(3);
+        PyTuple_SetItem(plot_args, 0, xarray);
+        PyTuple_SetItem(plot_args, 1, yarray);
+        PyTuple_SetItem(plot_args, 2, pystring);
+
+        PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
+
+        Py_DECREF(kwargs);
+        Py_DECREF(plot_args);
+
+        if(res)
+        {
+            line= PyList_GetItem(res, 0);
+
+            if(line)
+                set_data_fct = PyObject_GetAttrString(line,"set_data");
+            else
+                Py_DECREF(line);
+            Py_DECREF(res);
+        }
+    }
+
+    // shorter initialization with name or format only
+    // basically calls line, = plot([], [])
+    Plot(const std::string& name = "", const std::string& format = "")
+        : Plot(name, std::vector<double>(), std::vector<double>(), format) {}
+
+    template<typename Numeric>
+    bool update(const std::vector<Numeric>& x, const std::vector<Numeric>& y) {
+        assert(x.size() == y.size());
+        if(set_data_fct)
+        {
+            PyObject* xarray = get_array(x);
+            PyObject* yarray = get_array(y);
+
+            PyObject* plot_args = PyTuple_New(2);
+            PyTuple_SetItem(plot_args, 0, xarray);
+            PyTuple_SetItem(plot_args, 1, yarray);
+
+            PyObject* res = PyObject_CallObject(set_data_fct, plot_args);
+            if (res) Py_DECREF(res);
+            return res;
+        }
+        return false;
+    }
+
+    // clears the plot but keep it available
+    bool clear() {
+        return update(std::vector<double>(), std::vector<double>());
+    }
+
+    // definitely remove this line
+    void remove() {
+        if(line)
+        {
+            auto remove_fct = PyObject_GetAttrString(line,"remove");
+            PyObject* args = PyTuple_New(0);
+            PyObject* res = PyObject_CallObject(remove_fct, args);
+            if (res) Py_DECREF(res);
+        }
+        decref();
+    }
+
+    ~Plot() {
+        decref();
+    }
+private:
+
+    void decref() {
+        if(line)
+            Py_DECREF(line);
+        if(set_data_fct)
+            Py_DECREF(set_data_fct);
+    }
+
+
+    PyObject* line = nullptr;
+    PyObject* set_data_fct = nullptr;
+};
 
 } // end namespace matplotlibcpp
