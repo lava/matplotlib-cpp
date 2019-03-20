@@ -1321,29 +1321,41 @@ inline void subplot(long nrows, long ncols, long plot_number)
     Py_DECREF(res);
 }
 
-inline void title(const std::string &titlestr)
+inline void title(const std::string &titlestr, const std::map<std::string, std::string> &keywords = {})
 {
     PyObject* pytitlestr = PyString_FromString(titlestr.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pytitlestr);
 
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_title, args);
+    PyObject* kwargs = PyDict_New();
+    for (auto it = keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_title, args, kwargs);
     if(!res) throw std::runtime_error("Call to title() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
-inline void suptitle(const std::string &suptitlestr)
+inline void suptitle(const std::string &suptitlestr, const std::map<std::string, std::string> &keywords = {})
 {
     PyObject* pysuptitlestr = PyString_FromString(suptitlestr.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pysuptitlestr);
 
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_suptitle, args);
+    PyObject* kwargs = PyDict_New();
+    for (auto it = keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_suptitle, args, kwargs);
     if(!res) throw std::runtime_error("Call to suptitle() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
@@ -1360,29 +1372,41 @@ inline void axis(const std::string &axisstr)
     Py_DECREF(res);
 }
 
-inline void xlabel(const std::string &str)
+inline void xlabel(const std::string &str, const std::map<std::string, std::string> &keywords = {})
 {
     PyObject* pystr = PyString_FromString(str.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pystr);
 
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlabel, args);
+    PyObject* kwargs = PyDict_New();
+    for (auto it = keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_xlabel, args, kwargs);
     if(!res) throw std::runtime_error("Call to xlabel() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
-inline void ylabel(const std::string &str)
+inline void ylabel(const std::string &str, const std::map<std::string, std::string>& keywords = {})
 {
     PyObject* pystr = PyString_FromString(str.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pystr);
 
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylabel, args);
+    PyObject* kwargs = PyDict_New();
+    for (auto it = keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_ylabel, args, kwargs);
     if(!res) throw std::runtime_error("Call to ylabel() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
