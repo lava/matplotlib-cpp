@@ -20,93 +20,41 @@ void update_window(const double x, const double y, const double t,
 
 int main()
 {
-
-    bool use_dynamic_plot = false;
-    bool timeit = true;
-
     size_t n = 1000;
     std::vector<double> x, y;
 
     const double w = 0.05;
     const double a = n/2;
 
-    for(size_t i=0; i<n; i++) {
+    for (size_t i=0; i<n; i++) {
         x.push_back(i);
         y.push_back(a*sin(w*i));
     }
 
     std::vector<double> xt(2), yt(2);
 
-    plt::title("Sample figure");
+    plt::title("Tangent of a since curve");
+    plt::xlim(x.front(), x.back());
+    plt::ylim(-a, a);
+    plt::axis("equal");
 
-    std::chrono::time_point<std::chrono::system_clock> start, end;
-    start = std::chrono::system_clock::now();
+    // Plot sin once and for all.
+    plt::named_plot("sin", x, y);
 
-    if(use_dynamic_plot)
-    {
-        plt::xlim(x.front(), x.back());
-        plt::ylim(-a,a);
-        plt::axis("equal");
+    // Prepare plotting the tangent.
+    plt::Plot plot("tangent");
 
-        // plot sin once and for all
-        plt::named_plot("sin", x, y);
+    plt::legend();
 
-        // prepare plotting the tangent
-        plt::Plot plot("tangent");
+    for (size_t i=0; i<n; i++) {
+        if (i % 10 == 0) {
+            update_window(x[i], y[i], a*w*cos(w*x[i]), xt, yt);
 
-        plt::legend();
+            // Just update data for this plot.
+            plot.update(xt, yt);
 
-        for(size_t i=0; i<n; i++) {
-
-            if (i % 10 == 0) {
-                {
-                    update_window(x[i], y[i], a*w*cos(w*x[i]), xt, yt);
-                    // just update data for this plot
-                    plot.update(xt, yt);
-                }
-
-                // Display plot continuously
-                if(!timeit)
-                    plt::pause(0.1);
-            }
+            // Small pause so the viewer has a chance to enjoy the animation.
+            plt::pause(0.1);
         }
-    }
-
-    else
-    {
-        for(size_t i=0; i<n; i++) {
-
-            if (i % 10 == 0) {
-                {
-                    plt::clf();
-
-                    plt::named_plot("sin", x, y);
-
-                    update_window(x[i], y[i], a*w*cos(w*i), xt, yt);
-                    plt::named_plot("tangent", xt, yt);
-
-                    // we have to control axis size
-                    plt::xlim(x.front(), x.back());
-                    plt::ylim(-a,a);
-                    plt::axis("equal");
-                    plt::legend();
-
-                }
-
-                // Display plot continuously
-                if(!timeit)
-                    plt::pause(0.1);
-            }
-        }
-    }
-
-    end = std::chrono::system_clock::now();
-    double elapsed_seconds = std::chrono::duration_cast<std::chrono::microseconds>
-            (end-start).count();
-    if(use_dynamic_plot)
-        std::cout << "dynamic";
-    else
-        std::cout << "static";
-
-    std::cout << " : " << elapsed_seconds/1000 << " ms\n";
+   }
 }
