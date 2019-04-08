@@ -33,7 +33,7 @@ int main()
 
     std::vector<double> xt(2), yt(2);
 
-    plt::title("Tangent of a since curve");
+    plt::title("Tangent of a sine curve");
     plt::xlim(x.front(), x.back());
     plt::ylim(-a, a);
     plt::axis("equal");
