@@ -65,7 +65,7 @@ int main()
 
 ![Basic example](./examples/basic.png)
 
-matplotlib-cpp doesn't require C++11, but will enable some additional syntactic sugar when available:
+Alternatively, matplotlib-cpp also supports some C++11-powered syntactic sugar:
 ```cpp
 #include <cmath>
 #include "matplotlibcpp.h"
@@ -159,6 +159,36 @@ int main()
 
 ![quiver example](./examples/quiver.png)
 
+When working with 3d functions, you might be interested in 3d plots:
+```cpp
+#include "../matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
+
+int main()
+{
+    std::vector<std::vector<double>> x, y, z;
+    for (double i = -5; i <= 5;  i += 0.25) {
+        std::vector<double> x_row, y_row, z_row;
+        for (double j = -5; j <= 5; j += 0.25) {
+            x_row.push_back(i);
+            y_row.push_back(j);
+            z_row.push_back(::std::sin(::std::hypot(i, j)));
+        }
+        x.push_back(x_row);
+        y.push_back(y_row);
+        z.push_back(z_row);
+    }
+
+    plt::plot_surface(x, y, z);
+    plt::show();
+}
+```
+
+**Result:**
+
+![surface example](./examples/surface.png)
+
 Installation
 ------------
 
@@ -186,6 +216,16 @@ find_package(PythonLibs 2.7)
 target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(myproject ${PYTHON_LIBRARIES})
 ```
+
+# C++11
+
+Currently, c++11 is required to build matplotlib-cpp. The last working commit that did
+not have this requirement was `717e98e752260245407c5329846f5d62605eff08`.
+
+Note that support for c++98 was dropped more or less accidentally, so if you have to work
+with an ancient compiler and still want to enjoy the latest additional features, I'd
+probably merge a PR that restores support.
+
 # Python 3
 
 This library supports both python2 and python3 (although the python3 support is probably far less tested,
