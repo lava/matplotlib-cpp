@@ -32,12 +32,12 @@ fill_inbetween: examples/fill_inbetween.cpp matplotlibcpp.h
 
 fill: examples/fill.cpp matplotlibcpp.h
 	cd examples && g++ fill.cpp -I/usr/include/python2.7 -lpython2.7 -o fill -std=c++11
-	
+
 update: examples/update.cpp matplotlibcpp.h
 	cd examples && g++ update.cpp -I/usr/include/python2.7 -lpython2.7 -o update -std=c++11
 
 imshow: examples/imshow.cpp matplotlibcpp.h
-	cd examples && g++ imshow.cpp -I/usr/include/python2.7 -lpython2.7 -o xkcd -std=c++11
+	cd examples && g++ imshow.cpp -I/usr/include/python2.7 -lpython2.7 -o imshow -std=c++11
 
 clean:
 	rm -f examples/{minimal,basic,modern,animation,nonblock,xkcd,quiver,bar,surface,fill_inbetween,fill,update,imshow}
