@@ -61,6 +61,7 @@ struct _interpreter {
     PyObject *s_python_function_imshow;
     PyObject *s_python_function_scatter;
     PyObject *s_python_function_subplot;
+    PyObject *s_python_function_subplot2grid;
     PyObject *s_python_function_legend;
     PyObject *s_python_function_xlim;
     PyObject *s_python_function_ion;
@@ -193,6 +194,7 @@ private:
         s_python_function_hist = safe_import(pymod,"hist");
         s_python_function_scatter = safe_import(pymod,"scatter");
         s_python_function_subplot = safe_import(pymod, "subplot");
+        s_python_function_subplot2grid = safe_import(pymod, "subplot2grid");
         s_python_function_legend = safe_import(pymod, "legend");
         s_python_function_ylim = safe_import(pymod, "ylim");
         s_python_function_title = safe_import(pymod, "title");
@@ -362,6 +364,9 @@ bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     return res;
 }
 
+// TODO - it should be possible to make this work by implementing
+// a non-numpy alternative for `get_2darray()`.
+#ifndef WITHOUT_NUMPY
 template <typename Numeric>
 void plot_surface(const std::vector<::std::vector<Numeric>> &x,
                   const std::vector<::std::vector<Numeric>> &y,
@@ -453,6 +458,8 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
   Py_DECREF(kwargs);
   if (res) Py_DECREF(res);
 }
+#endif // WITHOUT_NUMPY
+
 
 template<typename Numeric>
 bool stem(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
@@ -1073,7 +1080,6 @@ bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const 
     PyTuple_SetItem(plot_args, 0, xarray);
     PyTuple_SetItem(plot_args, 1, yarray);
     PyTuple_SetItem(plot_args, 2, pystring);
-
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_loglog, plot_args, kwargs);
 
     Py_DECREF(kwargs);
@@ -1375,6 +1381,31 @@ inline void subplot(long nrows, long ncols, long plot_number)
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
     if(!res) throw std::runtime_error("Call to subplot() failed.");
 
+    Py_DECREF(args);
+    Py_DECREF(res);
+}
+
+void subplot2grid(long nrows, long ncols, long rowid=0, long colid=0, long rowspan=1, long colspan=1)
+{
+    PyObject* shape = PyTuple_New(2);
+    PyTuple_SetItem(shape, 0, PyLong_FromLong(nrows));
+    PyTuple_SetItem(shape, 1, PyLong_FromLong(ncols));
+
+    PyObject* loc = PyTuple_New(2);
+    PyTuple_SetItem(loc, 0, PyLong_FromLong(rowid));
+    PyTuple_SetItem(loc, 1, PyLong_FromLong(colid));
+
+    PyObject* args = PyTuple_New(4);
+    PyTuple_SetItem(args, 0, shape);
+    PyTuple_SetItem(args, 1, loc);
+    PyTuple_SetItem(args, 2, PyLong_FromLong(rowspan));
+    PyTuple_SetItem(args, 3, PyLong_FromLong(colspan));
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot2grid, args);
+    if(!res) throw std::runtime_error("Call to subplot2grid() failed.");
+
+    Py_DECREF(shape);
+    Py_DECREF(loc);
     Py_DECREF(args);
     Py_DECREF(res);
 }
