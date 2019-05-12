@@ -14,7 +14,8 @@ WITHOUT_NUMPY   := $(findstring $(CXXFLAGS), WITHOUT_NUMPY)
 
 # Examples requiring numpy support to compile
 EXAMPLES_NUMPY  := surface
-EXAMPLES        := minimal basic modern animation nonblock xkcd quiver bar fill_inbetween fill update subplot2grid \
+EXAMPLES        := minimal basic modern animation nonblock xkcd quiver bar \
+	           fill_inbetween fill update subplot2grid colorbar \
                    $(if WITHOUT_NUMPY,,$(EXAMPLES_NUMPY))
 
 # Prefix every example with 'examples/build/'
