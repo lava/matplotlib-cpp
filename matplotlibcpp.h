@@ -75,6 +75,7 @@ struct _interpreter {
     PyObject *s_python_function_text;
     PyObject *s_python_function_suptitle;
     PyObject *s_python_function_bar;
+    PyObject *s_python_function_colorbar;
     PyObject *s_python_function_subplots_adjust;
 
 
@@ -206,11 +207,11 @@ private:
         s_python_function_text = safe_import(pymod, "text");
         s_python_function_suptitle = safe_import(pymod, "suptitle");
         s_python_function_bar = safe_import(pymod,"bar");
+        s_python_function_colorbar = PyObject_GetAttrString(pymod, "colorbar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
 #ifndef WITHOUT_NUMPY
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
-
         s_python_empty_tuple = PyTuple_New(0);
     }
 
@@ -570,7 +571,7 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 
 #ifndef WITHOUT_NUMPY
     namespace internal {
-        void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords)
+        PyObject* imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords)
         {
             assert(type == NPY_UINT8 || type == NPY_FLOAT);
             assert(colors == 1 || colors == 3 || colors == 4);
@@ -595,17 +596,18 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
             if (!res)
                 throw std::runtime_error("Call to imshow() failed");
             Py_DECREF(res);
+            return res;
         }
     }
 
-    void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
+    PyObject* imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
     {
-        internal::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords);
+        return internal::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords);
     }
 
-    void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
+    PyObject* imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {})
     {
-        internal::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords);
+        return internal::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords);
     }
 
 #ifdef WITH_OPENCV
@@ -1089,6 +1091,27 @@ void text(Numeric x, Numeric y, const std::string& s = "")
     if(!res) throw std::runtime_error("Call to text() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(res);
+}
+
+void colorbar(PyObject* mappable = NULL, const std::map<std::string, float>& keywords = {})
+{
+    if (mappable == NULL)
+        throw std::runtime_error("Must call colorbar with PyObject* returned from an image, contour, surface, etc.");
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, mappable);
+
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, float>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyFloat_FromDouble(it->second));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_colorbar, args, kwargs);
+    if(!res) throw std::runtime_error("Call to colorbar() failed.");
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
