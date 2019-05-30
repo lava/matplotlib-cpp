@@ -1116,6 +1116,9 @@ inline bool fignum_exists(long number)
 
 inline void figure_size(size_t w, size_t h)
 {
+    // Make sure interpreter is initialised
+    detail::_interpreter::get();
+
     const size_t dpi = 100;
     PyObject* size = PyTuple_New(2);
     PyTuple_SetItem(size, 0, PyFloat_FromDouble((double)w / dpi));
