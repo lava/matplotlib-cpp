@@ -666,35 +666,56 @@ bool scatter(const std::vector<NumericX>& x,
     return res;
 }
 
-template< typename Numeric>
-bool bar(const std::vector<Numeric>& y, std::string ec = "black", std::string ls = "-", double lw = 1.0,
-         __attribute__((unused)) const std::map<std::string, std::string>& keywords = {})
-{
-    PyObject* yarray = get_array(y);
+template <typename Numeric>
+bool bar(const std::vector<Numeric> &               x,
+         const std::vector<Numeric> &               y,
+         std::string                                ec       = "black",
+         std::string                                ls       = "-",
+         double                                     lw       = 1.0,
+         const std::map<std::string, std::string> & keywords = {}) {
+  PyObject * xarray = get_array(x);
+  PyObject * yarray = get_array(y);
 
-    std::vector<int> x;
-    for (std::size_t i = 0; i < y.size(); i++)
-        x.push_back(i);
+  PyObject * kwargs = PyDict_New();
 
-    PyObject* xarray = get_array(x);
+  PyDict_SetItemString(kwargs, "ec", PyString_FromString(ec.c_str()));
+  PyDict_SetItemString(kwargs, "ls", PyString_FromString(ls.c_str()));
+  PyDict_SetItemString(kwargs, "lw", PyFloat_FromDouble(lw));
 
-    PyObject* kwargs = PyDict_New();
+  for (std::map<std::string, std::string>::const_iterator it =
+         keywords.begin();
+       it != keywords.end();
+       ++it) {
+    PyDict_SetItemString(
+      kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+  }
 
-    PyDict_SetItemString(kwargs, "ec", PyString_FromString(ec.c_str()));
-    PyDict_SetItemString(kwargs, "ls", PyString_FromString(ls.c_str()));
-    PyDict_SetItemString(kwargs, "lw", PyFloat_FromDouble(lw));
+  PyObject * plot_args = PyTuple_New(2);
+  PyTuple_SetItem(plot_args, 0, xarray);
+  PyTuple_SetItem(plot_args, 1, yarray);
 
-    PyObject* plot_args = PyTuple_New(2);
-    PyTuple_SetItem(plot_args, 0, xarray);
-    PyTuple_SetItem(plot_args, 1, yarray);
+  PyObject * res = PyObject_Call(
+    detail::_interpreter::get().s_python_function_bar, plot_args, kwargs);
 
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_bar, plot_args, kwargs);
+  Py_DECREF(plot_args);
+  Py_DECREF(kwargs);
+  if (res) Py_DECREF(res);
 
-    Py_DECREF(plot_args);
-    Py_DECREF(kwargs);
-    if(res) Py_DECREF(res);
+  return res;
+}
 
-    return res;
+template <typename Numeric>
+bool bar(const std::vector<Numeric> &               y,
+         std::string                                ec       = "black",
+         std::string                                ls       = "-",
+         double                                     lw       = 1.0,
+         const std::map<std::string, std::string> & keywords = {}) {
+  using T = typename std::remove_reference<decltype(y)>::type::value_type;
+
+  std::vector<T> x;
+  for (std::size_t i = 0; i < y.size(); i++) { x.push_back(i); }
+
+  return bar(x, y, ec, ls, lw, keywords);
 }
 
 inline bool subplots_adjust(const std::map<std::string, double>& keywords = {})
