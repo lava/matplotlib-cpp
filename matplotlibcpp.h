@@ -668,12 +668,12 @@ bool scatter(const std::vector<NumericX>& x,
 
 template< typename Numeric>
 bool bar(const std::vector<Numeric>& y, std::string ec = "black", std::string ls = "-", double lw = 1.0,
-         const std::map<std::string, std::string>& keywords = {})
+         __attribute__((unused)) const std::map<std::string, std::string>& keywords = {})
 {
     PyObject* yarray = get_array(y);
 
     std::vector<int> x;
-    for (int i = 0; i < y.size(); i++)
+    for (std::size_t i = 0; i < y.size(); i++)
         x.push_back(i);
 
     PyObject* xarray = get_array(x);
