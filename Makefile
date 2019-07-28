@@ -21,5 +21,8 @@ EXECUTABLES := $(foreach exec,$(basename $(SOURCES)),$(exec))
 
 examples: $(EXECUTABLES)
 
+$(EXECUTABLES): %: %.cpp
+	$(CXX) -o $@ $< $(CXXFLAGS) $(LDFLAGS)
+
 clean:
 	rm -f ${EXECUTABLES}
