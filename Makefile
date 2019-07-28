@@ -1,43 +1,25 @@
-examples: minimal basic modern animation nonblock xkcd quiver bar surface fill_inbetween fill update imshow
 
-minimal: examples/minimal.cpp matplotlibcpp.h
-	cd examples && g++ -DWITHOUT_NUMPY minimal.cpp -I/usr/include/python2.7 -lpython2.7 -o minimal -std=c++11
+# Use C++11
+CXXFLAGS += -std=c++11
 
-basic: examples/basic.cpp matplotlibcpp.h
-	cd examples && g++ basic.cpp -I/usr/include/python2.7 -lpython2.7 -o basic -std=c++11
+# Default to using system's default version of python
+PYTHON_BIN     ?= python
+PYTHON_CONFIG  := $(PYTHON_BIN)-config
+PYTHON_INCLUDE ?= $(shell $(PYTHON_CONFIG) --includes)
+CXXFLAGS       += $(PYTHON_INCLUDE)
+LDFLAGS        += $(shell $(PYTHON_CONFIG) --libs)
 
-modern: examples/modern.cpp matplotlibcpp.h
-	cd examples && g++ modern.cpp -I/usr/include/python2.7 -lpython2.7 -o modern -std=c++11
+# Either finds numpy or set -DWITHOUT_NUMPY
+CURRENT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+CXXFLAGS    += $(shell $(PYTHON_BIN) $(CURRENT_DIR)/numpy_flags.py)
 
-animation: examples/animation.cpp matplotlibcpp.h
-	cd examples && g++ animation.cpp -I/usr/include/python2.7 -lpython2.7 -o animation -std=c++11
+# Assume every *.cpp file is a separate example
+SOURCES     ?= $(wildcard examples/*.cpp)
+EXECUTABLES := $(foreach exec,$(basename $(SOURCES)),$(exec))
 
-nonblock: examples/nonblock.cpp matplotlibcpp.h
-	cd examples && g++ nonblock.cpp -I/usr/include/python2.7 -lpython2.7 -o nonblock -std=c++11
+.PHONY: examples
 
-quiver: examples/quiver.cpp matplotlibcpp.h
-	cd examples && g++ quiver.cpp -I/usr/include/python2.7 -lpython2.7 -o quiver -std=c++11
-
-xkcd: examples/xkcd.cpp matplotlibcpp.h
-	cd examples && g++ xkcd.cpp -I/usr/include/python2.7 -lpython2.7 -o xkcd -std=c++11
-
-bar: examples/bar.cpp matplotlibcpp.h
-	cd examples && g++ bar.cpp -I/usr/include/python2.7 -lpython2.7 -o bar -std=c++11
-
-surface: examples/surface.cpp matplotlibcpp.h
-	cd examples && g++ surface.cpp -I/usr/include/python2.7 -lpython2.7 -o surface -std=c++11
-
-fill_inbetween: examples/fill_inbetween.cpp matplotlibcpp.h
-	cd examples && g++ fill_inbetween.cpp -I/usr/include/python2.7 -lpython2.7 -o fill_inbetween -std=c++11
-
-fill: examples/fill.cpp matplotlibcpp.h
-	cd examples && g++ fill.cpp -I/usr/include/python2.7 -lpython2.7 -o fill -std=c++11
-
-update: examples/update.cpp matplotlibcpp.h
-	cd examples && g++ update.cpp -I/usr/include/python2.7 -lpython2.7 -o update -std=c++11
-
-imshow: examples/imshow.cpp matplotlibcpp.h
-	cd examples && g++ imshow.cpp -I/usr/include/python2.7 -lpython2.7 -o imshow -std=c++11
+examples: $(EXECUTABLES)
 
 clean:
-	rm -f examples/{minimal,basic,modern,animation,nonblock,xkcd,quiver,bar,surface,fill_inbetween,fill,update,imshow}
+	rm -f ${EXECUTABLES}
