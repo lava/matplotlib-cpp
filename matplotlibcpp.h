@@ -17,8 +17,17 @@
 #  include <numpy/arrayobject.h>
 
 #  ifdef WITH_OPENCV
-#  include <opencv2/opencv.hpp>
+#    include <opencv2/opencv.hpp>
 #  endif // WITH_OPENCV
+
+/*
+ * A bunch of constants were removed in OpenCV 4 in favour of enum classes, so
+ * define the ones we need here.
+ */
+#  if CV_MAJOR_VERSION > 3
+#    define CV_BGR2RGB cv::COLOR_BGR2RGB
+#    define CV_BGRA2RGBA cv::COLOR_BGRA2RGBA
+#  endif
 #endif // WITHOUT_NUMPY
 
 #if PY_MAJOR_VERSION >= 3
