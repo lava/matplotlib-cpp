@@ -10,7 +10,11 @@
 #include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
 
+#ifdef __APPLE__ 
+#include <Python/Python.h> 
+#else 
 #include <Python.h>
+#endif
 
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
