@@ -1,4 +1,3 @@
-
 # Use C++11
 CXXFLAGS += -std=c++11
 
@@ -10,19 +9,25 @@ CXXFLAGS       += $(PYTHON_INCLUDE)
 LDFLAGS        += $(shell $(PYTHON_CONFIG) --libs)
 
 # Either finds numpy or set -DWITHOUT_NUMPY
-CURRENT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-CXXFLAGS    += $(shell $(PYTHON_BIN) $(CURRENT_DIR)/numpy_flags.py)
+CXXFLAGS        += $(shell $(PYTHON_BIN) $(CURDIR)/numpy_flags.py)
+WITHOUT_NUMPY   := $(findstring $(CXXFLAGS), WITHOUT_NUMPY)
 
-# Assume every *.cpp file is a separate example
-SOURCES     ?= $(wildcard examples/*.cpp)
-EXECUTABLES := $(foreach exec,$(basename $(SOURCES)),$(exec))
+# Examples requiring numpy support to compile
+EXAMPLES_NUMPY  := surface
+EXAMPLES        := minimal basic modern animation nonblock xkcd quiver bar fill_inbetween fill update subplot2grid \
+                   $(if WITHOUT_NUMPY,,$(EXAMPLES_NUMPY))
+
+# Prefix every example with 'examples/build/'
+EXAMPLE_TARGETS := $(patsubst %,examples/build/%,$(EXAMPLES))
 
 .PHONY: examples
 
-examples: $(EXECUTABLES)
+examples: $(EXAMPLE_TARGETS)
 
-$(EXECUTABLES): %: %.cpp
+# Assume every *.cpp file is a separate example
+$(EXAMPLE_TARGETS): examples/build/%: examples/%.cpp
+	mkdir -p examples/build
 	$(CXX) -o $@ $< $(CXXFLAGS) $(LDFLAGS)
 
 clean:
-	rm -f ${EXECUTABLES}
+	rm -f ${EXAMPLE_TARGETS}
