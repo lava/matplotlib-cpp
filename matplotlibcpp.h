@@ -1385,7 +1385,7 @@ inline void subplot(long nrows, long ncols, long plot_number)
     Py_DECREF(res);
 }
 
-void subplot2grid(long nrows, long ncols, long rowid=0, long colid=0, long rowspan=1, long colspan=1)
+inline void subplot2grid(long nrows, long ncols, long rowid=0, long colid=0, long rowspan=1, long colspan=1)
 {
     PyObject* shape = PyTuple_New(2);
     PyTuple_SetItem(shape, 0, PyLong_FromLong(nrows));
