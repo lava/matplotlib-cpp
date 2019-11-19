@@ -204,6 +204,7 @@ private:
         s_python_function_ylabel = safe_import(pymod, "ylabel");
         s_python_function_xticks = safe_import(pymod, "xticks");
         s_python_function_yticks = safe_import(pymod, "yticks");
+    	s_python_function_tick_params = safe_import(pymod, "tick_params");
         s_python_function_grid = safe_import(pymod, "grid");
         s_python_function_xlim = safe_import(pymod, "xlim");
         s_python_function_ion = safe_import(pymod, "ion");
