@@ -659,7 +659,8 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 template<typename NumericX, typename NumericY>
 bool scatter(const std::vector<NumericX>& x,
              const std::vector<NumericY>& y,
-             const double s=1.0) // The marker size in points**2
+             const double s=1.0, // The marker size in points**2
+             const std::unordered_map<std::string, std::string> & keywords = {})
 {
     assert(x.size() == y.size());
 
@@ -668,6 +669,10 @@ bool scatter(const std::vector<NumericX>& x,
 
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
+    for (const auto& it : keywords)
+    {
+        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+    }
 
     PyObject* plot_args = PyTuple_New(2);
     PyTuple_SetItem(plot_args, 0, xarray);
