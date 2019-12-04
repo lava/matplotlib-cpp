@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
+#include <unordered_map>
 
 #include <Python.h>
 
