@@ -212,7 +212,7 @@ matplotlib-cpp.
 If you prefer to use CMake as build system, you will want to add something like this to your
 CMakeLists.txt:
 
-**Recommended way(since CMake 3.12):**
+**Recommended way (since CMake 3.12):**
 
 It's easy to use cmake official [docs](https://cmake.org/cmake/help/git-stage/module/FindPython2.html#module:FindPython2) to find Python 2(or 3) interpreter, compiler and development environment (include directories and libraries).
 
@@ -224,7 +224,7 @@ target_include_directories(myproject PRIVATE ${Python2_INCLUDE_DIRS} ${Python2_N
 target_link_libraries(myproject Python2::Python Python2::NumPy)
 ```
 
-**Legacy way(unrecommended):**
+**Alternative way (for CMake <= 3.11):**
 
 ```cmake
 find_package(PythonLibs 2.7)
