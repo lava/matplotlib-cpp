@@ -1101,7 +1101,7 @@ template<typename Numeric>
 bool plot(const std::vector<Numeric>& y, const std::string& format = "")
 {
     std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = (double)i;
     return plot(x,y,format);
 }
 
@@ -1109,7 +1109,7 @@ template<typename Numeric>
 bool plot(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords)
 {
     std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = (double)i;
     return plot(x,y,keywords);
 }
 
@@ -1117,7 +1117,7 @@ template<typename Numeric>
 bool stem(const std::vector<Numeric>& y, const std::string& format = "")
 {
     std::vector<Numeric> x(y.size());
-    for (size_t i = 0; i < x.size(); ++i) x.at(i) = i;
+    for (size_t i = 0; i < x.size(); ++i) x.at(i) = (double)i;
     return stem(x, y, format);
 }
 
@@ -1406,9 +1406,9 @@ inline void subplot(long nrows, long ncols, long plot_number)
 {
     // construct positional args
     PyObject* args = PyTuple_New(3);
-    PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
-    PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
-    PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble((double)nrows));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble((double)ncols));
+    PyTuple_SetItem(args, 2, PyFloat_FromDouble((double)plot_number));
 
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
     if(!res) throw std::runtime_error("Call to subplot() failed.");
