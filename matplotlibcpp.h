@@ -70,6 +70,7 @@ struct _interpreter {
     PyObject *s_python_function_ylim;
     PyObject *s_python_function_title;
     PyObject *s_python_function_axis;
+    PyObject *s_python_function_axvline;
     PyObject *s_python_function_xlabel;
     PyObject *s_python_function_ylabel;
     PyObject *s_python_function_xticks;
@@ -201,6 +202,7 @@ private:
         s_python_function_ylim = safe_import(pymod, "ylim");
         s_python_function_title = safe_import(pymod, "title");
         s_python_function_axis = safe_import(pymod, "axis");
+        s_python_function_axvline = safe_import(pymod, "axvline");
         s_python_function_xlabel = safe_import(pymod, "xlabel");
         s_python_function_ylabel = safe_import(pymod, "ylabel");
         s_python_function_xticks = safe_import(pymod, "xticks");
@@ -1384,21 +1386,21 @@ inline void tick_params(const std::map<std::string, std::string>& keywords, cons
   PyObject* args;
   args = PyTuple_New(1);
   PyTuple_SetItem(args, 0, PyString_FromString(axis.c_str()));
-  
+
   // construct keyword args
   PyObject* kwargs = PyDict_New();
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
   {
     PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
   }
-  
-  
+
+
   PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_tick_params, args, kwargs);
-  
+
   Py_DECREF(args);
   Py_DECREF(kwargs);
   if (!res) throw std::runtime_error("Call to tick_params() failed");
-  
+
   Py_DECREF(res);
 }
 
@@ -1491,6 +1493,29 @@ inline void axis(const std::string &axisstr)
 
     Py_DECREF(args);
     Py_DECREF(res);
+}
+
+void axvline(double x, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
+{
+    // construct positional args
+    PyObject* args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(x));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(ymin));
+    PyTuple_SetItem(args, 2, PyFloat_FromDouble(ymax));
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axvline, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(res) Py_DECREF(res);
 }
 
 inline void xlabel(const std::string &str, const std::map<std::string, std::string> &keywords = {})
