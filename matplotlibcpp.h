@@ -61,6 +61,7 @@ struct _interpreter {
     PyObject *s_python_function_hist;
     PyObject *s_python_function_imshow;
     PyObject *s_python_function_scatter;
+    PyObject *s_python_function_boxplot;
     PyObject *s_python_function_subplot;
     PyObject *s_python_function_subplot2grid;
     PyObject *s_python_function_legend;
@@ -196,6 +197,7 @@ private:
         s_python_function_fill_between = safe_import(pymod, "fill_between");
         s_python_function_hist = safe_import(pymod,"hist");
         s_python_function_scatter = safe_import(pymod,"scatter");
+        s_python_function_boxplot = safe_import(pymod,"boxplot");
         s_python_function_subplot = safe_import(pymod, "subplot");
         s_python_function_subplot2grid = safe_import(pymod, "subplot2grid");
         s_python_function_legend = safe_import(pymod, "legend");
@@ -323,6 +325,27 @@ PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
     }
 
     return reinterpret_cast<PyObject *>(varray);
+}
+
+// sometimes, for labels and such, we need string arrays
+PyObject * get_array(const std::vector<std::string>& strings)
+{
+  PyObject* list = PyList_New(strings.size());
+  for (std::size_t i = 0; i < strings.size(); ++i) {
+    PyList_SetItem(list, i, PyString_FromString(strings[i].c_str()));
+  }
+  return list;
+}
+
+// not all matplotlib need 2d arrays, some prefer lists of lists
+template<typename Numeric>
+PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
+{
+  PyObject* listlist = PyList_New(ll.size());
+  for (std::size_t i = 0; i < ll.size(); ++i) {
+    PyList_SetItem(listlist, i, get_array(ll[i]));
+  }
+  return listlist;
 }
 
 #else // fallback if we don't have numpy: copy every element of the given vector
@@ -687,6 +710,62 @@ bool scatter(const std::vector<NumericX>& x,
 
     Py_DECREF(plot_args);
     Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename Numeric>
+bool boxplot(const std::vector<std::vector<Numeric>>& data,
+             const std::vector<std::string>& labels = {},
+             const std::unordered_map<std::string, std::string> & keywords = {})
+{
+    PyObject* listlist = get_listlist(data);
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, listlist);
+
+    PyObject* kwargs = PyDict_New();
+
+    // kwargs needs the labels, if there are (the correct number of) labels
+    if (!labels.empty() && labels.size() == data.size()) {
+        PyDict_SetItemString(kwargs, "labels", get_array(labels));
+    }
+
+    // take care of the remaining keywords
+    for (const auto& it : keywords)
+    {
+        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_boxplot, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename Numeric>
+bool boxplot(const std::vector<Numeric>& data,
+             const std::unordered_map<std::string, std::string> & keywords = {})
+{
+    PyObject* vector = get_array(data);
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, vector);
+
+    PyObject* kwargs = PyDict_New();
+    for (const auto& it : keywords)
+    {
+        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_boxplot, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
     if(res) Py_DECREF(res);
 
     return res;
