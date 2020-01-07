@@ -273,7 +273,6 @@ inline bool annotate(std::string annotation, double x, double y) {
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
-
   if (res) { Py_DECREF(res); }
 
   return res;
@@ -1182,12 +1181,8 @@ bool errorbar(const std::vector<NumericX> &              x,
 
   Py_DECREF(kwargs);
   Py_DECREF(plot_args);
-
-  if (res) {
-    Py_DECREF(res);
-  } else {
-    throw std::runtime_error("Call to errorbar() failed.");
-  }
+  if (!res) { throw std::runtime_error("Call to errorbar() failed."); }
+  Py_DECREF(res);
 
   return res;
 }
@@ -1369,9 +1364,9 @@ void text(Numeric x, Numeric y, const std::string & s = "") {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_text, args);
-  if (!res) { throw std::runtime_error("Call to text() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to text() failed."); }
   Py_DECREF(res);
 }
 
@@ -1395,8 +1390,6 @@ inline long figure(long number = -1) {
     Py_DECREF(args);
   }
 
-  if (!res) { throw std::runtime_error("Call to figure() failed."); }
-
   PyObject * num = PyObject_GetAttrString(res, "number");
   if (!num) {
     throw std::runtime_error(
@@ -1406,6 +1399,7 @@ inline long figure(long number = -1) {
   const long figureNumber = PyLong_AsLong(num);
 
   Py_DECREF(num);
+  if (!res) { throw std::runtime_error("Call to figure() failed."); }
   Py_DECREF(res);
 
   return figureNumber;
@@ -1420,12 +1414,12 @@ inline bool fignum_exists(long number) {
   PyTuple_SetItem(args, 0, PyLong_FromLong(number));
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_fignum_exists, args);
-  if (!res) { throw std::runtime_error("Call to fignum_exists() failed."); }
 
   bool ret = PyObject_IsTrue(res);
 
-  Py_DECREF(res);
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to fignum_exists() failed."); }
+  Py_DECREF(res);
 
   return ret;
 }
@@ -1450,7 +1444,6 @@ inline void figure_size(size_t w, size_t h) {
                   kwargs);
 
   Py_DECREF(kwargs);
-
   if (!res) { throw std::runtime_error("Call to figure_size() failed."); }
   Py_DECREF(res);
 }
@@ -1476,9 +1469,9 @@ void ylim(Numeric left, Numeric right) {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_ylim, args);
-  if (!res) { throw std::runtime_error("Call to ylim() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to ylim() failed."); }
   Py_DECREF(res);
 }
 
@@ -1494,9 +1487,9 @@ void xlim(Numeric left, Numeric right) {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_xlim, args);
-  if (!res) { throw std::runtime_error("Call to xlim() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to xlim() failed."); }
   Py_DECREF(res);
 }
 
@@ -1514,8 +1507,8 @@ inline double * xlim() {
   arr[1]       = PyFloat_AsDouble(right);
 
   if (!res) { throw std::runtime_error("Call to xlim() failed."); }
-
   Py_DECREF(res);
+
   return arr;
 }
 
@@ -1533,8 +1526,8 @@ inline double * ylim() {
   arr[1]       = PyFloat_AsDouble(right);
 
   if (!res) { throw std::runtime_error("Call to ylim() failed."); }
-
   Py_DECREF(res);
+
   return arr;
 }
 
@@ -1579,7 +1572,6 @@ inline void xticks(const std::vector<Numeric> &               ticks,
   Py_DECREF(args);
   Py_DECREF(kwargs);
   if (!res) { throw std::runtime_error("Call to xticks() failed"); }
-
   Py_DECREF(res);
 }
 
@@ -1631,7 +1623,6 @@ inline void yticks(const std::vector<Numeric> &               ticks,
   Py_DECREF(args);
   Py_DECREF(kwargs);
   if (!res) { throw std::runtime_error("Call to yticks() failed"); }
-
   Py_DECREF(res);
 }
 
@@ -1665,23 +1656,33 @@ inline void tick_params(const std::map<std::string, std::string> & keywords,
   Py_DECREF(args);
   Py_DECREF(kwargs);
   if (!res) { throw std::runtime_error("Call to tick_params() failed"); }
-
   Py_DECREF(res);
 }
 
 
-inline void subplot(long nrows, long ncols, long plot_number) {
+inline void subplot(long                                       nrows,
+                    long                                       ncols,
+                    long                                       plot_number,
+                    const std::map<std::string, std::string> & keywords = {}) {
   // construct positional args
   PyObject * args = PyTuple_New(3);
   PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
   PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
   PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
 
-  PyObject * res = PyObject_CallObject(
-    detail::_interpreter::get().s_python_function_subplot, args);
-  if (!res) { throw std::runtime_error("Call to subplot() failed."); }
+  PyObject * kwargs = PyDict_New();
+  for (const auto & keyword : keywords) {
+    PyDict_SetItemString(kwargs,
+                         keyword.first.c_str(),
+                         PyString_FromString(keyword.second.c_str()));
+  }
+
+  PyObject * res = PyObject_Call(
+    detail::_interpreter::get().s_python_function_subplot, args, kwargs);
 
   Py_DECREF(args);
+  Py_DECREF(kwargs);
+  if (!res) { throw std::runtime_error("Call to subplot() failed."); }
   Py_DECREF(res);
 }
 
@@ -1708,11 +1709,11 @@ inline void subplot2grid(long nrows,
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_subplot2grid, args);
-  if (!res) { throw std::runtime_error("Call to subplot2grid() failed."); }
 
   Py_DECREF(shape);
   Py_DECREF(loc);
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to subplot2grid() failed."); }
   Py_DECREF(res);
 }
 
@@ -1732,10 +1733,10 @@ inline void title(const std::string &                        titlestr,
 
   PyObject * res = PyObject_Call(
     detail::_interpreter::get().s_python_function_title, args, kwargs);
-  if (!res) { throw std::runtime_error("Call to title() failed."); }
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
+  if (!res) { throw std::runtime_error("Call to title() failed."); }
   Py_DECREF(res);
 }
 
@@ -1756,10 +1757,10 @@ inline void suptitle(
 
   PyObject * res = PyObject_Call(
     detail::_interpreter::get().s_python_function_suptitle, args, kwargs);
-  if (!res) { throw std::runtime_error("Call to suptitle() failed."); }
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
+  if (!res) { throw std::runtime_error("Call to suptitle() failed."); }
   Py_DECREF(res);
 }
 
@@ -1771,9 +1772,9 @@ inline void axis(const std::string & axisstr) {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_axis, args);
-  if (!res) { throw std::runtime_error("Call to title() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to axis() failed."); }
   Py_DECREF(res);
 }
 
@@ -1801,8 +1802,8 @@ void axvline(double                                     x,
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
-
-  if (res) { Py_DECREF(res); }
+  if (!res) { throw std::runtime_error("Call to axvline() failed."); }
+  Py_DECREF(res);
 }
 
 
@@ -1821,10 +1822,10 @@ inline void xlabel(const std::string &                        str,
 
   PyObject * res = PyObject_Call(
     detail::_interpreter::get().s_python_function_xlabel, args, kwargs);
-  if (!res) { throw std::runtime_error("Call to xlabel() failed."); }
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
+  if (!res) { throw std::runtime_error("Call to xlabel() failed."); }
   Py_DECREF(res);
 }
 
@@ -1844,10 +1845,10 @@ inline void ylabel(const std::string &                        str,
 
   PyObject * res = PyObject_Call(
     detail::_interpreter::get().s_python_function_ylabel, args, kwargs);
-  if (!res) { throw std::runtime_error("Call to ylabel() failed."); }
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
+  if (!res) { throw std::runtime_error("Call to ylabel() failed."); }
   Py_DECREF(res);
 }
 
@@ -1861,9 +1862,9 @@ inline void grid(bool flag) {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_grid, args);
-  if (!res) { throw std::runtime_error("Call to grid() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to grid() failed."); }
   Py_DECREF(res);
 }
 
@@ -1884,7 +1885,6 @@ inline void show(const bool block = true) {
   }
 
   if (!res) { throw std::runtime_error("Call to show() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -1895,7 +1895,6 @@ inline void close() {
                         detail::_interpreter::get().s_python_empty_tuple);
 
   if (!res) { throw std::runtime_error("Call to close() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -1909,9 +1908,7 @@ inline void xkcd() {
                       kwargs);
 
   Py_DECREF(kwargs);
-
   if (!res) { throw std::runtime_error("Call to show() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -1922,7 +1919,6 @@ inline void draw() {
                         detail::_interpreter::get().s_python_empty_tuple);
 
   if (!res) { throw std::runtime_error("Call to draw() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -1934,9 +1930,9 @@ inline void pause(Numeric interval) {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_pause, args);
-  if (!res) { throw std::runtime_error("Call to pause() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to pause() failed."); }
   Py_DECREF(res);
 }
 
@@ -1949,9 +1945,9 @@ inline void save(const std::string & filename) {
 
   PyObject * res = PyObject_CallObject(
     detail::_interpreter::get().s_python_function_save, args);
-  if (!res) { throw std::runtime_error("Call to save() failed."); }
 
   Py_DECREF(args);
+  if (!res) { throw std::runtime_error("Call to save() failed."); }
   Py_DECREF(res);
 }
 
@@ -1962,7 +1958,6 @@ inline void clf() {
                         detail::_interpreter::get().s_python_empty_tuple);
 
   if (!res) { throw std::runtime_error("Call to clf() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -1973,7 +1968,6 @@ inline void ion() {
                         detail::_interpreter::get().s_python_empty_tuple);
 
   if (!res) { throw std::runtime_error("Call to ion() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -1995,10 +1989,6 @@ inline std::vector<std::array<double, 2>> ginput(
   PyObject * res = PyObject_Call(
     detail::_interpreter::get().s_python_function_ginput, args, kwargs);
 
-  Py_DECREF(kwargs);
-  Py_DECREF(args);
-  if (!res) { throw std::runtime_error("Call to ginput() failed."); }
-
   const size_t                       len = PyList_Size(res);
   std::vector<std::array<double, 2>> out;
   out.reserve(len);
@@ -2009,6 +1999,10 @@ inline std::vector<std::array<double, 2>> ginput(
     position[1] = PyFloat_AsDouble(PyTuple_GetItem(current, 1));
     out.push_back(position);
   }
+
+  Py_DECREF(args);
+  Py_DECREF(kwargs);
+  if (!res) { throw std::runtime_error("Call to ginput() failed."); }
   Py_DECREF(res);
 
   return out;
@@ -2021,7 +2015,6 @@ inline void tight_layout() {
     detail::_interpreter::get().s_python_empty_tuple);
 
   if (!res) { throw std::runtime_error("Call to tight_layout() failed."); }
-
   Py_DECREF(res);
 }
 
@@ -2203,8 +2196,9 @@ public:
     assert(x.size() == y.size());
 
     PyObject * kwargs = PyDict_New();
-    if (name != "")
+    if (name != "") {
       PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+    }
 
     PyObject * xarray = get_array(x);
     PyObject * yarray = get_array(y);
