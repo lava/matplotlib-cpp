@@ -815,6 +815,43 @@ bool scatter(
 }
 
 
+template <typename NumericX, typename NumericY, typename NumericZ>
+bool scatter(
+  const std::vector<NumericX> & x,
+  const std::vector<NumericY> & y,
+  const std::vector<NumericZ> & z,
+  const double                  s = 1.0,  // The marker size in points**2
+  const std::unordered_map<std::string, std::string> & keywords = {}) {
+  assert(x.size() == y.size());
+
+  PyObject * xarray = get_array(x);
+  PyObject * yarray = get_array(y);
+  PyObject * zarray = get_array(z);
+
+  PyObject * plot_args = PyTuple_New(3);
+  PyTuple_SetItem(plot_args, 0, xarray);
+  PyTuple_SetItem(plot_args, 1, yarray);
+  PyTuple_SetItem(plot_args, 2, zarray);
+
+  PyObject * kwargs = PyDict_New();
+  PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
+  for (const auto & keyword : keywords) {
+    PyDict_SetItemString(kwargs,
+                         keyword.first.c_str(),
+                         PyString_FromString(keyword.second.c_str()));
+  }
+
+  PyObject * res = PyObject_Call(
+    detail::_interpreter::get().s_python_function_scatter, plot_args, kwargs);
+
+  Py_DECREF(plot_args);
+  Py_DECREF(kwargs);
+  if (res) { Py_DECREF(res); }
+
+  return res;
+}
+
+
 template <typename Numeric>
 bool boxplot(
   const std::vector<std::vector<Numeric>> &            data,
