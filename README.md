@@ -207,6 +207,17 @@ anywhere.
 Since a python interpreter is opened internally, it is necessary to link against `libpython2.7` in order to use
 matplotlib-cpp.
 
+You can download and install matplotlib-cpp using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    vcpkg install matplotlib-cpp
+  
+The matplotlib-cpp port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
+
 # CMake
 
 If you prefer to use CMake as build system, you will want to add something like this to your
