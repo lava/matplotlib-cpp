@@ -32,3 +32,6 @@ $(EXAMPLE_TARGETS): examples/build/%: examples/%.cpp
 
 clean:
 	rm -f ${EXAMPLE_TARGETS}
+
+docker_build:
+	docker build . -t matplotlibcpp
