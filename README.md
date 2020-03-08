@@ -30,7 +30,7 @@ A more comprehensive example:
 
 namespace plt = matplotlibcpp;
 
-int main() 
+int main()
 {
     // Prepare data.
     int n = 5000;
@@ -73,26 +73,26 @@ Alternatively, matplotlib-cpp also supports some C++11-powered syntactic sugar:
 using namespace std;
 namespace plt = matplotlibcpp;
 
-int main() 
-{    
+int main()
+{
     // Prepare data.
     int n = 5000; // number of data points
-    vector<double> x(n),y(n); 
+    vector<double> x(n),y(n);
     for(int i=0; i<n; ++i) {
         double t = 2*M_PI*i/n;
         x.at(i) = 16*sin(t)*sin(t)*sin(t);
         y.at(i) = 13*cos(t) - 5*cos(2*t) - 2*cos(3*t) - cos(4*t);
     }
 
-    // plot() takes an arbitrary number of (x,y,format)-triples. 
+    // plot() takes an arbitrary number of (x,y,format)-triples.
     // x must be iterable (that is, anything providing begin(x) and end(x)),
-    // y must either be callable (providing operator() const) or iterable. 
+    // y must either be callable (providing operator() const) or iterable.
     plt::plot(x, y, "r-", x, [](double d) { return 12.5+abs(sin(d)); }, "k-");
 
 
     // show plots
     plt::show();
-} 
+}
 ```
     g++ modern.cpp -std=c++11 -I/usr/include/python2.7 -lpython
 
@@ -256,10 +256,10 @@ The same technique can be used for linking against a custom build of python
 
 Why?
 ----
-I initially started this library during my diploma thesis. The usual approach of 
+I initially started this library during my diploma thesis. The usual approach of
 writing data from the c++ algorithm to a file and afterwards parsing and plotting
 it in python using matplotlib proved insufficient: Keeping the algorithm
-and plotting code in sync requires a lot of effort when the C++ code frequently and substantially 
+and plotting code in sync requires a lot of effort when the C++ code frequently and substantially
 changes. Additionally, the python yaml parser was not able to cope with files that
 exceed a few hundred megabytes in size.
 
@@ -290,4 +290,4 @@ Todo/Issues/Wishlist
 in "".'
 
 * MacOS: `Unable to import matplotlib.pyplot`. Cause: In mac os image rendering back end of matplotlib (what-is-a-backend to render using the API of Cocoa by default). There is Qt4Agg and GTKAgg and as a back-end is not the default. Set the back end of macosx that is differ compare with other windows or linux os.
-Solution is discribed [here](https://stackoverflow.com/questions/21784641/installation-issue-with-matplotlib-python?noredirect=1&lq=1), additional information can be found there too(see links in answers).
+Solution is described [here](https://stackoverflow.com/questions/21784641/installation-issue-with-matplotlib-python?noredirect=1&lq=1), additional information can be found there too(see links in answers).
