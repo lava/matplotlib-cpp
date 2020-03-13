@@ -10,7 +10,7 @@ int main() {
     std::vector<double> x(t.size());
 
     for(size_t i = 0; i < t.size(); i++) {
-        t[i] = i / 100.0;
+        t[i] = (double)i / 100.0;
         x[i] = sin(2.0 * M_PI * 1.0 * t[i]);
     }
 

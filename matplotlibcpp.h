@@ -737,7 +737,7 @@ bool bar(const std::vector<Numeric> &               y,
   using T = typename std::remove_reference<decltype(y)>::type::value_type;
 
   std::vector<T> x;
-  for (std::size_t i = 0; i < y.size(); i++) { x.push_back(i); }
+  for (std::size_t i = 0; i < y.size(); i++) { x.push_back((T)i); }
 
   return bar(x, y, ec, ls, lw, keywords);
 }
@@ -1101,7 +1101,7 @@ template<typename Numeric>
 bool plot(const std::vector<Numeric>& y, const std::string& format = "")
 {
     std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = (double)i;
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = (Numeric)i;
     return plot(x,y,format);
 }
 
@@ -1109,7 +1109,7 @@ template<typename Numeric>
 bool plot(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords)
 {
     std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = (double)i;
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = (Numeric)i;
     return plot(x,y,keywords);
 }
 
@@ -1117,7 +1117,7 @@ template<typename Numeric>
 bool stem(const std::vector<Numeric>& y, const std::string& format = "")
 {
     std::vector<Numeric> x(y.size());
-    for (size_t i = 0; i < x.size(); ++i) x.at(i) = (double)i;
+    for (size_t i = 0; i < x.size(); ++i) x.at(i) = (Numeric)i;
     return stem(x, y, format);
 }
 
