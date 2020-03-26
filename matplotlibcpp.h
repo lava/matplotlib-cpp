@@ -36,6 +36,7 @@
 #  define PyString_FromString PyUnicode_FromString
 #  define PyInt_FromLong PyLong_FromLong
 #  define PyString_FromString PyUnicode_FromString
+#  define PyString_AsString PyUnicode_AsUTF8
 #endif
 
 
@@ -93,6 +94,7 @@ struct _interpreter {
     PyObject *s_python_function_bar;
     PyObject *s_python_function_colorbar;
     PyObject *s_python_function_subplots_adjust;
+    PyObject* s_python_function_cla;
 
 
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
@@ -117,6 +119,83 @@ struct _interpreter {
 
         return fn;
     }
+
+  static bool exists(const std::string& pathname)
+  {
+    struct stat info{};
+    return stat(pathname.c_str(), &info) == 0;
+  }
+
+  // usefull when working with virtual python environment
+  static void add_site(const std::string& new_path)
+  {
+    // Make sure interpreter is initialised
+    detail::_interpreter::get();
+
+    if (!exists(new_path)) {
+      throw std::runtime_error("Directory doesn't exist : " + new_path);
+    }
+    PyObject* site = PyImport_ImportModule("site");
+    if (!site) {
+      PyErr_Print();
+      throw std::runtime_error("Error loading module site!");
+    }
+    PyObject* addsitedir = PyObject_GetAttrString(site, "addsitedir");
+    if(!addsitedir) {
+      PyErr_Print();
+      throw std::runtime_error("Couldn't find addsitedir");
+    }
+    if(!PyFunction_Check(addsitedir)) {
+      throw std::runtime_error("PyObject addsitedir in not a function.");
+    }
+
+    PyObject* args = Py_BuildValue("(s)", new_path.c_str());
+    PyObject* res = PyObject_CallObject(addsitedir, args);
+    if(!res) {
+      PyErr_Print();
+      Py_DECREF(addsitedir);
+      Py_DECREF(args);
+      throw std::runtime_error("Call to site.addsitedir(new_path) failed.");
+    }
+    Py_DECREF(addsitedir);
+    Py_DECREF(args);
+    Py_DECREF(res);
+  }
+
+  static void append_sys_path(const std::string& new_path)
+  {
+    // Make sure interpreter is initialised
+    detail::_interpreter::get();
+
+    PyObject* sys_path = PySys_GetObject("path");
+    PyList_Append(sys_path, PyString_FromString(new_path.c_str()));
+  }
+
+  // WARNING : initialisation must be done before calling this function
+  static void print_sys_path() {
+    // Make sure interpreter is initialised
+    detail::_interpreter::get();
+
+    PyObject *sys_path = PySys_GetObject("path");
+    fprintf(stderr, "---------- sys.path ----------\n");
+    // a list of strings : PyListObject
+    Py_ssize_t n = PyList_Size(sys_path);
+    for (int i = 0; i < n; i++) {
+      PyObject *item = PyList_GetItem(sys_path, i);
+      if (!item) {
+        PyErr_Print();
+        fprintf(stderr, "Error getting item %d", i);
+        throw std::runtime_error("Error getting item!");
+      } else {
+        if (item != nullptr && item != Py_None) {
+          const char *str_item = PyString_AsString(item);
+          fprintf(stderr, "%s\n", str_item);
+        }
+      }
+    }
+    fprintf(stderr, "\n\n");
+  }
+
 
 private:
 
@@ -230,6 +309,7 @@ private:
         s_python_function_bar = safe_import(pymod,"bar");
         s_python_function_colorbar = PyObject_GetAttrString(pymod, "colorbar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
+        s_python_function_cla = safe_import(pymod, "cla");
 #ifndef WITHOUT_NUMPY
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
@@ -2039,6 +2119,20 @@ inline void clf() {
     if (!res) throw std::runtime_error("Call to clf() failed.");
 
     Py_DECREF(res);
+}
+
+inline void cla()
+{
+  PyObject* res = PyObject_CallObject(
+      detail::_interpreter::get().s_python_function_cla,
+      detail::_interpreter::get().s_python_empty_tuple);
+
+  Py_DECREF(detail::_interpreter::get().s_python_empty_tuple);
+  if (!res) {
+    PyErr_Print();
+    throw std::runtime_error("Call to plt.cla() failed.");
+  }
+  Py_DECREF(res);
 }
 
 inline void ion() {

@@ -30,3 +30,15 @@ The `WinBuild.cmd` will set up temporal ENV variables and build binaries in (mat
 
 3. Find exe files in examples/build/Release
 Note: platforms folder is necessary to make qt works.
+
+## Unit Tests
+
+```cmd
+> cd contrib/unittests_catch2
+> cmake -S -B "./build"
+> cd build
+> make
+> ./run_MatplotlibcppTests
+```
+See `unittests_catch/2README` for more details.
+ 
