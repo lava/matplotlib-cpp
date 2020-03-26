@@ -417,6 +417,102 @@ PyObject* get_array(const std::vector<Numeric>& v)
 
 #endif // WITHOUT_NUMPY
 
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
+
+// ---------------------------------------------
+// Analyse des keywords dans un tuple
+//
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const bool value) {
+    return {key, value ? Py_True : Py_False};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const int value) {
+    return {key, PyLong_FromLong(value)};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const long value) {
+    return {key, PyLong_FromLong(value)};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const double value) {
+    return {key, PyFloat_FromDouble(value)};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const char* value) {
+    return {key, PyString_FromString(value)};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::string& value) {
+    PyObject* str_value = PyString_FromString(value.c_str());
+    return {key, str_value};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<double>& value) {
+//    PyObject* py_levels = PyList_New(value.size());
+//    for (size_t i = 0; i < value.size(); ++i) {
+//        PyList_SetItem(py_levels, i, PyFloat_FromDouble(value.at(i)));
+//    }
+    return {key, get_array(value)};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<int>& value) {
+    PyObject* args = PyTuple_New(value.size());
+    for(size_t i = 0; i < value.size(); ++i) {
+        PyTuple_SetItem(args, i, PyLong_FromLong(value.at(i)));
+    }
+    return {key, get_array(value)};
+}
+
+template<class Tuple, std::size_t N>
+struct AnalyzeKeywordsHelper {
+    static void analyze_keywords(const Tuple& kw, PyObject* keywords) {
+        AnalyzeKeywordsHelper<Tuple, N-2>::analyze_keywords(kw, keywords);
+        std::string key;
+        PyObject* value;
+        std::tie(key, value) = analyze_key_value(std::get<N-2>(kw), std::get<N-1>(kw));
+        PyDict_SetItemString(keywords, key.c_str(), value);
+        Py_DECREF(value); // @TST
+    }
+};
+
+template<class Tuple>
+struct AnalyzeKeywordsHelper<Tuple, 2> {
+    static void analyze_keywords(const Tuple& kw, PyObject* keywords) {
+        std::string key;
+        PyObject* value;
+        std::tie(key, value) = analyze_key_value(std::get<0>(kw), std::get<1>(kw));
+        PyDict_SetItemString(keywords, key.c_str(), value);
+        Py_DECREF(value); // @TST
+    }
+};
+
+template<class... Args>
+PyObject* analyze_keywords(const std::tuple<Args...>& kw) {
+    // Inutile de vérifier que la longueur du tuple est un multiple de 2,
+    // car comme on avance de 2 en 2, l'instanciation du template ne peut pas se faire pour
+    // un tuple qui n'a pas un nombre pair d'items.
+    PyObject* keywords = PyDict_New();
+    AnalyzeKeywordsHelper<decltype(kw), sizeof...(Args)>::analyze_keywords(kw, keywords);
+    return keywords;
+}
+
+// ----------
+// Identity type conversion to PyObject* (for functions `figure(Identity, tuple<Args...>&)` and `close(Identity)`)
+//
+PyObject* get_pyobject_from(const int value) {
+    return PyLong_FromLong(value);
+}
+
+PyObject* get_pyobject_from(const char* value) {
+    return PyString_FromString(value);
+}
+
+PyObject* get_pyobject_from(const std::string& value) {
+    return PyString_FromString(value.c_str());
+}
+#endif // USE_VARIADIC_TEMPLATES_ARGS
+
+
 template<typename Numeric>
 bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
 {
@@ -740,16 +836,48 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 #endif // WITHOUT_NUMPY
 
 template<typename NumericX, typename NumericY>
+bool __scatter(const std::vector<NumericX>& x,
+             const std::vector<NumericY>& y,
+             PyObject* kwargs)
+{
+  assert(x.size() == y.size());
+
+  PyObject* xarray = get_array(x);
+  PyObject* yarray = get_array(y);
+
+  PyObject* args = PyTuple_New(2);
+  PyTuple_SetItem(args, 0, xarray);
+  PyTuple_SetItem(args, 1, yarray);
+
+  PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_scatter, args, kwargs);
+
+  Py_DECREF(args);
+  Py_DECREF(kwargs);
+
+  if(!res) {
+    throw std::runtime_error("Call to scatter(x, y [, marker]) failed.");
+  }
+
+  Py_DECREF(res);
+
+  return res;
+}
+
+// generic form
+template <typename Numeric, class... Args>
+inline bool scatter(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::tuple<Args...>& keywords)
+{
+  PyObject* kwargs = analyze_keywords(keywords);
+  return __scatter(x, y, kwargs);
+}
+
+// specialized form
+template<typename NumericX, typename NumericY>
 bool scatter(const std::vector<NumericX>& x,
              const std::vector<NumericY>& y,
              const double s=1.0, // The marker size in points**2
              const std::unordered_map<std::string, std::string> & keywords = {})
 {
-    assert(x.size() == y.size());
-
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
-
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
     for (const auto& it : keywords)
@@ -757,17 +885,7 @@ bool scatter(const std::vector<NumericX>& x,
         PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
     }
 
-    PyObject* plot_args = PyTuple_New(2);
-    PyTuple_SetItem(plot_args, 0, xarray);
-    PyTuple_SetItem(plot_args, 1, yarray);
-
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_scatter, plot_args, kwargs);
-
-    Py_DECREF(plot_args);
-    Py_DECREF(kwargs);
-    if(res) Py_DECREF(res);
-
-    return res;
+    return __scatter(x, y, kwargs);
 }
 
 template <typename Numeric>
@@ -1246,6 +1364,36 @@ inline long figure(long number = -1)
     return figureNumber;
 }
 
+template <typename Identity, class... Args>
+inline Identity figure(Identity number, const std::tuple<Args...>& keywords)
+{
+  // Identity est de type int ou string
+  PyObject* args = PyTuple_New(1);
+  PyTuple_SetItem(args, 0, get_pyobject_from(number));
+
+  PyObject* kwargs = analyze_keywords(keywords);
+
+  PyObject* res = nullptr;
+  res = PyObject_Call(detail::_interpreter::get().s_python_function_figure, args, kwargs);
+
+  Py_DECREF(args);
+  Py_DECREF(kwargs);
+
+  if(!res) {
+    PyErr_Print();
+    throw std::runtime_error("Call to pyplot.figure(num) failed.");
+  }
+
+  PyObject* num = PyObject_GetAttrString(res, "number");
+  if (!num) throw std::runtime_error("Could not get number attribute of figure object");
+  auto figureNumber = static_cast<Identity>(PyLong_AsLong(num));
+
+  Py_DECREF(num);
+  Py_DECREF(res);
+
+  return figureNumber;
+}
+
 inline bool fignum_exists(long number)
 {
     // Make sure interpreter is initialised
@@ -1658,6 +1806,23 @@ inline void close()
     if (!res) throw std::runtime_error("Call to close() failed.");
 
     Py_DECREF(res);
+}
+
+template <typename Identity>
+inline void close(Identity num)
+{
+  PyObject* args = PyTuple_New(1);
+  PyTuple_SetItem(args, 0, get_pyobject_from(num));
+
+  PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_close, args);
+
+  Py_DECREF(args);
+
+  if (!res) {
+    throw std::runtime_error("Call to close(num) failed.");
+  }
+
+  Py_DECREF(res);
 }
 
 inline void xkcd() {

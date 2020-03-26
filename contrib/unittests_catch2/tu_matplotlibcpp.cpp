@@ -304,15 +304,14 @@ TEST_CASE("matplotlib", "[matplotlibcpp][matplotlib]") {
     REQUIRE_NOTHROW(plt::scatter(x_scatter, y_scatter, 1.0, kw_2));
     plt::show(true);
 
-    // @FIXME
-    //        plt::clf();
-    //        REQUIRE_NOTHROW(plt::scatter(x_scatter, y_scatter, make_tuple(
-    //                "cmap", "twilight",
-    //                "c", z_scatter,
-    //                "s", 46.,
-    //                "marker", "o"
-    //        )));
-    //        plt::show(true);
+    plt::clf();
+    REQUIRE_NOTHROW(plt::scatter(x_scatter, y_scatter, make_tuple(
+        "cmap", "twilight",
+        "c", z_scatter,
+        "s", 46.,
+        "marker", "o"
+        )));
+    plt::show(true);
   }
 
   SECTION("quiver") {
@@ -534,12 +533,25 @@ TEST_CASE("matplotlib_ending", "[matplotlibcpp][matplotlib]") {
   plt::clf();
   plt::named_plot("Courbe", x, y);
   plt::show(true);
-  REQUIRE_NOTHROW(plt::close());
+  REQUIRE_NOTHROW(plt::close(fig_num));
 }
 
 TEST_CASE("matplotlib_figure", "[matplotlibcpp]") {
   plt::ion();
-  REQUIRE_NOTHROW(plt::figure_size(100, 100));
-  plt::show(true);
+
+  SECTION("figure_size") {
+    REQUIRE_NOTHROW(plt::figure_size(100, 100));
+    plt::show(true);
+    REQUIRE_NOTHROW(plt::close());
+  }
+
+  SECTION("figure_template") {
+    vector<double> fsize {6., 4.};
+    REQUIRE_NOTHROW(plt::figure(111, make_tuple(
+        "dpi", 50,
+        "edgecolor", "green",
+        "figsize", fsize
+    )));
+  }
 }
 #endif // CATCH_UNIT_TESTS

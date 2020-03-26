@@ -35,7 +35,7 @@ Note: platforms folder is necessary to make qt works.
 
 ```cmd
 > cd contrib/unittests_catch2
-> cmake -S -B "./build"
+> cmake -S . -B "./build"
 > cd build
 > make
 > ./run_MatplotlibcppTests

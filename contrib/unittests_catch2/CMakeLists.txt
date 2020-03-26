@@ -76,6 +76,7 @@ target_compile_features(${TU_EXE}
             )
 target_compile_definitions(${TU_EXE}
         PRIVATE
+            USE_VARIADIC_TEMPLATES_ARGS
             CATCH_UNIT_TESTS)
 target_compile_options(${TU_EXE}
             PRIVATE
