@@ -33,3 +33,11 @@
 
 # Build
 /examples/build/*
+/contrib/unittests_catch2/build/*
+/contrib/unittests_catch2/cmake-
+/contrib/unittests_catch2/build/*
+/contrib/unittests_catch2/cmake-*
+
+# IDE directories
+.idea
+
