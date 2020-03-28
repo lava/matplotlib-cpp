@@ -1,15 +1,15 @@
-# Use C++11
-CXXFLAGS += -std=c++11
+# Use C++11, dont warn on long-to-float conversion
+CXXFLAGS += -std=c++11 -Wno-conversion
 
 # Default to using system's default version of python
 PYTHON_BIN     ?= python
 PYTHON_CONFIG  := $(PYTHON_BIN)-config
 PYTHON_INCLUDE ?= $(shell $(PYTHON_CONFIG) --includes)
-CXXFLAGS       += $(PYTHON_INCLUDE)
+EXTRA_FLAGS    := $(PYTHON_INCLUDE)
 LDFLAGS        += $(shell $(PYTHON_CONFIG) --libs)
 
 # Either finds numpy or set -DWITHOUT_NUMPY
-CXXFLAGS        += $(shell $(PYTHON_BIN) $(CURDIR)/numpy_flags.py)
+EXTRA_FLAGS     += $(shell $(PYTHON_BIN) $(CURDIR)/numpy_flags.py)
 WITHOUT_NUMPY   := $(findstring $(CXXFLAGS), WITHOUT_NUMPY)
 
 # Examples requiring numpy support to compile
@@ -28,7 +28,7 @@ examples: $(EXAMPLE_TARGETS)
 # Assume every *.cpp file is a separate example
 $(EXAMPLE_TARGETS): examples/build/%: examples/%.cpp
 	mkdir -p examples/build
-	$(CXX) -o $@ $< $(CXXFLAGS) $(LDFLAGS)
+	$(CXX) -o $@ $< $(EXTRA_FLAGS) $(CXXFLAGS) $(LDFLAGS)
 
 clean:
 	rm -f ${EXAMPLE_TARGETS}
