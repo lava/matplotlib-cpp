@@ -3,4 +3,4 @@ dist: trusty
 services:
   - docker
 script:
-  - make docker_build
+  - make -C contrib docker_build
