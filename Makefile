@@ -25,8 +25,12 @@ EXAMPLE_TARGETS := $(patsubst %,examples/build/%,$(EXAMPLES))
 
 examples: $(EXAMPLE_TARGETS)
 
+docs:
+	doxygen
+	moxygen doc/xml --noindex -o doc/api.md
+
 # Assume every *.cpp file is a separate example
-$(EXAMPLE_TARGETS): examples/build/%: examples/%.cpp
+$(EXAMPLE_TARGETS): examples/build/%: examples/%.cpp matplotlibcpp.h
 	mkdir -p examples/build
 	$(CXX) -o $@ $< $(EXTRA_FLAGS) $(CXXFLAGS) $(LDFLAGS)
 

@@ -242,7 +242,15 @@ private:
 
 } // end namespace detail
 
-// must be called before the first regular call to matplotlib to have any effect
+/// Select the backend
+///
+/// **NOTE:** This must be called before the first plot command to have
+/// any effect.
+///
+/// Mainly useful to select the non-interactive 'Agg' backend when running
+/// matplotlibcpp in headless mode, for example on a machine with no display.
+///
+/// See also: https://matplotlib.org/2.0.2/api/matplotlib_configuration_api.html#matplotlib.use
 inline void backend(const std::string& name)
 {
     detail::s_backend = name;
@@ -271,6 +279,8 @@ inline bool annotate(std::string annotation, double x, double y)
 
     return res;
 }
+
+namespace detail {
 
 #ifndef WITHOUT_NUMPY
 // Type selector for numpy array conversion
@@ -365,14 +375,19 @@ PyObject* get_array(const std::vector<Numeric>& v)
 
 #endif // WITHOUT_NUMPY
 
+} // namespace detail
+
+/// Plot a line through the given x and y data points..
+/// 
+/// See: https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
 template<typename Numeric>
 bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
 {
     assert(x.size() == y.size());
 
     // using numpy arrays
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     // construct positional args
     PyObject* args = PyTuple_New(2);
@@ -396,7 +411,7 @@ bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
 }
 
 // TODO - it should be possible to make this work by implementing
-// a non-numpy alternative for `get_2darray()`.
+// a non-numpy alternative for `detail::get_2darray()`.
 #ifndef WITHOUT_NUMPY
 template <typename Numeric>
 void plot_surface(const std::vector<::std::vector<Numeric>> &x,
@@ -430,9 +445,9 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
   assert(y.size() == z.size());
 
   // using numpy arrays
-  PyObject *xarray = get_2darray(x);
-  PyObject *yarray = get_2darray(y);
-  PyObject *zarray = get_2darray(z);
+  PyObject *xarray = detail::get_2darray(x);
+  PyObject *yarray = detail::get_2darray(y);
+  PyObject *zarray = detail::get_2darray(z);
 
   // construct positional args
   PyObject *args = PyTuple_New(3);
@@ -522,9 +537,9 @@ void plot3(const std::vector<Numeric> &x,
   assert(x.size() == y.size());
   assert(y.size() == z.size());
 
-  PyObject *xarray = get_array(x);
-  PyObject *yarray = get_array(y);
-  PyObject *zarray = get_array(z);
+  PyObject *xarray = detail::get_array(x);
+  PyObject *yarray = detail::get_array(y);
+  PyObject *zarray = detail::get_array(z);
 
   // construct positional args
   PyObject *args = PyTuple_New(3);
@@ -580,8 +595,8 @@ bool stem(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     assert(x.size() == y.size());
 
     // using numpy arrays
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     // construct positional args
     PyObject* args = PyTuple_New(2);
@@ -613,8 +628,8 @@ bool fill(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const st
     assert(x.size() == y.size());
 
     // using numpy arrays
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     // construct positional args
     PyObject* args = PyTuple_New(2);
@@ -644,9 +659,9 @@ bool fill_between(const std::vector<Numeric>& x, const std::vector<Numeric>& y1,
     assert(x.size() == y2.size());
 
     // using numpy arrays
-    PyObject* xarray = get_array(x);
-    PyObject* y1array = get_array(y1);
-    PyObject* y2array = get_array(y2);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* y1array = detail::get_array(y1);
+    PyObject* y2array = detail::get_array(y2);
 
     // construct positional args
     PyObject* args = PyTuple_New(3);
@@ -674,7 +689,7 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
           double alpha=1.0, bool cumulative=false)
 {
 
-    PyObject* yarray = get_array(y);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "bins", PyLong_FromLong(bins));
@@ -698,7 +713,7 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 }
 
 #ifndef WITHOUT_NUMPY
-namespace internal {
+namespace detail {
 
 inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords, PyObject** out)
 {
@@ -730,16 +745,16 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
         Py_DECREF(res);
 }
 
-} // namespace internal
+} // namespace detail
 
 inline void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
 {
-    internal::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords, out);
+    detail::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords, out);
 }
 
 inline void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
 {
-    internal::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out);
+    detail::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out);
 }
 
 #ifdef WITH_OPENCV
@@ -769,7 +784,7 @@ void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keyw
         cv::cvtColor(image2, image2, CV_BGRA2RGBA);
     }
 
-    internal::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords);
+    detail::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords);
 }
 #endif // WITH_OPENCV
 #endif // WITHOUT_NUMPY
@@ -782,8 +797,8 @@ bool scatter(const std::vector<NumericX>& x,
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
@@ -810,7 +825,7 @@ bool boxplot(const std::vector<std::vector<Numeric>>& data,
              const std::vector<std::string>& labels = {},
              const std::unordered_map<std::string, std::string> & keywords = {})
 {
-    PyObject* listlist = get_listlist(data);
+    PyObject* listlist = detail::get_listlist(data);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, listlist);
 
@@ -818,7 +833,7 @@ bool boxplot(const std::vector<std::vector<Numeric>>& data,
 
     // kwargs needs the labels, if there are (the correct number of) labels
     if (!labels.empty() && labels.size() == data.size()) {
-        PyDict_SetItemString(kwargs, "labels", get_array(labels));
+        PyDict_SetItemString(kwargs, "labels", detail::get_array(labels));
     }
 
     // take care of the remaining keywords
@@ -841,7 +856,7 @@ template<typename Numeric>
 bool boxplot(const std::vector<Numeric>& data,
              const std::unordered_map<std::string, std::string> & keywords = {})
 {
-    PyObject* vector = get_array(data);
+    PyObject* vector = detail::get_array(data);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, vector);
 
@@ -868,8 +883,8 @@ bool bar(const std::vector<Numeric> &               x,
          std::string                                ls       = "-",
          double                                     lw       = 1.0,
          const std::map<std::string, std::string> & keywords = {}) {
-  PyObject * xarray = get_array(x);
-  PyObject * yarray = get_array(y);
+  PyObject * xarray = detail::get_array(x);
+  PyObject * yarray = detail::get_array(y);
 
   PyObject * kwargs = PyDict_New();
 
@@ -938,7 +953,7 @@ inline bool subplots_adjust(const std::map<std::string, double>& keywords = {})
 template< typename Numeric>
 bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
 {
-    PyObject* yarray = get_array(y);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(label.c_str()));
@@ -964,8 +979,8 @@ bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const 
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(s.c_str());
 
@@ -987,10 +1002,10 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
 {
     assert(x.size() == y.size() && x.size() == u.size() && u.size() == w.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
-    PyObject* uarray = get_array(u);
-    PyObject* warray = get_array(w);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
+    PyObject* uarray = detail::get_array(u);
+    PyObject* warray = detail::get_array(w);
 
     PyObject* plot_args = PyTuple_New(4);
     PyTuple_SetItem(plot_args, 0, xarray);
@@ -1021,8 +1036,8 @@ bool stem(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const 
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(s.c_str());
 
@@ -1046,8 +1061,8 @@ bool semilogx(const std::vector<NumericX>& x, const std::vector<NumericY>& y, co
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(s.c_str());
 
@@ -1069,8 +1084,8 @@ bool semilogy(const std::vector<NumericX>& x, const std::vector<NumericY>& y, co
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(s.c_str());
 
@@ -1092,8 +1107,8 @@ bool loglog(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(s.c_str());
 
@@ -1115,9 +1130,9 @@ bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, co
 {
     assert(x.size() == y.size());
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
-    PyObject* yerrarray = get_array(yerr);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
+    PyObject* yerrarray = detail::get_array(yerr);
 
     // construct keyword args
     PyObject* kwargs = PyDict_New();
@@ -1151,7 +1166,7 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& y, const st
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-    PyObject* yarray = get_array(y);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -1175,8 +1190,8 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& x, const st
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -1200,8 +1215,8 @@ bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, cons
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -1225,8 +1240,8 @@ bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, cons
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -1250,8 +1265,8 @@ bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const 
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-    PyObject* xarray = get_array(x);
-    PyObject* yarray = get_array(y);
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
 
     PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -1482,7 +1497,7 @@ inline void xticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     assert(labels.size() == 0 || ticks.size() == labels.size());
 
     // using numpy array
-    PyObject* ticksarray = get_array(ticks);
+    PyObject* ticksarray = detail::get_array(ticks);
 
     PyObject* args;
     if(labels.size() == 0) {
@@ -1529,7 +1544,7 @@ inline void yticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     assert(labels.size() == 0 || ticks.size() == labels.size());
 
     // using numpy array
-    PyObject* ticksarray = get_array(ticks);
+    PyObject* ticksarray = detail::get_array(ticks);
 
     PyObject* args;
     if(labels.size() == 0) {
@@ -2096,7 +2111,6 @@ inline bool plot(const std::vector<double>& x, const std::vector<double>& y, con
 /*
  * This class allows dynamic plots, ie changing the plotted data without clearing and re-plotting
  */
-
 class Plot
 {
 public:
@@ -2110,8 +2124,8 @@ public:
         if(name != "")
             PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
-        PyObject* xarray = get_array(x);
-        PyObject* yarray = get_array(y);
+        PyObject* xarray = detail::get_array(x);
+        PyObject* yarray = detail::get_array(y);
 
         PyObject* pystring = PyString_FromString(format.c_str());
 
@@ -2147,8 +2161,8 @@ public:
         assert(x.size() == y.size());
         if(set_data_fct)
         {
-            PyObject* xarray = get_array(x);
-            PyObject* yarray = get_array(y);
+            PyObject* xarray = detail::get_array(x);
+            PyObject* yarray = detail::get_array(y);
 
             PyObject* plot_args = PyTuple_New(2);
             PyTuple_SetItem(plot_args, 0, xarray);
