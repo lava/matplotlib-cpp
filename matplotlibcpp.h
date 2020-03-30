@@ -90,7 +90,7 @@ struct _interpreter {
     PyObject *s_python_function_bar;
     PyObject *s_python_function_subplots_adjust;
     PyObject* s_python_function_cla;
-
+    PyObject* s_python_function_ioff;
 
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
@@ -301,6 +301,8 @@ private:
         s_python_function_bar = safe_import(pymod,"bar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
         s_python_function_cla = safe_import(pymod, "cla");
+
+        s_python_function_ioff = safe_import(pymod, "ioff");
 #ifndef WITHOUT_NUMPY
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
@@ -420,7 +422,7 @@ PyObject* get_array(const std::vector<Numeric>& v)
 #ifdef USE_VARIADIC_TEMPLATES_ARGS
 
 // ---------------------------------------------
-// Analyse des keywords dans un tuple
+// Analyze of args (key = value) in a tuple
 //
 std::pair<std::string, PyObject*> analyze_key_value(const char* key, const bool value) {
     return {key, value ? Py_True : Py_False};
@@ -488,9 +490,9 @@ struct AnalyzeKeywordsHelper<Tuple, 2> {
 
 template<class... Args>
 PyObject* analyze_keywords(const std::tuple<Args...>& kw) {
-    // Inutile de vérifier que la longueur du tuple est un multiple de 2,
-    // car comme on avance de 2 en 2, l'instanciation du template ne peut pas se faire pour
-    // un tuple qui n'a pas un nombre pair d'items.
+    // No need to check if tuple length is a multiple of two, because
+    // the template instantiation will fail
+    // if the tuple doesn't have a even number of items
     PyObject* keywords = PyDict_New();
     AnalyzeKeywordsHelper<decltype(kw), sizeof...(Args)>::analyze_keywords(kw, keywords);
     return keywords;
@@ -863,6 +865,7 @@ bool __scatter(const std::vector<NumericX>& x,
   return res;
 }
 
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
 // generic form
 template <typename Numeric, class... Args>
 inline bool scatter(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::tuple<Args...>& keywords)
@@ -870,6 +873,7 @@ inline bool scatter(const std::vector<Numeric>& x, const std::vector<Numeric>& y
   PyObject* kwargs = analyze_keywords(keywords);
   return __scatter(x, y, kwargs);
 }
+#endif
 
 // specialized form
 template<typename NumericX, typename NumericY>
@@ -1364,10 +1368,11 @@ inline long figure(long number = -1)
     return figureNumber;
 }
 
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
 template <typename Identity, class... Args>
-inline Identity figure(Identity number, const std::tuple<Args...>& keywords)
+inline long figure(Identity number, const std::tuple<Args...>& keywords)
 {
-  // Identity est de type int ou string
+  // Identity : int or string type according to matplotlib.figure documentation
   PyObject* args = PyTuple_New(1);
   PyTuple_SetItem(args, 0, get_pyobject_from(number));
 
@@ -1386,13 +1391,14 @@ inline Identity figure(Identity number, const std::tuple<Args...>& keywords)
 
   PyObject* num = PyObject_GetAttrString(res, "number");
   if (!num) throw std::runtime_error("Could not get number attribute of figure object");
-  auto figureNumber = static_cast<Identity>(PyLong_AsLong(num));
+  auto figureNumber = PyLong_AsLong(num);
 
   Py_DECREF(num);
   Py_DECREF(res);
 
   return figureNumber;
 }
+#endif
 
 inline bool fignum_exists(long number)
 {
@@ -1908,6 +1914,20 @@ inline void ion() {
         detail::_interpreter::get().s_python_empty_tuple);
 
     if (!res) throw std::runtime_error("Call to ion() failed.");
+
+    Py_DECREF(res);
+}
+
+inline void ioff() {
+    PyObject* res = PyObject_CallObject(
+            detail::_interpreter::get().s_python_function_ioff,
+            detail::_interpreter::get().s_python_empty_tuple);
+
+    Py_DECREF(detail::_interpreter::get().s_python_empty_tuple);
+    if (!res) {
+        PyErr_Print();
+        throw std::runtime_error("Call to ioff() failed.");
+    }
 
     Py_DECREF(res);
 }
