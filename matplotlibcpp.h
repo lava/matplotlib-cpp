@@ -124,9 +124,6 @@ struct _interpreter {
   // usefull when working with virtual python environment
   static void add_site(const std::string& new_path)
   {
-    // Make sure interpreter is initialised
-    detail::_interpreter::get();
-
     if (!exists(new_path)) {
       throw std::runtime_error("Directory doesn't exist : " + new_path);
     }
@@ -159,9 +156,6 @@ struct _interpreter {
 
   static void append_sys_path(const std::string& new_path)
   {
-    // Make sure interpreter is initialised
-    detail::_interpreter::get();
-
     PyObject* sys_path = PySys_GetObject("path");
     PyList_Append(sys_path, PyString_FromString(new_path.c_str()));
   }
