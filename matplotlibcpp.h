@@ -340,6 +340,20 @@ PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
     return reinterpret_cast<PyObject *>(varray);
 }
 
+#else // fallback if we don't have numpy: copy every element of the given vector
+
+template<typename Numeric>
+PyObject* get_array(const std::vector<Numeric>& v)
+{
+    PyObject* list = PyList_New(v.size());
+    for(size_t i = 0; i < v.size(); ++i) {
+        PyList_SetItem(list, i, PyFloat_FromDouble(v.at(i)));
+    }
+    return list;
+}
+
+#endif // WITHOUT_NUMPY
+
 // sometimes, for labels and such, we need string arrays
 PyObject * get_array(const std::vector<std::string>& strings)
 {
@@ -360,20 +374,6 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
   }
   return listlist;
 }
-
-#else // fallback if we don't have numpy: copy every element of the given vector
-
-template<typename Numeric>
-PyObject* get_array(const std::vector<Numeric>& v)
-{
-    PyObject* list = PyList_New(v.size());
-    for(size_t i = 0; i < v.size(); ++i) {
-        PyList_SetItem(list, i, PyFloat_FromDouble(v.at(i)));
-    }
-    return list;
-}
-
-#endif // WITHOUT_NUMPY
 
 } // namespace detail
 
