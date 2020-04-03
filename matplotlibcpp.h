@@ -9,7 +9,6 @@
 #include <iostream>
 #include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
-#include <unordered_map>
 
 #include <Python.h>
 
@@ -793,7 +792,7 @@ template<typename NumericX, typename NumericY>
 bool scatter(const std::vector<NumericX>& x,
              const std::vector<NumericY>& y,
              const double s=1.0, // The marker size in points**2
-             const std::unordered_map<std::string, std::string> & keywords = {})
+             const std::map<std::string, std::string> & keywords = {})
 {
     assert(x.size() == y.size());
 
@@ -823,7 +822,7 @@ bool scatter(const std::vector<NumericX>& x,
 template<typename Numeric>
 bool boxplot(const std::vector<std::vector<Numeric>>& data,
              const std::vector<std::string>& labels = {},
-             const std::unordered_map<std::string, std::string> & keywords = {})
+             const std::map<std::string, std::string> & keywords = {})
 {
     PyObject* listlist = detail::get_listlist(data);
     PyObject* args = PyTuple_New(1);
@@ -854,7 +853,7 @@ bool boxplot(const std::vector<std::vector<Numeric>>& data,
 
 template<typename Numeric>
 bool boxplot(const std::vector<Numeric>& data,
-             const std::unordered_map<std::string, std::string> & keywords = {})
+             const std::map<std::string, std::string> & keywords = {})
 {
     PyObject* vector = detail::get_array(data);
     PyObject* args = PyTuple_New(1);
