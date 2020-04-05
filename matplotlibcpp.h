@@ -298,7 +298,7 @@ template <> struct select_npy_type<uint32_t> { const static NPY_TYPES type = NPY
 template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
 
 template<typename Numeric>
-PyObject* get_array(const std::vector<Numeric>& v)
+inline PyObject* get_array(const std::vector<Numeric>& v)
 {
     detail::_interpreter::get();    //interpreter needs to be initialized for the numpy commands to work
     NPY_TYPES type = select_npy_type<Numeric>::type;
@@ -343,7 +343,7 @@ PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
 #else // fallback if we don't have numpy: copy every element of the given vector
 
 template<typename Numeric>
-PyObject* get_array(const std::vector<Numeric>& v)
+inline PyObject* get_array(const std::vector<Numeric>& v)
 {
     PyObject* list = PyList_New(v.size());
     for(size_t i = 0; i < v.size(); ++i) {
@@ -355,7 +355,7 @@ PyObject* get_array(const std::vector<Numeric>& v)
 #endif // WITHOUT_NUMPY
 
 // sometimes, for labels and such, we need string arrays
-PyObject * get_array(const std::vector<std::string>& strings)
+inline PyObject * get_array(const std::vector<std::string>& strings)
 {
   PyObject* list = PyList_New(strings.size());
   for (std::size_t i = 0; i < strings.size(); ++i) {
@@ -1322,7 +1322,7 @@ void text(Numeric x, Numeric y, const std::string& s = "")
     Py_DECREF(res);
 }
 
-void colorbar(PyObject* mappable = NULL, const std::map<std::string, float>& keywords = {})
+inline void colorbar(PyObject* mappable = NULL, const std::map<std::string, float>& keywords = {})
 {
     if (mappable == NULL)
         throw std::runtime_error("Must call colorbar with PyObject* returned from an image, contour, surface, etc.");
@@ -1700,7 +1700,7 @@ inline void axis(const std::string &axisstr)
     Py_DECREF(res);
 }
 
-void axvline(double x, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
+inline void axvline(double x, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
 {
     // construct positional args
     PyObject* args = PyTuple_New(3);
