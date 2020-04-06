@@ -298,7 +298,7 @@ template <> struct select_npy_type<uint32_t> { const static NPY_TYPES type = NPY
 template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
 
 template<typename Numeric>
-inline PyObject* get_array(const std::vector<Numeric>& v)
+PyObject* get_array(const std::vector<Numeric>& v)
 {
     detail::_interpreter::get();    //interpreter needs to be initialized for the numpy commands to work
     NPY_TYPES type = select_npy_type<Numeric>::type;
@@ -343,7 +343,7 @@ PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
 #else // fallback if we don't have numpy: copy every element of the given vector
 
 template<typename Numeric>
-inline PyObject* get_array(const std::vector<Numeric>& v)
+PyObject* get_array(const std::vector<Numeric>& v)
 {
     PyObject* list = PyList_New(v.size());
     for(size_t i = 0; i < v.size(); ++i) {
