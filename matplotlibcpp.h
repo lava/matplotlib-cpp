@@ -1611,6 +1611,9 @@ inline void tick_params(const std::map<std::string, std::string>& keywords, cons
 
 inline void subplot(long nrows, long ncols, long plot_number)
 {
+    // Make sure interpreter is initialized
+    detail::_interpreter::get();
+    
     // construct positional args
     PyObject* args = PyTuple_New(3);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
@@ -1670,6 +1673,9 @@ inline void title(const std::string &titlestr, const std::map<std::string, std::
 
 inline void suptitle(const std::string &suptitlestr, const std::map<std::string, std::string> &keywords = {})
 {
+    // Make sure interpreter is initialized
+    detail::_interpreter::get();
+    
     PyObject* pysuptitlestr = PyString_FromString(suptitlestr.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pysuptitlestr);
