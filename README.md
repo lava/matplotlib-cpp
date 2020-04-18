@@ -199,23 +199,15 @@ On Ubuntu:
     sudo apt-get install python-matplotlib python-numpy python2.7-dev
 
 If, for some reason, you're unable to get a working installation of numpy on your system,
-you can add the define `WITHOUT_NUMPY` to erase this dependency.
+you can define the macro `WITHOUT_NUMPY` before including the header file to erase this
+dependency.
 
 The C++-part of the library consists of the single header file `matplotlibcpp.h` which can be placed
 anywhere.
 
-Since a python interpreter is opened internally, it is necessary to link against `libpython2.7` in order to use
-matplotlib-cpp.
-
-You can download and install matplotlib-cpp using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
-
-    git clone https://github.com/Microsoft/vcpkg.git
-    cd vcpkg
-    ./bootstrap-vcpkg.sh
-    ./vcpkg integrate install
-    vcpkg install matplotlib-cpp
-  
-The matplotlib-cpp port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+Since a python interpreter is opened internally, it is necessary to link against `libpython` in order
+to user matplotlib-cpp. Most versions should work, although `libpython2.7` and `libpython3.6` are
+probably the most regularly testedr.
 
 
 # CMake
@@ -242,6 +234,20 @@ find_package(PythonLibs 2.7)
 target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(myproject ${PYTHON_LIBRARIES})
 ```
+
+
+# Vcpkg
+
+You can download and install matplotlib-cpp using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    vcpkg install matplotlib-cpp
+  
+The matplotlib-cpp port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 
 # C++11
 
