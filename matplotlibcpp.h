@@ -73,6 +73,7 @@ struct _interpreter {
     PyObject *s_python_function_title;
     PyObject *s_python_function_axis;
     PyObject *s_python_function_axvline;
+    PyObject *s_python_function_axvspan;
     PyObject *s_python_function_xlabel;
     PyObject *s_python_function_ylabel;
     PyObject *s_python_function_gca;
@@ -208,6 +209,7 @@ private:
         s_python_function_title = safe_import(pymod, "title");
         s_python_function_axis = safe_import(pymod, "axis");
         s_python_function_axvline = safe_import(pymod, "axvline");
+        s_python_function_axvspan = safe_import(pymod, "axvspan");
         s_python_function_xlabel = safe_import(pymod, "xlabel");
         s_python_function_ylabel = safe_import(pymod, "ylabel");
         s_python_function_gca = safe_import(pymod, "gca");
@@ -1813,6 +1815,29 @@ inline void axvline(double x, double ymin = 0., double ymax = 1., const std::map
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axvline, args, kwargs);
 
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(res) Py_DECREF(res);
+}
+
+inline void axvspan(double xmin, double xmax, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
+{
+    // construct positional args
+    PyObject* args = PyTuple_New(4);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(xmin));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(xmax));
+    PyTuple_SetItem(args, 2, PyFloat_FromDouble(ymin));
+    PyTuple_SetItem(args, 3, PyFloat_FromDouble(ymax));
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axvspan, args, kwargs);
     Py_DECREF(args);
     Py_DECREF(kwargs);
 
