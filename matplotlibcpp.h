@@ -299,21 +299,23 @@ template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY
 template<typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
 {
-    detail::_interpreter::get();    //interpreter needs to be initialized for the numpy commands to work
+    detail::_interpreter::get(); //interpreter needs to be initialized for the numpy commands to work
+    npy_intp vsize = v.size();
     NPY_TYPES type = select_npy_type<Numeric>::type;
-    if (type == NPY_NOTYPE)
-    {
-        std::vector<double> vd(v.size());
-        npy_intp vsize = v.size();
-        std::copy(v.begin(),v.end(),vd.begin());
-        PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, (void*)(vd.data()));
+    if (type == NPY_NOTYPE) {
+        size_t memsize = v.size()*sizeof(double);
+        double* dp = static_cast<double*>(::malloc(memsize));
+        for (size_t i=0; i<v.size(); ++i)
+            dp[i] = v[i];
+        PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, dp);
+        PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
         return varray;
     }
-
-    npy_intp vsize = v.size();
+    
     PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(v.data()));
     return varray;
 }
+
 
 template<typename Numeric>
 PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
