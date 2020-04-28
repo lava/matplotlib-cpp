@@ -244,7 +244,7 @@ private:
     struct SettingValue {
         int type;
         bool boolValue;
-        string stringValue;
+        std::string stringValue;
         float floatValue;
         int intValue;
 
@@ -259,7 +259,7 @@ private:
             this->type = SettingValue::Bool;
         }
 
-        SettingValue(string value) {
+        SettingValue(std::string value) {
             this->stringValue = value;
             this->type = SettingValue::String;
         }
