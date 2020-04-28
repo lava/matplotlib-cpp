@@ -36,3 +36,12 @@
 
 # vim temp files
 *.sw*
+
+# clion
+.idea/
+
+# cmake
+CMakeCache.txt
+CMakeFiles/
+cmake-build-debug/
+cmake_install.cmake
