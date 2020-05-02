@@ -1,5 +1,9 @@
 #pragma once
 
+// Python headers must be included before any system headers, since
+// they define _POSIX_C_SOURCE
+#include <Python.h>
+
 #include <vector>
 #include <map>
 #include <array>
@@ -9,8 +13,6 @@
 #include <iostream>
 #include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
-
-#include <Python.h>
 
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
