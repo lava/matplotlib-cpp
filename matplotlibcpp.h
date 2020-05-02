@@ -1174,6 +1174,9 @@ bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, co
 template<typename Numeric>
 bool named_plot(const std::string& name, const std::vector<Numeric>& y, const std::string& format = "")
 {
+    // Make sure python is initialized.
+    detail::_interpreter::get();
+
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
@@ -1198,6 +1201,9 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& y, const st
 template<typename Numeric>
 bool named_plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
 {
+    // Make sure python is initialized.
+    detail::_interpreter::get();
+
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
@@ -1223,6 +1229,9 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& x, const st
 template<typename Numeric>
 bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
 {
+    // Make sure python is initialized.
+    detail::_interpreter::get();
+
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
@@ -1248,6 +1257,9 @@ bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, cons
 template<typename Numeric>
 bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
 {
+    // Make sure python is initialized.
+    detail::_interpreter::get();
+
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
@@ -1273,6 +1285,9 @@ bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, cons
 template<typename Numeric>
 bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
 {
+    // Make sure python is initialized.
+    detail::_interpreter::get();
+
     PyObject* kwargs = PyDict_New();
     PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
 
