@@ -6,10 +6,10 @@ PYTHON_BIN     ?= python3
 PYTHON_CONFIG  := $(PYTHON_BIN)-config
 PYTHON_INCLUDE ?= $(shell $(PYTHON_CONFIG) --includes)
 EXTRA_FLAGS    := $(PYTHON_INCLUDE)
-# NOTE: Since python3.8, the correct invocation is `python3-config --libs --embed`. 
+# NOTE: Since python3.8, the correct invocation is `python3-config --libs --embed`.
 # So of course the proper way to get python libs for embedding now is to
 # invoke that, check if it crashes, and fall back to just `--libs` if it does.
-LDFLAGS        += $(shell if $(PYTHON_CONFIG) --libs --embed >/dev/null; then $(PYTHON_CONFIG) --libs --embed; else $(PYTHON_CONFIG) --libs; fi)
+LDFLAGS        += $(shell if $(PYTHON_CONFIG) --ldflags --embed >/dev/null; then $(PYTHON_CONFIG) --ldflags --embed; else $(PYTHON_CONFIG) --ldflags; fi)
 
 # Either finds numpy or set -DWITHOUT_NUMPY
 EXTRA_FLAGS     += $(shell $(PYTHON_BIN) $(CURDIR)/numpy_flags.py)
