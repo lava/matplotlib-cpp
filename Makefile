@@ -16,7 +16,7 @@ EXTRA_FLAGS     += $(shell $(PYTHON_BIN) $(CURDIR)/numpy_flags.py)
 WITHOUT_NUMPY   := $(findstring $(EXTRA_FLAGS), WITHOUT_NUMPY)
 
 # Examples requiring numpy support to compile
-EXAMPLES_NUMPY  := surface colorbar contour
+EXAMPLES_NUMPY  := surface colorbar contour spy
 EXAMPLES        := minimal basic modern animation nonblock xkcd quiver bar \
 	           fill_inbetween fill update subplot2grid lines3d \
                    $(if $(WITHOUT_NUMPY),,$(EXAMPLES_NUMPY))
