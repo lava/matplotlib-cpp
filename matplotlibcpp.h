@@ -75,6 +75,7 @@ struct _interpreter {
     PyObject *s_python_function_ylim;
     PyObject *s_python_function_title;
     PyObject *s_python_function_axis;
+    PyObject *s_python_function_axhline;
     PyObject *s_python_function_axvline;
     PyObject *s_python_function_axvspan;
     PyObject *s_python_function_xlabel;
@@ -247,6 +248,7 @@ private:
         s_python_function_ylim = safe_import(pymod, "ylim");
         s_python_function_title = safe_import(pymod, "title");
         s_python_function_axis = safe_import(pymod, "axis");
+        s_python_function_axhline = safe_import(pymod, "axhline");
         s_python_function_axvline = safe_import(pymod, "axvline");
         s_python_function_axvspan = safe_import(pymod, "axvspan");
         s_python_function_xlabel = safe_import(pymod, "xlabel");
@@ -2236,6 +2238,31 @@ inline void axis(const std::string &axisstr)
 
     Py_DECREF(args);
     Py_DECREF(res);
+}
+
+inline void axhline(double y, double xmin = 0., double xmax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
+{
+    detail::_interpreter::get();
+
+    // construct positional args
+    PyObject* args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(y));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(xmin));
+    PyTuple_SetItem(args, 2, PyFloat_FromDouble(xmax));
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axhline, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(res) Py_DECREF(res);
 }
 
 inline void axvline(double x, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
