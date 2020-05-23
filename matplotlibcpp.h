@@ -72,6 +72,7 @@ struct _interpreter {
     PyObject *s_python_function_ylim;
     PyObject *s_python_function_title;
     PyObject *s_python_function_axis;
+    PyObject *s_python_function_axhline;
     PyObject *s_python_function_axvline;
     PyObject *s_python_function_xlabel;
     PyObject *s_python_function_ylabel;
@@ -207,6 +208,7 @@ private:
         s_python_function_ylim = safe_import(pymod, "ylim");
         s_python_function_title = safe_import(pymod, "title");
         s_python_function_axis = safe_import(pymod, "axis");
+        s_python_function_axhline = safe_import(pymod, "axhline");
         s_python_function_axvline = safe_import(pymod, "axvline");
         s_python_function_xlabel = safe_import(pymod, "xlabel");
         s_python_function_ylabel = safe_import(pymod, "ylabel");
@@ -322,7 +324,7 @@ PyObject* get_array(const std::vector<Numeric>& v)
         PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
         return varray;
     }
-    
+
     PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(v.data()));
     return varray;
 }
@@ -389,7 +391,7 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
 } // namespace detail
 
 /// Plot a line through the given x and y data points..
-/// 
+///
 /// See: https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
 template<typename Numeric>
 bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
@@ -530,9 +532,9 @@ void plot3(const std::vector<Numeric> &x,
 {
   detail::_interpreter::get();
 
-  // Same as with plot_surface: We lazily load the modules here the first time 
-  // this function is called because I'm not sure that we can assume "matplotlib 
-  // installed" implies "mpl_toolkits installed" on all platforms, and we don't 
+  // Same as with plot_surface: We lazily load the modules here the first time
+  // this function is called because I'm not sure that we can assume "matplotlib
+  // installed" implies "mpl_toolkits installed" on all platforms, and we don't
   // want to require it for people who don't need 3d plots.
   static PyObject *mpl_toolkitsmod = nullptr, *axis3dmod = nullptr;
   if (!mpl_toolkitsmod) {
@@ -1696,7 +1698,7 @@ inline void tick_params(const std::map<std::string, std::string>& keywords, cons
 inline void subplot(long nrows, long ncols, long plot_number)
 {
     detail::_interpreter::get();
-    
+
     // construct positional args
     PyObject* args = PyTuple_New(3);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
@@ -1761,7 +1763,7 @@ inline void title(const std::string &titlestr, const std::map<std::string, std::
 inline void suptitle(const std::string &suptitlestr, const std::map<std::string, std::string> &keywords = {})
 {
     detail::_interpreter::get();
-    
+
     PyObject* pysuptitlestr = PyString_FromString(suptitlestr.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pysuptitlestr);
@@ -1792,6 +1794,31 @@ inline void axis(const std::string &axisstr)
 
     Py_DECREF(args);
     Py_DECREF(res);
+}
+
+inline void axhline(double y, double xmin = 0., double xmax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
+{
+    detail::_interpreter::get();
+
+    // construct positional args
+    PyObject* args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(y));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(xmin));
+    PyTuple_SetItem(args, 2, PyFloat_FromDouble(xmax));
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axhline, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(res) Py_DECREF(res);
 }
 
 inline void axvline(double x, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
@@ -1865,9 +1892,9 @@ inline void set_zlabel(const std::string &str, const std::map<std::string, std::
 {
     detail::_interpreter::get();
 
-    // Same as with plot_surface: We lazily load the modules here the first time 
-    // this function is called because I'm not sure that we can assume "matplotlib 
-    // installed" implies "mpl_toolkits installed" on all platforms, and we don't 
+    // Same as with plot_surface: We lazily load the modules here the first time
+    // this function is called because I'm not sure that we can assume "matplotlib
+    // installed" implies "mpl_toolkits installed" on all platforms, and we don't
     // want to require it for people who don't need 3d plots.
     static PyObject *mpl_toolkitsmod = nullptr, *axis3dmod = nullptr;
     if (!mpl_toolkitsmod) {
