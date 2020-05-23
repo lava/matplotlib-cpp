@@ -103,7 +103,6 @@ struct _interpreter {
     PyObject *s_python_function_subplots_adjust;
     PyObject *s_python_function_rcparams;
 
-
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
        or starting a separate process for each. [1]
@@ -245,6 +244,7 @@ private:
         s_python_function_subplot = safe_import(pymod, "subplot");
         s_python_function_subplot2grid = safe_import(pymod, "subplot2grid");
         s_python_function_legend = safe_import(pymod, "legend");
+        s_python_function_xlim = safe_import(pymod, "xlim");
         s_python_function_ylim = safe_import(pymod, "ylim");
         s_python_function_title = safe_import(pymod, "title");
         s_python_function_axis = safe_import(pymod, "axis");
@@ -259,7 +259,6 @@ private:
         s_python_function_margins = safe_import(pymod, "margins");
         s_python_function_tick_params = safe_import(pymod, "tick_params");
         s_python_function_grid = safe_import(pymod, "grid");
-        s_python_function_xlim = safe_import(pymod, "xlim");
         s_python_function_ion = safe_import(pymod, "ion");
         s_python_function_ginput = safe_import(pymod, "ginput");
         s_python_function_save = safe_import(pylabmod, "savefig");
@@ -349,10 +348,10 @@ template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY
 
 // Sanity checks; comment them out or change the numpy type below if you're compiling on
 // a platform where they don't apply
-static_assert(sizeof(long long) == 8);
-template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
-static_assert(sizeof(unsigned long long) == 8);
-template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
+// static_assert(sizeof(long long) == 8);
+// template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
+// static_assert(sizeof(unsigned long long) == 8);
+// template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
 // TODO: add int, long, etc.
 
 template<typename Numeric>
@@ -581,6 +580,49 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
   Py_DECREF(args);
   Py_DECREF(kwargs);
   if (res) Py_DECREF(res);
+}
+
+template <typename Numeric>
+void contour(const std::vector<::std::vector<Numeric>> &x,
+             const std::vector<::std::vector<Numeric>> &y,
+             const std::vector<::std::vector<Numeric>> &z,
+             const std::map<std::string, std::string> &keywords = {})
+{
+  detail::_interpreter::get();
+
+  // using numpy arrays
+  PyObject *xarray = detail::get_2darray(x);
+  PyObject *yarray = detail::get_2darray(y);
+  PyObject *zarray = detail::get_2darray(z);
+
+  // construct positional args
+  PyObject *args = PyTuple_New(3);
+  PyTuple_SetItem(args, 0, xarray);
+  PyTuple_SetItem(args, 1, yarray);
+  PyTuple_SetItem(args, 2, zarray);
+
+  // Build up the kw args.
+  PyObject *kwargs = PyDict_New();
+
+  PyObject *python_colormap_coolwarm = PyObject_GetAttrString(
+      detail::_interpreter::get().s_python_colormap, "coolwarm");
+
+  PyDict_SetItemString(kwargs, "cmap", python_colormap_coolwarm);
+
+  for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
+       it != keywords.end(); ++it) {
+    PyDict_SetItemString(kwargs, it->first.c_str(),
+                         PyString_FromString(it->second.c_str()));
+  }
+
+  PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contour, args, kwargs);
+  if (!res)
+    throw std::runtime_error("failed contour");
+
+  Py_DECREF(args);
+  Py_DECREF(kwargs);
+  if (res)
+    Py_DECREF(res);
 }
 #endif // WITHOUT_NUMPY
 
