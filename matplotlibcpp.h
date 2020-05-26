@@ -96,6 +96,7 @@ struct _interpreter {
     PyObject *s_python_function_text;
     PyObject *s_python_function_suptitle;
     PyObject *s_python_function_bar;
+    PyObject *s_python_function_barh;
     PyObject *s_python_function_colorbar;
     PyObject *s_python_function_subplots_adjust;
 
@@ -243,6 +244,7 @@ private:
         s_python_function_text = safe_import(pymod, "text");
         s_python_function_suptitle = safe_import(pymod, "suptitle");
         s_python_function_bar = safe_import(pymod,"bar");
+        s_python_function_barh = safe_import(pymod, "barh");
         s_python_function_colorbar = PyObject_GetAttrString(pymod, "colorbar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
 #ifndef WITHOUT_NUMPY
@@ -1009,6 +1011,36 @@ bool bar(const std::vector<Numeric> &               y,
 
   return bar(x, y, ec, ls, lw, keywords);
 }
+
+
+template<typename Numeric>
+bool barh(const std::vector<Numeric> &x, const std::vector<Numeric> &y, std::string ec = "black", std::string ls = "-", double lw = 1.0, const std::map<std::string, std::string> &keywords = { }) {
+    PyObject *xarray = detail::get_array(x);
+    PyObject *yarray = detail::get_array(y);
+
+    PyObject *kwargs = PyDict_New();
+
+    PyDict_SetItemString(kwargs, "ec", PyString_FromString(ec.c_str()));
+    PyDict_SetItemString(kwargs, "ls", PyString_FromString(ls.c_str()));
+    PyDict_SetItemString(kwargs, "lw", PyFloat_FromDouble(lw));
+
+    for (std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject *plot_args = PyTuple_New(2);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+
+    PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_barh, plot_args, kwargs);
+
+    Py_DECREF(plot_args);
+    Py_DECREF(kwargs);
+    if (res) Py_DECREF(res);
+
+    return res;
+}
+
 
 inline bool subplots_adjust(const std::map<std::string, double>& keywords = {})
 {
