@@ -479,11 +479,11 @@ TEST_CASE("matplotlib3d",
   std::vector<double> xxx, yyy, zzz;
   i = -5;
   for (auto cpt = 0; cpt < 40; ++cpt) {
-    xx.push_back(i);
-    yy.push_back(std::sin(std::hypot(i, i)));
+    xxx.push_back(i);
+    yyy.push_back(std::sin(std::hypot(i, i)));
     i += 0.25;
   }
-  zz.push_back(2.);
+  zzz.push_back(2.);
 
   // To be sure that plt::clf() call doesn't crash.
   plt::ion();
@@ -497,8 +497,6 @@ TEST_CASE("matplotlib3d",
   SECTION("plot_surface_2") {
     plt::clf();
     REQUIRE_NOTHROW(plt::plot_surface(x, y, z));
-    plt::clf();
-    plt::plot_surface(x, y, z);
     plt::show(true);
   }
 
