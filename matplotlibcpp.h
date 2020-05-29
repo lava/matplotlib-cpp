@@ -474,7 +474,7 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
 #ifdef USE_VARIADIC_TEMPLATES_ARGS
 
 // ---------------------------------------------
-// Analyse des keywords dans un tuple
+// Keyword analysis
 //
 std::pair<std::string, PyObject*> analyze_key_value(const char* key, const bool value) {
     return {key, value ? Py_True : Py_False};
@@ -546,9 +546,9 @@ struct AnalyzeKeywordsHelper<Tuple, 2> {
 
 template<class... Args>
 PyObject* analyze_keywords(const std::tuple<Args...>& kw) {
-    // Inutile de vérifier que la longueur du tuple est un multiple de 2,
-    // car comme on avance de 2 en 2, l'instanciation du template ne peut pas se faire pour
-    // un tuple qui n'a pas un nombre pair d'items.
+    // No need to check if tuple length is a multiple of two, because
+    // the template instantiation will fail
+    // if the tuple doesn't have a even number of items
     PyObject* keywords = PyDict_New();
     AnalyzeKeywordsHelper<decltype(kw), sizeof...(Args)>::analyze_keywords(kw, keywords);
     return keywords;
@@ -1256,6 +1256,8 @@ bool __quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, co
     assert(x.size() == y.size() && x.size() == u.size() && u.size() == w.size() && w.size() == c.size());
   }
 
+  detail::_interpreter::get();
+
   PyObject* xarray = detail::get_array(x);
   PyObject* yarray = detail::get_array(y);
   PyObject* uarray = detail::get_array(u);
@@ -1291,8 +1293,6 @@ bool __quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, co
   }
 
   Py_DECREF(res);
-  return res;
-
   return res;
 }
 
@@ -1764,6 +1764,7 @@ inline long figure(long number = -1)
     return figureNumber;
 }
 
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
 template <typename Identity, class... Args>
 inline Identity figure(Identity number, const std::tuple<Args...>& keywords)
 {
@@ -1793,6 +1794,7 @@ inline Identity figure(Identity number, const std::tuple<Args...>& keywords)
 
   return figureNumber;
 }
+#endif
 
 inline bool fignum_exists(long number)
 {
