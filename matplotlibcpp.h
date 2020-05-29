@@ -55,6 +55,7 @@ struct _interpreter {
     PyObject *s_python_function_fignum_exists;
     PyObject *s_python_function_plot;
     PyObject *s_python_function_quiver;
+    PyObject *s_python_function_streamplot;
     PyObject *s_python_function_semilogx;
     PyObject *s_python_function_semilogy;
     PyObject *s_python_function_loglog;
@@ -272,6 +273,7 @@ private:
         s_python_function_fignum_exists = safe_import(pymod, "fignum_exists");
         s_python_function_plot = safe_import(pymod, "plot");
         s_python_function_quiver = safe_import(pymod, "quiver");
+        s_python_function_streamplot = safe_import(pymod, "streamplot");
         s_python_function_semilogx = safe_import(pymod, "semilogx");
         s_python_function_semilogy = safe_import(pymod, "semilogy");
         s_python_function_loglog = safe_import(pymod, "loglog");
@@ -461,7 +463,7 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
 {
   PyObject* listlist = PyList_New(ll.size());
   for (std::size_t i = 0; i < ll.size(); ++i) {
-    PyList_SetItem(listlist, i, get_array(ll[i]));
+    PyList_SetItem(listlist, i, detail::get_array(ll[i]));
   }
   return listlist;
 }
@@ -504,7 +506,7 @@ std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::
 //    for (size_t i = 0; i < value.size(); ++i) {
 //        PyList_SetItem(py_levels, i, PyFloat_FromDouble(value.at(i)));
 //    }
-    return {key, get_array(value)};
+    return {key, detail::get_array(value)};
 }
 
 std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<int>& value) {
@@ -512,7 +514,11 @@ std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::
     for(size_t i = 0; i < value.size(); ++i) {
         PyTuple_SetItem(args, i, PyLong_FromLong(value.at(i)));
     }
-    return {key, get_array(value)};
+    return {key, detail::get_array(value)};
+}
+
+std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<std::vector<double>>& value) {
+  return {key, detail::get_2darray(value)};
 }
 
 template<class Tuple, std::size_t N>
@@ -999,8 +1005,8 @@ bool __scatter(const std::vector<NumericX>& x,
 	    
   assert(x.size() == y.size());
 
-  PyObject* xarray = get_array(x);
-  PyObject* yarray = get_array(y);
+  PyObject* xarray = detail::get_array(x);
+  PyObject* yarray = detail::get_array(y);
 
   PyObject* args = PyTuple_New(2);
   PyTuple_SetItem(args, 0, xarray);
@@ -1020,6 +1026,7 @@ bool __scatter(const std::vector<NumericX>& x,
   return res;
 }
 
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
 // generic form
 template <typename Numeric, class... Args>
 inline bool scatter(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::tuple<Args...>& keywords)
@@ -1027,6 +1034,7 @@ inline bool scatter(const std::vector<Numeric>& x, const std::vector<Numeric>& y
   PyObject* kwargs = analyze_keywords(keywords);
   return __scatter(x, y, kwargs);
 }
+#endif
 
 // specialized form
 template<typename NumericX, typename NumericY>
@@ -1237,40 +1245,154 @@ bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const 
     return res;
 }
 
-template<typename NumericX, typename NumericY, typename NumericU, typename NumericW>
-bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericU>& u, const std::vector<NumericW>& w, const std::map<std::string, std::string>& keywords = {})
+template<typename NumericX, typename NumericY, typename NumericU, typename NumericW, typename NumericC>
+bool __quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericU>& u,
+              const std::vector<NumericW>& w, const std::vector<NumericC>& c, PyObject* kwargs)
 {
+  if(c.empty()) {
     assert(x.size() == y.size() && x.size() == u.size() && u.size() == w.size());
+  }
+  else {
+    assert(x.size() == y.size() && x.size() == u.size() && u.size() == w.size() && w.size() == c.size());
+  }
 
-    detail::_interpreter::get();
+  PyObject* xarray = detail::get_array(x);
+  PyObject* yarray = detail::get_array(y);
+  PyObject* uarray = detail::get_array(u);
+  PyObject* warray = detail::get_array(w);
+  PyObject* carray = nullptr;
+  if(c.size() > 0) {
+    carray = detail::get_array(c);
+  }
 
-    PyObject* xarray = detail::get_array(x);
-    PyObject* yarray = detail::get_array(y);
-    PyObject* uarray = detail::get_array(u);
-    PyObject* warray = detail::get_array(w);
+  PyObject* plot_args = nullptr;
+  if(c.size() > 0) {
+    plot_args = PyTuple_New(5);
+  }
+  else {
+    plot_args = PyTuple_New(4);
+  }
+  PyTuple_SetItem(plot_args, 0, xarray);
+  PyTuple_SetItem(plot_args, 1, yarray);
+  PyTuple_SetItem(plot_args, 2, uarray);
+  PyTuple_SetItem(plot_args, 3, warray);
+  if(c.size() > 0) {
+    PyTuple_SetItem(plot_args, 4, carray);
+  }
 
-    PyObject* plot_args = PyTuple_New(4);
-    PyTuple_SetItem(plot_args, 0, xarray);
-    PyTuple_SetItem(plot_args, 1, yarray);
-    PyTuple_SetItem(plot_args, 2, uarray);
-    PyTuple_SetItem(plot_args, 3, warray);
+  PyObject* res = PyObject_Call(
+      detail::_interpreter::get().s_python_function_quiver, plot_args, kwargs);
 
-    // construct keyword args
-    PyObject* kwargs = PyDict_New();
-    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
-    {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
-    }
+  Py_DECREF(kwargs);
+  Py_DECREF(plot_args);
+  if (!res) {
+    PyErr_Print();
+    throw std::runtime_error("Call to quiver() failed.");
+  }
 
-    PyObject* res = PyObject_Call(
-            detail::_interpreter::get().s_python_function_quiver, plot_args, kwargs);
+  Py_DECREF(res);
+  return res;
 
-    Py_DECREF(kwargs);
-    Py_DECREF(plot_args);
-    if (res)
-        Py_DECREF(res);
+  return res;
+}
 
-    return res;
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
+// generic form
+template <typename NumericX, typename NumericY, typename NumericU, typename NumericW, class... Args>
+bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
+            const std::vector<NumericU>& u, const std::vector<NumericW>& w,
+            const std::tuple<Args...>& keywords)
+{
+  PyObject* kwargs = analyze_keywords(keywords);
+  auto c = std::vector<NumericX>(0);
+  return __quiver(x, y, u, w, c, kwargs);
+}
+
+template <typename Numeric, class... Args>
+inline bool quiver(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::vector<Numeric>& u,
+                   const std::vector<Numeric>& w, const std::vector<Numeric>& color, const std::tuple<Args...>& keywords)
+{
+  PyObject* kwargs = analyze_keywords(keywords);
+  return __quiver(x, y, u, w, color, kwargs);
+}
+#endif
+
+template <typename NumericX, typename NumericY, typename NumericU, typename NumericW, typename NumericC>
+inline bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericU>& u,
+                   const std::vector<NumericW>& w, const std::vector<NumericC>& color)
+{
+  PyObject* kwargs = PyDict_New();
+  return __quiver(x, y, u, w, color, kwargs);
+}
+
+// specialized form
+template<typename NumericX, typename NumericY, typename NumericU, typename NumericW>
+bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericU>& u, const std::vector<NumericW>& w,
+            const std::map<std::string, std::string>& keywords = {})
+{
+  auto c = std::vector<NumericX>(0);
+
+  PyObject* kwargs = PyDict_New();
+  for (const auto &keyword : keywords) {
+    PyDict_SetItemString(kwargs, keyword.first.c_str(), PyUnicode_FromString(keyword.second.c_str()));
+  }
+
+  return __quiver(x, y, u, w, c, kwargs);
+}
+
+template<typename NumericX, typename NumericY, typename NumericU, typename NumericW>
+bool __streamplot(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
+                  const std::vector<std::vector<NumericU>>& u, const std::vector<std::vector<NumericW>>& w,
+                  PyObject* kwargs)
+{
+  assert(x.size() == y.size() && u.size() == w.size());
+
+  detail::_interpreter::get();
+
+  PyObject* xarray = detail::get_array(x);
+  PyObject* yarray = detail::get_array(y);
+  PyObject* uarray = detail::get_2darray(u);
+  PyObject* warray = detail::get_2darray(w);
+
+  PyObject* args = PyTuple_New(4);
+  PyTuple_SetItem(args, 0, xarray);
+  PyTuple_SetItem(args, 1, yarray);
+  PyTuple_SetItem(args, 2, uarray);
+  PyTuple_SetItem(args, 3, warray);
+
+  PyObject* res = PyObject_Call(
+      detail::_interpreter::get().s_python_function_streamplot, args, kwargs);
+
+  Py_DECREF(kwargs);
+  Py_DECREF(args);
+  if (!res) {
+    PyErr_Print();
+    throw std::runtime_error("Call to streamplot() failed.");
+  }
+
+  Py_DECREF(res);
+  return res;
+}
+
+#ifdef USE_VARIADIC_TEMPLATES_ARGS
+// generic form
+template <typename NumericX, typename NumericY, typename NumericU, typename NumericW, class... Args>
+bool streamplot(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
+            const std::vector<std::vector<NumericU>>& u, const std::vector<std::vector<NumericW>>& w,
+            const std::tuple<Args...>& keywords)
+{
+  PyObject* kwargs = analyze_keywords(keywords);
+  return __streamplot(x, y, u, w, kwargs);
+}
+#endif
+
+// specialized form
+template<typename NumericX, typename NumericY, typename NumericU, typename NumericW>
+bool streamplot(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
+                const std::vector<std::vector<NumericU>>& u, const std::vector<std::vector<NumericW>>& w)
+{
+  PyObject* kwargs = PyDict_New();
+  return __streamplot(x, y, u, w, kwargs);
 }
 
 template<typename NumericX, typename NumericY>
