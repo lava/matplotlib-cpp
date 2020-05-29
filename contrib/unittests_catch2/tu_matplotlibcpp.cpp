@@ -294,12 +294,12 @@ TEST_CASE("matplotlib", "[matplotlibcpp][matplotlib]") {
     REQUIRE_NOTHROW(plt::scatter(x_scatter, y_scatter));
     plt::show(true);
 
-    std::unordered_map<std::string, std::string> kw_1{{"marker", "P"}};
+    std::map<std::string, std::string> kw_1{{"marker", "P"}};
     plt::clf();
     REQUIRE_NOTHROW(plt::scatter(x_scatter, y_scatter, 1.0, kw_1));
     plt::show(true);
 
-    std::unordered_map<std::string, std::string> kw_2 {{"marker", "."}, {"c", "orange"}};
+    std::map<std::string, std::string> kw_2 {{"marker", "."}, {"c", "orange"}};
     plt::clf();
     REQUIRE_NOTHROW(plt::scatter(x_scatter, y_scatter, 1.0, kw_2));
     plt::show(true);
@@ -443,6 +443,88 @@ TEST_CASE("matplotlib", "[matplotlibcpp][matplotlib]") {
     REQUIRE_NOTHROW(plt::tick_params(kw_params));
     // if manual interction is needed (e.g. mouse clicked)
     //        REQUIRE_NOTHROW(plt::ginput());
+  }
+}
+
+TEST_CASE("cea_addon_display_vectors", "[matplotlibcpp][matplotlib][cea_addon][quiver][streamplot]")
+{
+  // Some data
+  unsigned long nx = 5;
+  unsigned long ny = 5;
+  vector<double> x = {1.2, 2.4, 3.6, 4.8, 6, 1.2, 2.4, 3.6, 4.8, 6, 1.2, 2.4, 3.6, 4.8, 6, 1.2, 2.4, 3.6, 4.8, 6, 1.2, 2.4, 3.6, 4.8, 6};
+  vector<double> y = {1.5, 1.5, 1.5, 1.5, 1.5, 3, 3, 3, 3, 3, 4.5, 4.5, 4.5, 4.5, 4.5, 6, 6, 6, 6, 6, 7.5, 7.5, 7.5, 7.5, 7.5};
+  vector<double> u = {0.362358, -0.737394, -0.896758, 0.087499, 0.96017, 0.362358, -0.737394, -0.896758, 0.087499, 0.96017, 0.362358, -0.737394, -0.896758, 0.087499, 0.96017, 0.362358, -0.737394, -0.896758, 0.087499, 0.96017, 0.362358, -0.737394, -0.896758, 0.087499, 0.96017};
+  vector<double> v = {0.997495, 0.997495, 0.997495, 0.997495, 0.997495, 0.14112, 0.14112, 0.14112, 0.14112, 0.14112, -0.97753, -0.97753, -0.97753, -0.97753, -0.97753, -0.279415, -0.279415, -0.279415, -0.279415, -0.279415, 0.938, 0.938, 0.938, 0.938, 0.938};
+  vector<double> mag = {1.92094, 2.83019, 3.9, 5.02892, 6.18466, 3.2311, 3.84187, 4.68615, 5.66039, 6.7082, 4.65725, 5.1, 5.76281, 6.57951, 7.5, 6.11882, 6.4622, 6.99714, 7.68375, 8.48528, 7.59539, 7.87464, 8.31925, 8.90449, 9.60469};
+  vector<double> x1d = {1.2, 2.4, 3.6, 4.8, 6};
+  vector<double> y1d = {1.5, 3, 4.5, 6, 7.5};
+  vector<vector<double>> u2d = {{0.362358, -0.737394, -0.896758, 0.087499, 0.96017},
+                                {0.362358, -0.737394, -0.896758, 0.087499, 0.96017},
+                                {0.362358, -0.737394, -0.896758, 0.087499, 0.96017},
+                                {0.362358, -0.737394, -0.896758, 0.087499, 0.96017},
+                                {0.362358, -0.737394, -0.896758, 0.087499, 0.96017}};
+  vector<vector<double>> v2d = {{0.997495, 0.997495, 0.997495, 0.997495, 0.997495},
+                                {0.14112, 0.14112, 0.14112, 0.14112, 0.14112},
+                                {-0.97753, -0.97753, -0.97753, -0.97753, -0.97753},
+                                {-0.279415, -0.279415, -0.279415, -0.279415, -0.279415},
+                                {0.938, 0.938, 0.938, 0.938, 0.938}};
+  vector<vector<double>> mag2d = {{1.92094, 2.83019, 3.9, 5.02892, 6.18466},
+                                  {3.2311, 3.84187, 4.68615, 5.66039, 6.7082},
+                                  {4.65725, 5.1, 5.76281, 6.57951, 7.5},
+                                  {6.11882, 6.4622, 6.99714, 7.68375, 8.48528},
+                                  {7.59539, 7.87464, 8.31925, 8.90449, 9.60469}};
+
+  // permet de faire le plt::clf() sans planter
+  plt::ion();
+
+  SECTION("quiver") {
+    plt::clf();
+    REQUIRE_NOTHROW(plt::quiver(x, y, u, v));
+    plt::show(true);
+  }
+
+  SECTION("quiver_with_args") {
+    plt::clf();
+    REQUIRE_NOTHROW(plt::quiver(x, y, u, v, make_tuple("headwidth", 5.)));
+    plt::show(true);
+  }
+
+  SECTION("colored_quiver") {
+    plt::clf();
+    REQUIRE_NOTHROW(plt::quiver(x, y, u, v, mag));
+    plt::show(true);
+  }
+
+  SECTION("colored_quiver_with_args") {
+    plt::clf();
+    REQUIRE_NOTHROW(plt::quiver(x, y, u, v, make_tuple("headwidth", 5.)));
+    plt::show(true);
+  }
+
+  SECTION("streamplot") {
+    plt::clf();
+    REQUIRE_NOTHROW(plt::streamplot(x1d, y1d, u2d, v2d));
+    plt::show(true);
+  }
+
+  SECTION("colored_streamplot") {
+    plt::clf();
+    REQUIRE_NOTHROW(plt::streamplot(x1d, y1d, u2d, v2d,  make_tuple("color", mag2d)));
+    plt::show(true);
+  }
+
+  SECTION("colored_streamplot_with_args") {
+    vector<vector<double>> lw = mag2d;
+    auto it_max = max_element(mag.begin(), mag.end());
+    auto max_mag = *it_max;
+    for(auto&& ey: lw) {
+      for(auto&& ex: ey) {
+        ex = (5 * ex / max_mag);
+      }
+    }
+    plt::clf();
+    REQUIRE_NOTHROW(plt::streamplot(x1d, y1d, u2d, v2d,  make_tuple("color", mag2d, "linewidth", lw)));
+    plt::show(true);
   }
 }
 
