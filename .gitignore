@@ -41,3 +41,5 @@
 # IDE directories
 .idea
 
+# vim temp files
+*.sw*

@@ -1,0 +1,6 @@
+language: minimal
+dist: trusty
+services:
+  - docker
+script:
+  - make -C contrib docker_build
