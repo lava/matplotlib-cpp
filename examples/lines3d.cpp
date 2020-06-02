@@ -4,7 +4,7 @@
 
 namespace plt = matplotlibcpp;
 
-int lines3d() {
+void lines3d() {
 	std::vector<double> x, y, z;
 	double theta, r;
 	double z_inc = 4.0 / 99.0;

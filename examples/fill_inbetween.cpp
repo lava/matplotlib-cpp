@@ -6,7 +6,7 @@
 using namespace std;
 namespace plt = matplotlibcpp;
 
-int fill_inbetween() {
+void fill_inbetween() {
 	// Prepare data.
 	int n = 5000;
 	std::vector<double> x(n), y(n), z(n), w(n, 2);

@@ -7,7 +7,7 @@ namespace plt = matplotlibcpp;
 
 // Example fill plot taken from:
 // https://matplotlib.org/gallery/misc/fill_spiral.html
-int fill() {
+void fill() {
 	// Prepare data.
 	vector<double> theta;
 	for (double d = 0; d < 8 * M_PI; d += 0.1)

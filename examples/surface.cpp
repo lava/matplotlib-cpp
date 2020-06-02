@@ -4,7 +4,7 @@
 
 namespace plt = matplotlibcpp;
 
-int surface() {
+void surface() {
 	std::vector<std::vector<double>> x, y, z;
 	for (double i = -5; i <= 5; i += 0.25) {
 		std::vector<double> x_row, y_row, z_row;

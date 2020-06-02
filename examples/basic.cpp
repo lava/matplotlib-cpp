@@ -5,7 +5,7 @@
 
 namespace plt = matplotlibcpp;
 
-int basic() {
+void basic() {
 	// Prepare data.
 	int n = 5000;
 	std::vector<double> x(n), y(n), z(n), w(n, 2);

@@ -7,7 +7,7 @@ namespace plt = matplotlibcpp;
 using namespace matplotlibcpp;
 using namespace std;
 
-int nonblock() {
+void nonblock() {
 	// Prepare data.
 	int n = 5000;
 	std::vector<double> x(n), y(n), z(n), w(n, 2);

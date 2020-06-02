@@ -5,7 +5,7 @@
 using namespace std;
 namespace plt = matplotlibcpp;
 
-int subplot() {
+void subplot() {
 	// Prepare data
 	int n = 500;
 	std::vector<double> x(n), y(n), z(n), w(n, 2);

@@ -6,7 +6,7 @@
 using namespace std;
 namespace plt = matplotlibcpp;
 
-int imshow() {
+void imshow() {
 	// Prepare data
 	int ncols = 500, nrows = 300;
 	std::vector<float> z(ncols * nrows);

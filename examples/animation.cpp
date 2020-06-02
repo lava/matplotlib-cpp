@@ -4,7 +4,7 @@
 
 namespace plt = matplotlibcpp;
 
-int animation() {
+void animation() {
 	int n = 1000;
 	std::vector<double> x, y, z;
 

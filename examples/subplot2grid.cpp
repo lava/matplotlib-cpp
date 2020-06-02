@@ -5,7 +5,7 @@
 using namespace std;
 namespace plt = matplotlibcpp;
 
-int subplot2grid() {
+void subplot2grid() {
 	// Prepare data
 	int n = 500;
 	std::vector<double> x(n), u(n), v(n), w(n);

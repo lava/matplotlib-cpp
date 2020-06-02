@@ -5,7 +5,7 @@
 #include "../matplotlibcpp.h"
 namespace plt = matplotlibcpp;
 
-int bar(int argc, char **argv) {
+void bar(int argc, char **argv) {
 	std::vector<int> test_data;
 	for (int i = 0; i < 20; i++) {
 		test_data.push_back(i);

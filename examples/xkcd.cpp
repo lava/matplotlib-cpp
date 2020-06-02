@@ -5,7 +5,7 @@
 
 namespace plt = matplotlibcpp;
 
-int xkcd() {
+void xkcd() {
 	std::vector<double> t(1000);
 	std::vector<double> x(t.size());
 
