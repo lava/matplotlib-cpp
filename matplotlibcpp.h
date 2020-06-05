@@ -481,7 +481,7 @@ std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const bool va
 }
 
 std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const int value) {
-    return {PyString_FromString(key), PyLong_FromLong(value)};
+    return {PyString_FromString(key), PyLong_FromLong(static_cast<long>(value))};
 }
 
 std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const long value) {
@@ -544,8 +544,17 @@ struct AnalyzeKeywordsHelper<Tuple, 2> {
     }
 };
 
+// Doc of PyLong_FromLong(value) says:
+//    The current implementation keeps an array of integer objects for all
+//    integers between -5 and 256, when you create an int in that range you
+//    actually just get back a reference to the existing object.
+// -> So, we need to intialized the interpreter to have the object, otherwise
+//  it fails with a segv (PyObject not null, but inside it's null)
 template<class... Args>
 PyObject* analyze_keywords(const std::tuple<Args...>& kw) {
+    // See above comments
+    detail::_interpreter::get();
+
     // No need to check if tuple length is a multiple of two, because
     // the template instantiation will fail
     // if the tuple doesn't have a even number of items
