@@ -476,59 +476,59 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
 // ---------------------------------------------
 // Keyword analysis
 //
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const bool value) {
-    return {key, value ? Py_True : Py_False};
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const bool value) {
+    return {PyString_FromString(key), value ? Py_True : Py_False};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const int value) {
-    return {key, PyLong_FromLong(value)};
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const int value) {
+    return {PyString_FromString(key), PyLong_FromLong(value)};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const long value) {
-    return {key, PyLong_FromLong(value)};
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const long value) {
+    return {PyString_FromString(key), PyLong_FromLong(value)};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const double value) {
-    return {key, PyFloat_FromDouble(value)};
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const double value) {
+    return {PyString_FromString(key), PyFloat_FromDouble(value)};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const char* value) {
-    return {key, PyString_FromString(value)};
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const char* value) {
+    return {PyString_FromString(key), PyString_FromString(value)};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::string& value) {
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const std::string& value) {
     PyObject* str_value = PyString_FromString(value.c_str());
-    return {key, str_value};
+    return {PyString_FromString(key), str_value};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<double>& value) {
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const std::vector<double>& value) {
 //    PyObject* py_levels = PyList_New(value.size());
 //    for (size_t i = 0; i < value.size(); ++i) {
 //        PyList_SetItem(py_levels, i, PyFloat_FromDouble(value.at(i)));
 //    }
-    return {key, detail::get_array(value)};
+    return {PyString_FromString(key), detail::get_array(value)};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<int>& value) {
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const std::vector<int>& value) {
     PyObject* args = PyTuple_New(value.size());
     for(size_t i = 0; i < value.size(); ++i) {
         PyTuple_SetItem(args, i, PyLong_FromLong(value.at(i)));
     }
-    return {key, detail::get_array(value)};
+    return {PyString_FromString(key), detail::get_array(value)};
 }
 
-std::pair<std::string, PyObject*> analyze_key_value(const char* key, const std::vector<std::vector<double>>& value) {
-  return {key, detail::get_2darray(value)};
+std::pair<PyObject*, PyObject*> analyze_key_value(const char* key, const std::vector<std::vector<double>>& value) {
+  return {PyString_FromString(key), detail::get_2darray(value)};
 }
 
 template<class Tuple, std::size_t N>
 struct AnalyzeKeywordsHelper {
     static void analyze_keywords(const Tuple& kw, PyObject* keywords) {
         AnalyzeKeywordsHelper<Tuple, N-2>::analyze_keywords(kw, keywords);
-        std::string key;
+        PyObject* key;
         PyObject* value;
         std::tie(key, value) = analyze_key_value(std::get<N-2>(kw), std::get<N-1>(kw));
-        PyDict_SetItemString(keywords, key.c_str(), value);
+        PyDict_SetItem(keywords, key, value);
         Py_DECREF(value); // @TST
     }
 };
@@ -536,10 +536,10 @@ struct AnalyzeKeywordsHelper {
 template<class Tuple>
 struct AnalyzeKeywordsHelper<Tuple, 2> {
     static void analyze_keywords(const Tuple& kw, PyObject* keywords) {
-        std::string key;
+        PyObject* key;
         PyObject* value;
         std::tie(key, value) = analyze_key_value(std::get<0>(kw), std::get<1>(kw));
-        PyDict_SetItemString(keywords, key.c_str(), value);
+        PyDict_SetItem(keywords, key, value);
         Py_DECREF(value); // @TST
     }
 };
