@@ -1565,6 +1565,24 @@ inline void legend()
     Py_DECREF(res);
 }
 
+inline void legend(const std::map<std::string, std::string>& keywords)
+{
+  detail::_interpreter::get();
+
+  // construct keyword args
+  PyObject* kwargs = PyDict_New();
+  for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+  {
+    PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+  }
+
+  PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple, kwargs);
+  if(!res) throw std::runtime_error("Call to legend() failed.");
+
+  Py_DECREF(kwargs);
+  Py_DECREF(res);  
+}
+
 template<typename Numeric>
 void ylim(Numeric left, Numeric right)
 {
