@@ -108,7 +108,17 @@ struct _interpreter {
        */
 
     static _interpreter& get() {
+        return interkeeper(false);
+    }
+
+    static _interpreter& kill() {
+        return interkeeper(true);
+    }
+
+    static _interpreter& interkeeper(bool should_kill) {
         static _interpreter ctx;
+        if (should_kill)
+            ctx.~_interpreter();
         return ctx;
     }
 
