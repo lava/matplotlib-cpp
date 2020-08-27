@@ -1993,10 +1993,10 @@ inline void axvspan(double xmin, double xmax, double ymin = 0., double ymax = 1.
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-	if (it->first == "linewidth" || it->first == "alpha")
-    	    PyDict_SetItemString(kwargs, it->first.c_str(), PyFloat_FromDouble(std::stod(it->second)));
-  	else
-    	    PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    if (it->first == "linewidth" || it->first == "alpha")
+            PyDict_SetItemString(kwargs, it->first.c_str(), PyFloat_FromDouble(std::stod(it->second)));
+    else
+            PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axvspan, args, kwargs);
