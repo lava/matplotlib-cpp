@@ -2321,6 +2321,8 @@ struct plot_impl<std::false_type>
     template<typename IterableX, typename IterableY>
     bool operator()(const IterableX& x, const IterableY& y, const std::string& format)
     {
+        detail::_interpreter::get();
+
         // 2-phase lookup for distance, begin, end
         using std::distance;
         using std::begin;
