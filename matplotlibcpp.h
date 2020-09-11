@@ -277,6 +277,40 @@ private:
 
 } // end namespace detail
 
+    struct SettingValue {
+        int type;
+        bool boolValue;
+        std::string stringValue;
+        float floatValue;
+        int intValue;
+
+    public:
+        static const int String = 0;
+        static const int Bool = 1;
+        static const int Float = 2;
+        static const int Int = 3;
+
+        SettingValue(const bool value) {
+            this->boolValue = value;
+            this->type = SettingValue::Bool;
+        }
+
+        SettingValue(std::string value) {
+            this->stringValue = value;
+            this->type = SettingValue::String;
+        }
+
+        SettingValue(float value) {
+            this->floatValue = value;
+            this->type = SettingValue::Float;
+        }
+
+        SettingValue(int value) {
+            this->intValue = value;
+            this->type = SettingValue::Int;
+        }
+    };
+
 /// Select the backend
 ///
 /// **NOTE:** This must be called before the first plot command to have
@@ -464,8 +498,8 @@ template <typename Numeric>
 void plot_surface(const std::vector<::std::vector<Numeric>> &x,
                   const std::vector<::std::vector<Numeric>> &y,
                   const std::vector<::std::vector<Numeric>> &z,
-                  const std::map<std::string, std::string> &keywords =
-                      std::map<std::string, std::string>())
+                  const std::map<std::string, SettingValue> &keywords =
+                      std::map<std::string, SettingValue>())
 {
   detail::_interpreter::get();
 
@@ -506,18 +540,26 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
 
   // Build up the kw args.
   PyObject *kwargs = PyDict_New();
-  PyDict_SetItemString(kwargs, "rstride", PyInt_FromLong(1));
-  PyDict_SetItemString(kwargs, "cstride", PyInt_FromLong(1));
 
-  PyObject *python_colormap_coolwarm = PyObject_GetAttrString(
-      detail::_interpreter::get().s_python_colormap, "coolwarm");
-
-  PyDict_SetItemString(kwargs, "cmap", python_colormap_coolwarm);
-
-  for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
+  for (std::map<std::string, SettingValue>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
-    PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+      PyObject *key = PyString_FromString(it->first.c_str());
+      SettingValue value = it->second;
+
+      switch (value.type) {
+          case SettingValue::String:
+              PyDict_SetItem(kwargs, key, PyString_FromString(value.stringValue.c_str()));
+              break;
+          case SettingValue::Float:
+              PyDict_SetItem(kwargs, key, PyFloat_FromDouble(value.floatValue));
+              break;
+          case SettingValue::Int:
+              PyDict_SetItem(kwargs, key, PyInt_FromLong(value.intValue));
+              break;
+          case SettingValue::Bool:
+              PyDict_SetItem(kwargs, key, PyBool_FromLong(value.boolValue));
+              break;
+      }
   }
 
 
