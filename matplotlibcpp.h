@@ -1661,8 +1661,8 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& y, const st
     return res;
 }
 
-template<typename Numeric>
-bool named_plot(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_plot(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     detail::_interpreter::get();
 
@@ -1688,8 +1688,8 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& x, const st
     return res;
 }
 
-template<typename Numeric>
-bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_semilogx(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     detail::_interpreter::get();
 
@@ -1715,8 +1715,8 @@ bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, cons
     return res;
 }
 
-template<typename Numeric>
-bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_semilogy(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     detail::_interpreter::get();
 
@@ -1742,8 +1742,8 @@ bool named_semilogy(const std::string& name, const std::vector<Numeric>& x, cons
     return res;
 }
 
-template<typename Numeric>
-bool named_loglog(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
+template<typename NumericX, typename NumericY>
+bool named_loglog(const std::string& name, const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& format = "")
 {
     detail::_interpreter::get();
 
