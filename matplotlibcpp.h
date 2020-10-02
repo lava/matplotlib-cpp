@@ -174,7 +174,12 @@ private:
         wchar_t const *dummy_args[] = {L"Python", NULL};  // const is needed because literals must not be modified
         wchar_t const **argv = dummy_args;
         int             argc = sizeof(dummy_args)/sizeof(dummy_args[0])-1;
+
+#if PY_MAJOR_VERSION >= 3
         PySys_SetArgv(argc, const_cast<wchar_t **>(argv));
+#else
+        PySys_SetArgv(argc, (char **)(argv));
+#endif
 
 #ifndef WITHOUT_NUMPY
         import_numpy(); // initialize numpy C-API
@@ -356,7 +361,7 @@ PyObject* get_array(const std::vector<Numeric>& v)
         PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
         return varray;
     }
-    
+
     PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(v.data()));
     return varray;
 }
@@ -423,7 +428,7 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
 } // namespace detail
 
 /// Plot a line through the given x and y data points..
-/// 
+///
 /// See: https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
 template<typename Numeric>
 bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
@@ -564,9 +569,9 @@ void plot3(const std::vector<Numeric> &x,
 {
   detail::_interpreter::get();
 
-  // Same as with plot_surface: We lazily load the modules here the first time 
-  // this function is called because I'm not sure that we can assume "matplotlib 
-  // installed" implies "mpl_toolkits installed" on all platforms, and we don't 
+  // Same as with plot_surface: We lazily load the modules here the first time
+  // this function is called because I'm not sure that we can assume "matplotlib
+  // installed" implies "mpl_toolkits installed" on all platforms, and we don't
   // want to require it for people who don't need 3d plots.
   static PyObject *mpl_toolkitsmod = nullptr, *axis3dmod = nullptr;
   if (!mpl_toolkitsmod) {
@@ -1634,7 +1639,7 @@ inline void legend(const std::map<std::string, std::string>& keywords)
   if(!res) throw std::runtime_error("Call to legend() failed.");
 
   Py_DECREF(kwargs);
-  Py_DECREF(res);  
+  Py_DECREF(res);
 }
 
 template<typename Numeric>
@@ -1874,7 +1879,7 @@ inline void tick_params(const std::map<std::string, std::string>& keywords, cons
 inline void subplot(long nrows, long ncols, long plot_number)
 {
     detail::_interpreter::get();
-    
+
     // construct positional args
     PyObject* args = PyTuple_New(3);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
@@ -1939,7 +1944,7 @@ inline void title(const std::string &titlestr, const std::map<std::string, std::
 inline void suptitle(const std::string &suptitlestr, const std::map<std::string, std::string> &keywords = {})
 {
     detail::_interpreter::get();
-    
+
     PyObject* pysuptitlestr = PyString_FromString(suptitlestr.c_str());
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pysuptitlestr);
@@ -2069,9 +2074,9 @@ inline void set_zlabel(const std::string &str, const std::map<std::string, std::
 {
     detail::_interpreter::get();
 
-    // Same as with plot_surface: We lazily load the modules here the first time 
-    // this function is called because I'm not sure that we can assume "matplotlib 
-    // installed" implies "mpl_toolkits installed" on all platforms, and we don't 
+    // Same as with plot_surface: We lazily load the modules here the first time
+    // this function is called because I'm not sure that we can assume "matplotlib
+    // installed" implies "mpl_toolkits installed" on all platforms, and we don't
     // want to require it for people who don't need 3d plots.
     static PyObject *mpl_toolkitsmod = nullptr, *axis3dmod = nullptr;
     if (!mpl_toolkitsmod) {
