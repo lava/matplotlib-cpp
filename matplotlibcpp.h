@@ -520,26 +520,32 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
                          PyString_FromString(it->second.c_str()));
   }
 
+  PyObject* axis = PyObject_CallObject(
+    detail::_interpreter::get().s_python_function_gca,
+    detail::_interpreter::get().s_python_empty_tuple);
 
-  PyObject *fig =
-      PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-                          detail::_interpreter::get().s_python_empty_tuple);
-  if (!fig) throw std::runtime_error("Call to figure() failed.");
+  if(!axis)
+  {
+    PyObject *fig =
+        PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
+                            detail::_interpreter::get().s_python_empty_tuple);
+    if (!fig) throw std::runtime_error("Call to figure() failed.");
 
-  PyObject *gca_kwargs = PyDict_New();
-  PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
+    PyObject *gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
 
-  PyObject *gca = PyObject_GetAttrString(fig, "gca");
-  if (!gca) throw std::runtime_error("No gca");
-  Py_INCREF(gca);
-  PyObject *axis = PyObject_Call(
-      gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
+    PyObject *gca = PyObject_GetAttrString(fig, "gca");
+    if (!gca) throw std::runtime_error("No gca");
+    Py_INCREF(gca);
+    PyObject *axis = PyObject_Call(
+        gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
 
-  if (!axis) throw std::runtime_error("No axis");
-  Py_INCREF(axis);
+    if (!axis) throw std::runtime_error("No axis");
+    Py_INCREF(axis);
 
-  Py_DECREF(gca);
-  Py_DECREF(gca_kwargs);
+    Py_DECREF(gca);
+    Py_DECREF(gca_kwargs);
+  }
 
   PyObject *plot_surface = PyObject_GetAttrString(axis, "plot_surface");
   if (!plot_surface) throw std::runtime_error("No surface");
@@ -607,25 +613,32 @@ void plot3(const std::vector<Numeric> &x,
                          PyString_FromString(it->second.c_str()));
   }
 
-  PyObject *fig =
-      PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-                          detail::_interpreter::get().s_python_empty_tuple);
-  if (!fig) throw std::runtime_error("Call to figure() failed.");
+  PyObject* axis = PyObject_CallObject(
+  detail::_interpreter::get().s_python_function_gca,
+  detail::_interpreter::get().s_python_empty_tuple);
 
-  PyObject *gca_kwargs = PyDict_New();
-  PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
+  if(!axis)
+  {
+    PyObject *fig =
+        PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
+                            detail::_interpreter::get().s_python_empty_tuple);
+    if (!fig) throw std::runtime_error("Call to figure() failed.");
 
-  PyObject *gca = PyObject_GetAttrString(fig, "gca");
-  if (!gca) throw std::runtime_error("No gca");
-  Py_INCREF(gca);
-  PyObject *axis = PyObject_Call(
-      gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
+    PyObject *gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("3d"));
 
-  if (!axis) throw std::runtime_error("No axis");
-  Py_INCREF(axis);
+    PyObject *gca = PyObject_GetAttrString(fig, "gca");
+    if (!gca) throw std::runtime_error("No gca");
+    Py_INCREF(gca);
+    PyObject *axis = PyObject_Call(
+        gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
 
-  Py_DECREF(gca);
-  Py_DECREF(gca_kwargs);
+    if (!axis) throw std::runtime_error("No axis");
+    Py_INCREF(axis);
+
+    Py_DECREF(gca);
+    Py_DECREF(gca_kwargs);
+  }
 
   PyObject *plot3 = PyObject_GetAttrString(axis, "plot");
   if (!plot3) throw std::runtime_error("No 3D line plot");
@@ -2115,6 +2128,33 @@ inline void set_zlabel(const std::string &str, const std::map<std::string, std::
     Py_DECREF(args);
     Py_DECREF(kwargs);
     if (res) Py_DECREF(res);
+}
+
+inline void gca(const std::string projection = "3d")
+{
+    PyObject* fig = PyObject_CallObject(
+        detail::_interpreter::get().s_python_function_figure,
+        detail::_interpreter::get().s_python_empty_tuple);
+    if (!fig)
+        throw std::runtime_error("Call to figure() failed.");
+
+    PyObject* gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection",
+                         PyString_FromString(projection.c_str()));
+
+    PyObject* gca = PyObject_GetAttrString(fig, "gca");
+    if (!gca)
+        throw std::runtime_error("No gca");
+    Py_INCREF(gca);
+    PyObject* axis = PyObject_Call(
+        gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
+
+    if (!axis)
+        throw std::runtime_error("No axis");
+    Py_INCREF(axis);
+    Py_DECREF(axis);
+    Py_DECREF(gca);
+    Py_DECREF(gca_kwargs);
 }
 
 inline void grid(bool flag)
