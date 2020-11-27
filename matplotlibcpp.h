@@ -827,6 +827,7 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
         }
 
         PyDict_SetItemString(kwargs, "extent", extentList);
+        Py_DECREF(extentList);
     }
 
     // take care of the remaining keywords
