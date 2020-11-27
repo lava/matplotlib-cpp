@@ -2217,7 +2217,7 @@ inline void pause(Numeric interval)
     Py_DECREF(res);
 }
 
-inline void save(const std::string& filename)
+inline void save(const std::string& filename, const int dpi=0)
 {
     detail::_interpreter::get();
 
@@ -2226,10 +2226,18 @@ inline void save(const std::string& filename)
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pyfilename);
 
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_save, args);
+    PyObject* kwargs = PyDict_New();
+
+    if(dpi > 0)
+    {
+        PyDict_SetItemString(kwargs, "dpi", PyLong_FromLong(dpi));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_save, args, kwargs);
     if (!res) throw std::runtime_error("Call to save() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
