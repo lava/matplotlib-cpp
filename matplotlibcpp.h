@@ -1676,7 +1676,7 @@ inline long figure(long number = -1)
     if (number == -1)
         res = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure, detail::_interpreter::get().s_python_empty_tuple);
     else {
-        assert(number > 0);
+        assert(number >= 0);
 
         // Make sure interpreter is initialised
         detail::_interpreter::get();
