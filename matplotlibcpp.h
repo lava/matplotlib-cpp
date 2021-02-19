@@ -1896,43 +1896,33 @@ void xlim(Numeric left, Numeric right)
 }
 
 
-inline double* xlim()
+inline std::array<double, 2> xlim()
 {
-    detail::_interpreter::get();
-
     PyObject* args = PyTuple_New(0);
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
-    PyObject* left = PyTuple_GetItem(res,0);
-    PyObject* right = PyTuple_GetItem(res,1);
-
-    double* arr = new double[2];
-    arr[0] = PyFloat_AsDouble(left);
-    arr[1] = PyFloat_AsDouble(right);
 
     if(!res) throw std::runtime_error("Call to xlim() failed.");
 
     Py_DECREF(res);
-    return arr;
+
+    PyObject* left = PyTuple_GetItem(res,0);
+    PyObject* right = PyTuple_GetItem(res,1);
+    return { PyFloat_AsDouble(left), PyFloat_AsDouble(right) };
 }
 
 
-inline double* ylim()
+inline std::array<double, 2> ylim()
 {
-    detail::_interpreter::get();
-
     PyObject* args = PyTuple_New(0);
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
-    PyObject* left = PyTuple_GetItem(res,0);
-    PyObject* right = PyTuple_GetItem(res,1);
-
-    double* arr = new double[2];
-    arr[0] = PyFloat_AsDouble(left);
-    arr[1] = PyFloat_AsDouble(right);
 
     if(!res) throw std::runtime_error("Call to ylim() failed.");
 
     Py_DECREF(res);
-    return arr;
+
+    PyObject* left = PyTuple_GetItem(res,0);
+    PyObject* right = PyTuple_GetItem(res,1);
+    return { PyFloat_AsDouble(left), PyFloat_AsDouble(right) };
 }
 
 template<typename Numeric>
