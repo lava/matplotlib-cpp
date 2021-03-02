@@ -1395,6 +1395,33 @@ bool named_plot(const std::string& name, const std::vector<Numeric>& x, const st
 }
 
 template<typename Numeric>
+bool named_plot(const std::string& name, const std::vector<std::string>& x, const std::vector<Numeric>& y, const std::string& format = "")
+{
+    detail::_interpreter::get();
+
+    PyObject* kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
+
+    PyObject* pystring = PyString_FromString(format.c_str());
+
+    PyObject* plot_args = PyTuple_New(3);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+    PyTuple_SetItem(plot_args, 2, pystring);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, plot_args, kwargs);
+
+    Py_DECREF(kwargs);
+    Py_DECREF(plot_args);
+    if (res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename Numeric>
 bool named_semilogx(const std::string& name, const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::string& format = "")
 {
     detail::_interpreter::get();
