@@ -475,9 +475,9 @@ template <typename Numeric>
 void plot_surface(const std::vector<::std::vector<Numeric>> &x,
                   const std::vector<::std::vector<Numeric>> &y,
                   const std::vector<::std::vector<Numeric>> &z,
-                  const long fig_number=0,
                   const std::map<std::string, std::string> &keywords =
-                      std::map<std::string, std::string>())
+                      std::map<std::string, std::string>(),
+                  const long fig_number=0)
 {
   detail::_interpreter::get();
 
@@ -586,9 +586,9 @@ template <typename Numeric>
 void plot3(const std::vector<Numeric> &x,
                   const std::vector<Numeric> &y,
                   const std::vector<Numeric> &z,
-                  const long fig_number=0,
                   const std::map<std::string, std::string> &keywords =
-                      std::map<std::string, std::string>())
+                      std::map<std::string, std::string>(),
+                  const long fig_number=0)
 {
   detail::_interpreter::get();
 
@@ -953,8 +953,8 @@ bool scatter(const std::vector<NumericX>& x,
              const std::vector<NumericY>& y,
              const std::vector<NumericZ>& z,
              const double s=1.0, // The marker size in points**2
-             const long fig_number=0,
-             const std::map<std::string, std::string> & keywords = {}) {
+             const std::map<std::string, std::string> & keywords = {},
+             const long fig_number=0) {
   detail::_interpreter::get();
 
   // Same as with plot_surface: We lazily load the modules here the first time 
