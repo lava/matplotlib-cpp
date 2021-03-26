@@ -202,39 +202,34 @@ If, for some reason, you're unable to get a working installation of numpy on you
 you can define the macro `WITHOUT_NUMPY` before including the header file to erase this
 dependency.
 
-The C++-part of the library consists of the single header file `matplotlibcpp.h` which can be placed
-anywhere.
+The C++-part of the library consists of the single header file `matplotlibcpp.h` which
+can be placed anywhere.
 
-Since a python interpreter is opened internally, it is necessary to link against `libpython` in order
-to user matplotlib-cpp. Most versions should work, although `libpython2.7` and `libpython3.6` are
-probably the most regularly testedr.
+Since a python interpreter is opened internally, it is necessary to link
+against `libpython` in order to user matplotlib-cpp. Most versions should
+work, although python likes to randomly break compatibility from time to time
+so some caution is advised when using the bleeding edge.
 
 
 # CMake
 
-If you prefer to use CMake as build system, you will want to add something like this to your
-CMakeLists.txt:
+The C++ code is compatible to both python2 and python3. However, the `CMakeLists.txt`
+file is currently set up to use python3 by default, so if python2 is required this
+has to be changed manually. (a PR that adds a cmake option for this would be highly
+welcomed)
 
-**Recommended way (since CMake 3.12):**
+**NOTE**: By design (of python), only a single python interpreter can be created per
+process. When using this library, *no other* library that is spawning a python
+interpreter internally can be used.
 
-It's easy to use cmake official [docs](https://cmake.org/cmake/help/git-stage/module/FindPython2.html#module:FindPython2) to find Python 2(or 3) interpreter, compiler and development environment (include directories and libraries).
+To compile the code without using cmake, the compiler invocation should look like
+this:
 
-NumPy is optional here, delete it from cmake script, if you don't need it.
+    g++ example.cpp -I/usr/include/python2.7 -lpython2.7
 
-```cmake
-find_package(Python2 COMPONENTS Development NumPy)
-target_include_directories(myproject PRIVATE ${Python2_INCLUDE_DIRS} ${Python2_NumPy_INCLUDE_DIRS})
-target_link_libraries(myproject Python2::Python Python2::NumPy)
-```
+This can also be used for linking against a custom build of python
 
-**Alternative way (for CMake <= 3.11):**
-
-```cmake
-find_package(PythonLibs 2.7)
-target_include_directories(myproject PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(myproject ${PYTHON_LIBRARIES})
-```
-
+    g++ example.cpp -I/usr/local/include/fancy-python4 -L/usr/local/lib -lfancy-python4
 
 # Vcpkg
 
@@ -258,17 +253,6 @@ Note that support for c++98 was dropped more or less accidentally, so if you hav
 with an ancient compiler and still want to enjoy the latest additional features, I'd
 probably merge a PR that restores support.
 
-# Python 3
-
-This library supports both python2 and python3 (although the python3 support is probably far less tested,
-so it is recommended to prefer python2.7). To switch the used python version, simply change
-the compiler flags accordingly.
-
-    g++ example.cpp -I/usr/include/python3.6 -lpython3.6
-
-The same technique can be used for linking against a custom build of python
-
-    g++ example.cpp -I/usr/local/include/fancy-python4 -L/usr/local/lib -lfancy-python4
 
 
 Why?
