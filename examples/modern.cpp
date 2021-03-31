@@ -24,6 +24,9 @@ int main()
 	// y must either be callable (providing operator() const) or iterable. 
 	plt::plot(x, y, "r-", x, [](double d) { return 12.5+abs(sin(d)); }, "k-");
 
+	//plt::set_aspect(0.5);
+	plt::set_aspect_equal();
+
 
 	// show plots
 	plt::show();
