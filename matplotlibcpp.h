@@ -1858,6 +1858,62 @@ inline void legend(const std::map<std::string, std::string>& keywords)
 }
 
 template<typename Numeric>
+inline void set_aspect(Numeric ratio)
+{
+    detail::_interpreter::get();
+
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(ratio));
+    PyObject* kwargs = PyDict_New();
+
+    PyObject *ax =
+    PyObject_CallObject(detail::_interpreter::get().s_python_function_gca,
+      detail::_interpreter::get().s_python_empty_tuple);
+    if (!ax) throw std::runtime_error("Call to gca() failed.");
+    Py_INCREF(ax);
+
+    PyObject *set_aspect = PyObject_GetAttrString(ax, "set_aspect");
+    if (!set_aspect) throw std::runtime_error("Attribute set_aspect not found.");
+    Py_INCREF(set_aspect);
+
+    PyObject *res = PyObject_Call(set_aspect, args, kwargs);
+    if (!res) throw std::runtime_error("Call to set_aspect() failed.");
+    Py_DECREF(set_aspect);
+
+    Py_DECREF(ax);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+}
+
+inline void set_aspect_equal()
+{
+    // expect ratio == "equal". Leaving error handling to matplotlib.
+    detail::_interpreter::get();
+
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, PyString_FromString("equal"));
+    PyObject* kwargs = PyDict_New();
+
+    PyObject *ax =
+    PyObject_CallObject(detail::_interpreter::get().s_python_function_gca,
+      detail::_interpreter::get().s_python_empty_tuple);
+    if (!ax) throw std::runtime_error("Call to gca() failed.");
+    Py_INCREF(ax);
+
+    PyObject *set_aspect = PyObject_GetAttrString(ax, "set_aspect");
+    if (!set_aspect) throw std::runtime_error("Attribute set_aspect not found.");
+    Py_INCREF(set_aspect);
+
+    PyObject *res = PyObject_Call(set_aspect, args, kwargs);
+    if (!res) throw std::runtime_error("Call to set_aspect() failed.");
+    Py_DECREF(set_aspect);
+
+    Py_DECREF(ax);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+}
+
+template<typename Numeric>
 void ylim(Numeric left, Numeric right)
 {
     detail::_interpreter::get();
