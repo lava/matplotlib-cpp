@@ -16,6 +16,7 @@ target_include_directories(matplotlib_cpp
 target_compile_features(matplotlib_cpp INTERFACE
   cxx_std_11
 )
+# TODO: Use `Development.Embed` component when requiring cmake >= 3.18
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 target_link_libraries(matplotlib_cpp INTERFACE
   Python3::Python
@@ -92,6 +93,13 @@ if(Python3_NumPy_FOUND)
   add_executable(colorbar examples/colorbar.cpp)
   target_link_libraries(colorbar PRIVATE matplotlib_cpp)
   set_target_properties(colorbar PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+  add_executable(contour examples/contour.cpp)
+  target_link_libraries(contour PRIVATE matplotlib_cpp)
+  set_target_properties(contour PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+  add_executable(spy examples/spy.cpp)
+  target_link_libraries(spy PRIVATE matplotlib_cpp)
+  set_target_properties(spy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
 
 

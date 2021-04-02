@@ -354,7 +354,6 @@ static_assert(sizeof(long long) == 8);
 template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
 static_assert(sizeof(unsigned long long) == 8);
 template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
-TODO: add int, long, etc.
 
 template<typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
