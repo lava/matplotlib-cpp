@@ -1,0 +1,10 @@
+get_filename_component(matplotlib_cpp_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+if(NOT TARGET matplotlib_cpp::matplotlib_cpp)
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+  find_package(Python3 COMPONENTS NumPy)
+  include("${matplotlib_cpp_CMAKE_DIR}/matplotlib_cppTargets.cmake")
+
+  get_target_property(matplotlib_cpp_INCLUDE_DIRS matplotlib_cpp::matplotlib_cpp INTERFACE_INCLUDE_DIRECTORIES)
+
+endif()
