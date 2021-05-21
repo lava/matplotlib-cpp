@@ -1,5 +1,10 @@
 #pragma once
 
+// Define math constants for Visual Studio https://docs.microsoft.com/en-us/cpp/c-runtime-library/math-constants
+#if defined(_MSC_VER)
+#define _USE_MATH_DEFINES
+#endif
+
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
 #include <Python.h>
