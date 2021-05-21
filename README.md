@@ -26,8 +26,6 @@ int main() {
 A more comprehensive example:
 ```cpp
 #include "matplotlibcpp.h"
-#include <cmath>
-
 namespace plt = matplotlibcpp;
 
 int main()
@@ -67,9 +65,7 @@ int main()
 
 Alternatively, matplotlib-cpp also supports some C++11-powered syntactic sugar:
 ```cpp
-#include <cmath>
 #include "matplotlibcpp.h"
-
 using namespace std;
 namespace plt = matplotlibcpp;
 
@@ -104,8 +100,6 @@ Or some *funny-looking xkcd-styled* example:
 ```cpp
 #include "matplotlibcpp.h"
 #include <vector>
-#include <cmath>
-
 namespace plt = matplotlibcpp;
 
 int main() {
