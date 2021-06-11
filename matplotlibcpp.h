@@ -984,7 +984,7 @@ void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keyw
         cv::cvtColor(image2, image2, CV_BGRA2RGBA);
     }
 
-    detail::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords);
+    detail::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords, nullptr);
 }
 #endif // WITH_OPENCV
 #endif // WITHOUT_NUMPY
