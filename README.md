@@ -189,6 +189,52 @@ int main()
 
 ![surface example](./examples/surface.png)
 
+If you wish to plot data in structures other than `std::vector`, a STL-like plotting interface interpreting the data as defined by a pair of iterators is provided.
+
+```cpp
+#include "../matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
+
+// fun() is transient response of some damped harmonic oscillator, defined in examples/stl_containers.cpp
+
+int main()
+{
+    // Raw buffer
+    double t[500];
+    double y[500];
+    std::iota(t, t + 500, 0);
+    std::transform(t, t + 500, t, [](double t) { return t / 50; });
+    std::transform(t, t + 500, y, fun);
+
+    plt::subplot(2, 1, 1);
+    plt::title("Data stored in raw C-array");
+    plt::stl::plot(t, t + 500, y, {{"linewidth", "3"}});
+
+    // Non-memory-contiguous containers
+    std::list<double> tlist{t, t + 500};
+    std::deque<double> ydeque{y, y + 500};
+
+    plt::subplot(2, 1, 2);
+    plt::title("Data stored in std::list and std::double");
+    plt::stl::plot<std::list<double>::iterator, 
+        std::deque<double>::iterator, 
+        plt::IS_NON_CONTIGUOUS,
+        plt::IS_NON_CONTIGUOUS>(tlist.begin(), tlist.end(), ydeque.begin(), "r--");
+
+    plt::tight_layout();
+    plt::show();
+}
+```
+
+Note that plotting non-contiguous data structures is possible. You must manually specify the iterator types and fill the last two template parameters with either `plt::IS_CONTIGUOUS` or `plt::IS_NON_CONTIGUOUS`. Mixing contiguous and non-contiguous data in a plot is allowed.
+
+**Objects from the [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) linear algebra library, e.g. `Eigen::VectorXd` can also be plotted similarly. Refer to `examples/eigen_objects.cpp` to learn how.**
+
+**Result:**
+
+![surface example](./examples/stl_containers.png)
+
 Installation
 ------------
 

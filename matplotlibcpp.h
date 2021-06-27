@@ -330,7 +330,10 @@ inline bool annotate(std::string annotation, double x, double y)
 
     return res;
 }
-
+enum IsContiguousContainer {
+    IS_CONTIGUOUS,
+    IS_NON_CONTIGUOUS
+};
 namespace detail {
 
 #ifndef WITHOUT_NUMPY
@@ -396,6 +399,75 @@ PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
     }
 
     return reinterpret_cast<PyObject *>(varray);
+}
+
+template <IsContiguousContainer _IsContiguous, typename _InputIterator>
+PyObject* array_from_iter(_InputIterator __begin, _InputIterator __end, std::size_t &__n_out)
+{
+    typedef typename std::iterator_traits<_InputIterator>::value_type Numeric;
+    __n_out = std::distance(__begin, __end);
+    auto vsize = static_cast<npy_intp>(__n_out);
+    NPY_TYPES type = select_npy_type<Numeric>::type;
+
+    if (type == NPY_NOTYPE)
+    {
+        auto dp = new double[vsize];
+        std::copy(__begin, __end, dp);
+        PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, dp);
+        PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
+        return varray;
+    }
+
+    switch (_IsContiguous)
+    {
+        case IS_CONTIGUOUS:
+        {
+            PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(&*__begin));
+            return varray;
+        }
+        case IS_NON_CONTIGUOUS:
+        {
+            auto dp = new Numeric[vsize];
+            std::copy(__begin, __end, dp);
+            PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, dp);
+            PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
+            return varray;
+        }
+    }
+}
+
+template <IsContiguousContainer _IsContiguous, typename _InputIterator>
+PyObject* array_from_iter_n(_InputIterator __begin, std::size_t __n)
+{
+    typedef typename std::iterator_traits<_InputIterator>::value_type Numeric;
+    auto vsize = static_cast<npy_intp>(__n);
+    NPY_TYPES type = select_npy_type<Numeric>::type;
+
+    if (type == NPY_NOTYPE)
+    {
+        auto dp = new double[vsize];
+        std::copy_n(__begin, __n, dp);
+        PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, dp);
+        PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
+        return varray;
+    }
+
+    switch (_IsContiguous)
+    {
+        case IS_CONTIGUOUS:
+        {
+            PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(&*__begin));
+            return varray;
+        }
+        case IS_NON_CONTIGUOUS:
+        {
+            auto dp = new Numeric[vsize];
+            std::copy_n(__begin, __n, dp);
+            PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, dp);
+            PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
+            return varray;
+        }
+    }
 }
 
 #else // fallback if we don't have numpy: copy every element of the given vector
@@ -468,6 +540,92 @@ bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     if(res) Py_DECREF(res);
 
     return res;
+}
+namespace stl {
+template <typename _InputIterator1, typename _InputIterator2, IsContiguousContainer _isContiguous1 = IS_CONTIGUOUS, IsContiguousContainer _isContiguous2 = IS_CONTIGUOUS>
+bool plot(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2, const std::string& s = "")
+{
+    detail::_interpreter::get();
+
+    std::size_t n;
+    PyObject* xarray = detail::array_from_iter<_isContiguous1>(__first1, __last1, n);
+    PyObject* yarray = detail::array_from_iter_n<_isContiguous2>(__first2, n);
+
+    PyObject* pystring = PyString_FromString(s.c_str());
+
+    PyObject* plot_args = PyTuple_New(3);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+    PyTuple_SetItem(plot_args, 2, pystring);
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
+
+    Py_DECREF(plot_args);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template <typename _InputIterator1, typename _InputIterator2, IsContiguousContainer _isContiguous1 = IS_CONTIGUOUS, IsContiguousContainer _isContiguous2 = IS_CONTIGUOUS>
+bool plot(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2, const std::map<std::string, std::string>& keywords)
+{
+    detail::_interpreter::get();
+
+    std::size_t n;
+    PyObject* xarray = detail::array_from_iter<_isContiguous1>(__first1, __last1, n);
+    PyObject* yarray = detail::array_from_iter_n<_isContiguous2>(__first2, n);
+
+    // construct positional args
+    PyObject* args = PyTuple_New(2);
+    PyTuple_SetItem(args, 0, xarray);
+    PyTuple_SetItem(args, 1, yarray);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template <typename _InputIterator1, typename _InputIterator2, IsContiguousContainer _isContiguous1 = IS_CONTIGUOUS, IsContiguousContainer _isContiguous2 = IS_CONTIGUOUS>
+bool scatter(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2,
+             const double s=1.0, // The marker size in points**2
+             const std::map<std::string, std::string> & keywords = {})
+{
+    detail::_interpreter::get();
+    std::size_t n;
+    PyObject* xarray = detail::array_from_iter<_isContiguous1>(__first1, __last1, n);
+    PyObject* yarray = detail::array_from_iter_n<_isContiguous2>(__first2, n);
+
+    PyObject* kwargs = PyDict_New();
+    PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
+    for (const auto& it : keywords)
+    {
+        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+    }
+
+    PyObject* plot_args = PyTuple_New(2);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_scatter, plot_args, kwargs);
+
+    Py_DECREF(plot_args);
+    Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
 }
 
 // TODO - it should be possible to make this work by implementing
