@@ -35,6 +35,7 @@ install(
   EXPORT install_targets
 )
 
+find_package(Eigen3)
 
 # Examples
 add_executable(minimal examples/minimal.cpp)
@@ -84,6 +85,16 @@ set_target_properties(subplot2grid PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_
 add_executable(lines3d examples/lines3d.cpp)
 target_link_libraries(lines3d PRIVATE matplotlib_cpp)
 set_target_properties(lines3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_executable(stl_containers examples/stl_containers.cpp)
+target_link_libraries(stl_containers PRIVATE matplotlib_cpp)
+set_target_properties(stl_containers PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+if (Eigen3_FOUND)
+  add_executable(eigen_objects examples/eigen_objects.cpp)
+  target_link_libraries(eigen_objects PRIVATE matplotlib_cpp Eigen3::Eigen)
+  set_target_properties(eigen_objects PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
 
 if(Python3_NumPy_FOUND)
   add_executable(surface examples/surface.cpp)
