@@ -2255,9 +2255,9 @@ inline void subplot(long nrows, long ncols, long plot_number)
 
     // construct positional args
     PyObject* args = PyTuple_New(3);
-    PyTuple_SetItem(args, 0, PyFloat_FromDouble(nrows));
-    PyTuple_SetItem(args, 1, PyFloat_FromDouble(ncols));
-    PyTuple_SetItem(args, 2, PyFloat_FromDouble(plot_number));
+    PyTuple_SetItem(args, 0, PyLong_FromLong(nrows));
+    PyTuple_SetItem(args, 1, PyLong_FromLong(ncols));
+    PyTuple_SetItem(args, 2, PyLong_FromLong(plot_number));
 
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot, args);
     if(!res) throw std::runtime_error("Call to subplot() failed.");
