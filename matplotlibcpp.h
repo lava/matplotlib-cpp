@@ -348,13 +348,19 @@ template <> struct select_npy_type<uint16_t> { const static NPY_TYPES type = NPY
 template <> struct select_npy_type<uint32_t> { const static NPY_TYPES type = NPY_ULONG; };
 template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
 
-// Sanity checks; comment them out or change the numpy type below if you're compiling on
-// a platform where they don't apply
-static_assert(sizeof(long long) == 8);
-template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
-static_assert(sizeof(unsigned long long) == 8);
-template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
-
+#ifndef DISABLE_TYPE_SIZE_SANITY_CHECK
+// Sanity checks; comment them out or change the numpy type below if you're
+// compiling on a platform where they don't apply
+static_assert(sizeof(long long) == 8, "size check failed");
+template <> struct select_npy_type<long long> {
+  const static NPY_TYPES type = NPY_INT64;
+};
+static_assert(sizeof(unsigned long long) == 8, "size check failed");
+template <> struct select_npy_type<unsigned long long> {
+  const static NPY_TYPES type = NPY_UINT64;
+};
+#endif
+	
 template<typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
 {
@@ -1057,8 +1063,7 @@ template<typename NumericX, typename NumericY, typename NumericColors>
         if(res) Py_DECREF(res);
 
         return res;
-    }
-    
+}
 
 template<typename NumericX, typename NumericY, typename NumericZ>
 bool scatter(const std::vector<NumericX>& x,
@@ -1069,9 +1074,9 @@ bool scatter(const std::vector<NumericX>& x,
              const long fig_number=0) {
   detail::_interpreter::get();
 
-  // Same as with plot_surface: We lazily load the modules here the first time 
-  // this function is called because I'm not sure that we can assume "matplotlib 
-  // installed" implies "mpl_toolkits installed" on all platforms, and we don't 
+  // Same as with plot_surface: We lazily load the modules here the first time
+  // this function is called because I'm not sure that we can assume "matplotlib
+  // installed" implies "mpl_toolkits installed" on all platforms, and we don't
   // want to require it for people who don't need 3d plots.
   static PyObject *mpl_toolkitsmod = nullptr, *axis3dmod = nullptr;
   if (!mpl_toolkitsmod) {
@@ -1468,7 +1473,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
     Py_DECREF(axis3d);
     if (!axis3dmod) { throw std::runtime_error("Error loading module mpl_toolkits.mplot3d!"); }
   }
-  
+
   //assert sizes match up
   assert(x.size() == y.size() && x.size() == u.size() && u.size() == w.size() && x.size() == z.size() && x.size() == v.size() && u.size() == v.size());
 
@@ -1496,7 +1501,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
   {
       PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
   }
-    
+
   //get figure gca to enable 3d projection
   PyObject *fig =
       PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
@@ -1516,7 +1521,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
   Py_INCREF(axis);
   Py_DECREF(gca);
   Py_DECREF(gca_kwargs);
-  
+
   //plot our boys bravely, plot them strongly, plot them with a wink and clap
   PyObject *plot3 = PyObject_GetAttrString(axis, "quiver");
   if (!plot3) throw std::runtime_error("No 3D line plot");
@@ -2655,7 +2660,7 @@ inline void rcparams(const std::map<std::string, std::string>& keywords = {}) {
           PyDict_SetItemString(kwargs, it->first.c_str(), PyLong_FromLong(std::stoi(it->second.c_str())));
         else PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
     }
-    
+
     PyObject * update = PyObject_GetAttrString(detail::_interpreter::get().s_python_function_rcparams, "update");
     PyObject * res = PyObject_Call(update, args, kwargs);
     if(!res) throw std::runtime_error("Call to rcParams.update() failed.");
