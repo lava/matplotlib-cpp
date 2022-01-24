@@ -957,6 +957,11 @@ inline void imshow(const float *ptr, const int rows, const int columns, const in
     detail::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out);
 }
 
+inline void imshow(const double *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
+{
+    detail::imshow((void *) ptr, NPY_DOUBLE, rows, columns, colors, keywords, out);
+}
+
 #ifdef WITH_OPENCV
 void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keywords = {})
 {
