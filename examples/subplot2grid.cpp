@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o subplot2grid $(python-config --includes --cflags) subplot2grid.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include "../matplotlibcpp.h"
@@ -40,5 +44,8 @@ int main()
 
 
     // Show plots
-	plt::show();
+    plt::show();
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }

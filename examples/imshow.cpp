@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o imshow $(python-config --includes --cflags) imshow.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
@@ -26,4 +30,7 @@ int main()
     // Show plots
     plt::save("imshow.png");
     std::cout << "Result saved to 'imshow.png'.\n";
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }

@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o surface $(python-config --includes --cflags) surface.cpp $(python-config --ldflags --embed)
+//
+
 #include "../matplotlibcpp.h"
 
 #include <cmath>
@@ -21,4 +25,7 @@ int main()
 
     plt::plot_surface(x, y, z);
     plt::show();
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }

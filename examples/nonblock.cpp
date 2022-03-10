@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o nonblock $(python-config --includes --cflags) nonblock.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include "../matplotlibcpp.h"
@@ -43,4 +47,7 @@ int main()
 
     cout << "matplotlibcpp::show() is working in an non-blocking mode" << endl;
     getchar();
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }

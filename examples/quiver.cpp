@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o quiver $(python-config --includes --cflags) quiver.cpp $(python-config --ldflags --embed)
+//
+
 #include "../matplotlibcpp.h"
 
 namespace plt = matplotlibcpp;
@@ -17,4 +21,7 @@ int main()
 
     plt::quiver(x, y, u, v);
     plt::show();
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }

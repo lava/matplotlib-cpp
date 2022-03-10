@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o xkcd $(python-config --includes --cflags) xkcd.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include "../matplotlibcpp.h"
@@ -18,5 +22,8 @@ int main() {
     plt::plot(t, x);
     plt::title("AN ORDINARY SIN WAVE");
     plt::show();
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }
 

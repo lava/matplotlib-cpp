@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o spy $(python-config --includes --cflags) spy.cpp $(python-config --ldflags --embed)
+//
+
 #include "../matplotlibcpp.h"
 
 #include <iostream>
@@ -26,5 +30,6 @@ int main()
     plt::spy(matrix, 5, {{"marker", "o"}});
     plt::show();
 
+    plt::detail::_interpreter::kill();
     return 0;
 }

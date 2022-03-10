@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o lines3d $(python-config --includes --cflags) lines3d.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include "../matplotlibcpp.h"
 #include <cmath>
@@ -9,7 +13,7 @@ int main()
     std::vector<double> x, y, z;
     double theta, r;
     double z_inc = 4.0/99.0; double theta_inc = (8.0 * M_PI)/99.0;
-    
+
     for (double i = 0; i < 100; i += 1) {
         theta = -4.0 * M_PI + theta_inc*i;
         z.push_back(-2.0 + z_inc*i);
@@ -27,4 +31,7 @@ int main()
     plt::set_zlabel("z label"); // set_zlabel rather than just zlabel, in accordance with the Axes3D method
     plt::legend();
     plt::show();
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }
