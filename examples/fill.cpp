@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o fill $(python-config --includes) fill.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include "../matplotlibcpp.h"
 #include <cmath>
@@ -32,4 +36,7 @@ int main() {
         plt::fill(x1, y1, {});
     }
     plt::show();
+
+    plt::detail::_interpreter::kill();
+    return (0);
 }

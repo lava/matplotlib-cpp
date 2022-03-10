@@ -1,3 +1,8 @@
+//
+// g++ -g -Wall -o basic -I/usr/include/python3.9 basic.cpp -lpython3.9
+// g++ -g -Wall -o basic $(python-config --includes) basic.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <cmath>
@@ -5,7 +10,7 @@
 
 namespace plt = matplotlibcpp;
 
-int main() 
+int main()
 {
     // Prepare data.
     int n = 5000;
@@ -15,7 +20,7 @@ int main()
         y.at(i) = sin(2*M_PI*i/360.0);
         z.at(i) = log(i);
     }
-    
+
     // Set the size of output image = 1200x780 pixels
     plt::figure_size(1200, 780);
 
@@ -41,4 +46,7 @@ int main()
     const char* filename = "./basic.png";
     std::cout << "Saving result to " << filename << std::endl;;
     plt::save(filename);
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }

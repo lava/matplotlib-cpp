@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o update $(python-config --includes) update.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include "../matplotlibcpp.h"
@@ -57,4 +61,7 @@ int main()
             plt::pause(0.1);
         }
    }
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }
