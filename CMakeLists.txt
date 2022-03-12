@@ -5,7 +5,6 @@ include(GNUInstallDirs)
 set(PACKAGE_NAME matplotlib_cpp)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PACKAGE_NAME}/cmake)
 
-
 # Library target
 add_library(matplotlib_cpp INTERFACE)
 target_include_directories(matplotlib_cpp
@@ -100,6 +99,11 @@ if(Python3_NumPy_FOUND)
   add_executable(spy examples/spy.cpp)
   target_link_libraries(spy PRIVATE matplotlib_cpp)
   set_target_properties(spy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+  add_executable(span examples/span.cpp)
+  target_link_libraries(span PRIVATE matplotlib_cpp)
+  target_compile_features(span PRIVATE cxx_std_20)
+  set_target_properties(span PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
 
 
