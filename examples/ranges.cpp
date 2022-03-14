@@ -21,23 +21,21 @@ int main()
 {
     plt::detail::_interpreter::get();
 
+    // C-style arrays with multiple rows.
 
 #if __cplusplus >= CPP20
 
-    // C-style arrays with multiple rows.
+    time_t t[]={1, 2, 3, 4};
 
     // Care with column-major vs row-major!
     // C and Python are row-major, but usually a time series is column-major
     // and we want to plot the columns.
     // In the example below, these columns are [3,1,4,5] and [5,4,1,3], so
     // the data must be stored like this:
-    time_t t[]={1, 2, 3, 4};
     double data [] = {
-	3, 5,
-	1, 4,
-	4, 1,
-	5, 3
-    };
+	3, 1, 4, 5,
+	5, 4, 1, 3
+    };             // contiguous data, column major!
 
     // Use std::span() to convert to a contiguous range (O(1)).
     // Data won't be copied, but passed as a pointer to Python.
@@ -49,7 +47,7 @@ int main()
 #else
 
     cerr << __FILE__ << ": " << __FUNCTION__ << ": " << __LINE__ << ": "
-	 << "No support for contiguous ranges." << endl;
+	 << "No support for C-style arrays in C++ <= 17" << endl;
 
 #endif
 
@@ -89,15 +87,28 @@ int main()
     //
     // TODO: have 3 tags plot_impl(): iterable, callable and contiguous range.
     plt::plot(span(t, 4), span(data, 8), "", x, y, "b", u, v, "r");
+    plt::grid(true);
+    plt::title("Variadic templates recursion, span first (copy)");
+    plt::show();
 
     // This resolves to plot(contiguous_range) and does not copy data.
-    // plt::plot(x, y, "b", u, v, "r", span(t, 4), span(data, 8));
+    plt::plot(x, y, "b", u, v, "r", span(t, 4), span(data, 8));
+    plt::grid(true);
+    plt::title("Variadic templates recursion, span last (passthrough)");
+    plt::show();
+
 #else
+
+    // no C-arrays
+    cerr << __FILE__ << ": " << __FUNCTION__ << ": " << __LINE__ << ": "
+	 << "No support for C-style arrays in C++ <= 17" << endl;
+
     plt::plot(x, y, "b", u, v, "r");
-#endif
     plt::grid(true);
     plt::title("Variadic templates recursion");
     plt::show();
+
+#endif
 
     plt::detail::_interpreter::kill();
 

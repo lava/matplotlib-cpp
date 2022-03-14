@@ -477,8 +477,46 @@ bool plot(const ContainerX& x, const ContainerY& y, const std::string& fmt="")
     npy_intp xsize=x.size();
     npy_intp yrows=xsize, ycols=y.size()/x.size();
     npy_intp ysize[]={yrows, ycols};   // ysize[0] must equal xsize
-    PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, xtype, (void*)(x.data()));
-    PyObject* yarray = PyArray_SimpleNewFromData(2, ysize, ytype, (void*)(y.data()));
+
+    // We have 2 options to pass existing data buffers to PyObject:
+    // PyArray_SimpleFromData() - by default creates C-style (row major) array
+    // PyArray_New() - uses flags, so we can specify Fotran-style (col major)
+    //
+    // In python,
+    // a=np.array([[3,5], [1,4], [4,1], [5,3]])
+    // is stored in row-major mode and has columns
+    // a[:,0]=[3,1,4,5] and a[:,1]=[5,4,1,3]
+    // Then,
+    // plt.plot(a)
+    // plots the columns of a. So in python the array is row-major, but
+    // plotted columnwise.
+    //
+    // For dataframes (and time series), however, it is more natural to assume
+    // that the data is stored contiguously in column-major mode, i.e.
+    // double a[] = [3, 1, 4, 5
+    //               5, 4, 1, 3];
+    // We let python know that is the case, by specifying the NPY_ARRAY_FARRAY
+    // flag. This rules out the usage of PyArray_SimpleFromData().
+    //
+    // Of course, in the vector-only version of this plot() function all this
+    // is irrelevant, because that plot is 1-dimensional anyway.
+    //
+    // If there are real-world applications that need to assume that the
+    // C-data is in row-major mode, we should address that.
+    //
+    // TODO:
+    // To that end, perhaps we can introduce C++ tags cmajor_tag and rmajor_tag
+    // and define a custom concept from contiguous_range, by further
+    // conditioning on the storage tags. The caller then specifies the major
+    // storage mode when wrapping the C-style array into a range.
+    PyObject* xarray =
+	PyArray_New(&PyArray_Type,
+		    1, &xsize, xtype, nullptr, (void*) x.data(),
+		    0, NPY_ARRAY_FARRAY, nullptr);
+    PyObject* yarray =
+	PyArray_New(&PyArray_Type,
+		    2, ysize, ytype, nullptr, (void*) y.data(),
+		    0, NPY_ARRAY_FARRAY, nullptr);  // column major by design!
 
     PyObject* pystring = PyString_FromString(fmt.c_str());
 
@@ -510,8 +548,16 @@ bool plot(const ContainerX& x, const ContainerY& y,
     npy_intp xsize=x.size();
     npy_intp yrows=xsize, ycols=y.size()/x.size();
     npy_intp ysize[]={yrows, ycols};   // ysize[0] must equal xsize
-    PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, xtype, (void*)(x.data()));
-    PyObject* yarray = PyArray_SimpleNewFromData(2, ysize, ytype, (void*)(y.data()));
+
+    // Same comments as above.
+    PyObject* xarray =
+	PyArray_New(&PyArray_Type,
+		    1, &xsize, xtype, nullptr, (void*) x.data(),
+		    0, NPY_ARRAY_FARRAY, nullptr);
+    PyObject* yarray =
+	PyArray_New(&PyArray_Type,
+		    2, ysize, ytype, nullptr, (void*) y.data(),
+		    0, NPY_ARRAY_FARRAY, nullptr);  // column major by design!
 
     // construct positional args
     PyObject* args = PyTuple_New(2);
@@ -2995,11 +3041,11 @@ struct plot_impl<std::false_type>
 	PyObject* xarray =
 	    PyArray_New(&PyArray_Type,
 			1, &xsize, xtype, nullptr, nullptr,
-			0, NPY_ARRAY_DEFAULT, nullptr);
+			0, NPY_ARRAY_FARRAY, nullptr);
 	PyObject* yarray =
 	    PyArray_New(&PyArray_Type,
 			2, ysize, ytype, nullptr, nullptr,
-			0, NPY_ARRAY_DEFAULT, nullptr);
+			0, NPY_ARRAY_FARRAY, nullptr);  // column major!
         PyObject* pystring = PyString_FromString(format.c_str());
 
 	// fill the data
