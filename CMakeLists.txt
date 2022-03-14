@@ -104,6 +104,12 @@ if(Python3_NumPy_FOUND)
   target_link_libraries(span PRIVATE matplotlib_cpp)
   target_compile_features(span PRIVATE cxx_std_20)
   set_target_properties(span PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+  add_executable(ranges examples/ranges.cpp)
+  target_link_libraries(ranges PRIVATE matplotlib_cpp)
+  target_compile_features(ranges PRIVATE cxx_std_20)
+  set_target_properties(ranges PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 endif()
 
 

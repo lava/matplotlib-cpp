@@ -14,6 +14,8 @@
 #include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
 #include <string> // std::stod
+#include <span>
+#include <ranges>
 
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -39,6 +41,7 @@
 #  define PyString_FromString PyUnicode_FromString
 #endif
 
+#define CPP20 202002L
 
 namespace matplotlibcpp {
 namespace detail {
@@ -438,10 +441,124 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
 /// Plot a line through the given x and y data points..
 ///
 /// See: https://matplotlib.org/3.2.1/api/_as_gen/matplotlib.pyplot.plot.html
+
+// If a container (range) has ::data() that converts to ::value and it has
+// ::size() that is convertible to pointer differences, then it's contiguous,
+// in which case we need not copy the data.
+// https://stackoverflow.com/questions/42851957/contiguous-iterator-detection
+//
+// TODO: get rid of the plot(vector) specializations, they unnecessarily
+// copy the data.
+// TODO: provide contiguous and non-contiguous implementations for ranges,
+// using iterator_tag.
+// https://stackoverflow.com/questions/4688177/how-does-iterator-category-in-c-work
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1474r0.pdf
+//
+
+#if __cplusplus >= CPP20
+
+// Support for contiguous ranges, e.g. vector, span, etc. In this case
+// we can pass the data pointer directly to python, without copying.
+//
+// Non-contiguous (but iterable) arrays (e.g. lists), call a different plot,
+// one which has to copy the items into a contiguous C-style array before
+// passing them to python.
+template <std::ranges::contiguous_range ContainerX,
+	  std::ranges::contiguous_range ContainerY>
+bool plot(const ContainerX& x, const ContainerY& y, const std::string& fmt="")
+{
+    assert(y.size()%x.size() == 0 && "length of y must be a multiple of length of x!");
+
+    detail::_interpreter::get();
+
+    NPY_TYPES xtype=detail::select_npy_type<typename ContainerX::value_type>::type;
+    NPY_TYPES ytype=detail::select_npy_type<typename ContainerY::value_type>::type;
+
+    npy_intp xsize=x.size();
+    npy_intp yrows=xsize, ycols=y.size()/x.size();
+    npy_intp ysize[]={yrows, ycols};   // ysize[0] must equal xsize
+    PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, xtype, (void*)(x.data()));
+    PyObject* yarray = PyArray_SimpleNewFromData(2, ysize, ytype, (void*)(y.data()));
+
+    PyObject* pystring = PyString_FromString(fmt.c_str());
+
+    PyObject* plot_args = PyTuple_New(3);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+    PyTuple_SetItem(plot_args, 2, pystring);
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
+
+    Py_DECREF(plot_args);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template <std::ranges::contiguous_range ContainerX,
+	  std::ranges::contiguous_range ContainerY>
+bool plot(const ContainerX& x, const ContainerY& y,
+	  const std::map<std::string, std::string>& keywords)
+{
+    assert(y.size()%x.size() == 0 && "length of y must be a multiple of length of x!");
+
+    detail::_interpreter::get();
+
+    NPY_TYPES xtype=detail::select_npy_type<typename ContainerX::value_type>::type;
+    NPY_TYPES ytype=detail::select_npy_type<typename ContainerY::value_type>::type;
+
+    npy_intp xsize=x.size();
+    npy_intp yrows=xsize, ycols=y.size()/x.size();
+    npy_intp ysize[]={yrows, ycols};   // ysize[0] must equal xsize
+    PyObject* xarray = PyArray_SimpleNewFromData(1, &xsize, xtype, (void*)(x.data()));
+    PyObject* yarray = PyArray_SimpleNewFromData(2, ysize, ytype, (void*)(y.data()));
+
+    // construct positional args
+    PyObject* args = PyTuple_New(2);
+    PyTuple_SetItem(args, 0, xarray);
+    PyTuple_SetItem(args, 1, yarray);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template<std::ranges::contiguous_range ContainerY>
+bool plot(const ContainerY& y, const std::string& format = "")
+{
+    std::vector<int> x(y.size());
+    std::iota(x.begin(), x.end(), 0);
+    return plot(x,y,format);
+}
+
+template<std::ranges::contiguous_range ContainerY>
+bool plot(const ContainerY& y, const std::map<std::string, std::string>& keywords)
+{
+    std::vector<int> x(y.size());
+    std::iota(x.begin(), x.end(), 0);
+    return plot(x,y,keywords);
+}
+
+#else
+
+// For the less fortunate ones who can't or won't use C++ 20, we stick with
+// vectors, since there's no ranges concept before that.
+
 template<typename Numeric>
 bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const std::map<std::string, std::string>& keywords)
 {
-    assert(x.size() == y.size());
+    assert(y.size()%x.size() == 0 && "length of y must be a multiple of length of x!");
 
     detail::_interpreter::get();
 
@@ -469,6 +586,49 @@ bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
 
     return res;
 }
+
+template<typename NumericX, typename NumericY>
+bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
+{
+    assert(y.size()%x.size() == 0 && "length of y must be a multiple of length of x!");
+
+    detail::_interpreter::get();
+
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
+
+    PyObject* pystring = PyString_FromString(s.c_str());
+
+    PyObject* plot_args = PyTuple_New(3);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+    PyTuple_SetItem(plot_args, 2, pystring);
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
+
+    Py_DECREF(plot_args);
+    if(res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename Numeric>
+bool plot(const std::vector<Numeric>& y, const std::string& format = "")
+{
+    std::vector<Numeric> x(y.size());
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
+    return plot(x,y,format);
+}
+
+template<typename Numeric>
+bool plot(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords)
+{
+    std::vector<Numeric> x(y.size());
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
+    return plot(x,y,keywords);
+}
+
+#endif
 
 // TODO - it should be possible to make this work by implementing
 // a non-numpy alternative for `detail::get_2darray()`.
@@ -1354,31 +1514,6 @@ bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, s
     return res;
 }
 
-template<typename NumericX, typename NumericY>
-bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::string& s = "")
-{
-    assert(x.size() == y.size());
-
-    detail::_interpreter::get();
-
-    PyObject* xarray = detail::get_array(x);
-    PyObject* yarray = detail::get_array(y);
-
-    PyObject* pystring = PyString_FromString(s.c_str());
-
-    PyObject* plot_args = PyTuple_New(3);
-    PyTuple_SetItem(plot_args, 0, xarray);
-    PyTuple_SetItem(plot_args, 1, yarray);
-    PyTuple_SetItem(plot_args, 2, pystring);
-
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
-
-    Py_DECREF(plot_args);
-    if(res) Py_DECREF(res);
-
-    return res;
-}
-
 template <typename NumericX, typename NumericY, typename NumericZ>
 bool contour(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
              const std::vector<NumericZ>& z,
@@ -1804,22 +1939,6 @@ bool named_loglog(const std::string& name, const std::vector<NumericX>& x, const
     if (res) Py_DECREF(res);
 
     return res;
-}
-
-template<typename Numeric>
-bool plot(const std::vector<Numeric>& y, const std::string& format = "")
-{
-    std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
-    return plot(x,y,format);
-}
-
-template<typename Numeric>
-bool plot(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords)
-{
-    std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
-    return plot(x,y,keywords);
 }
 
 template<typename Numeric>
@@ -2796,6 +2915,8 @@ struct is_callable
 template<typename IsYDataCallable>
 struct plot_impl { };
 
+#ifdef WITHOUT_NUMPY
+
 template<>
 struct plot_impl<std::false_type>
 {
@@ -2811,8 +2932,10 @@ struct plot_impl<std::false_type>
 
         auto xs = distance(begin(x), end(x));
         auto ys = distance(begin(y), end(y));
-        assert(xs == ys && "x and y data must have the same number of elements!");
 
+        assert(xs == ys && "x and y must have the same number of elements!");
+
+	// No PyArray, must use lists, and they must have the same length.
         PyObject* xlist = PyList_New(xs);
         PyObject* ylist = PyList_New(ys);
         PyObject* pystring = PyString_FromString(format.c_str());
@@ -2821,11 +2944,11 @@ struct plot_impl<std::false_type>
         for(decltype(xs) i = 0; i < xs; ++i) {
             PyList_SetItem(xlist, i, PyFloat_FromDouble(*itx++));
             PyList_SetItem(ylist, i, PyFloat_FromDouble(*ity++));
-        }
+	}
 
         PyObject* plot_args = PyTuple_New(3);
-        PyTuple_SetItem(plot_args, 0, xlist);
-        PyTuple_SetItem(plot_args, 1, ylist);
+        PyTuple_SetItem(plot_args, 0, xarray);
+        PyTuple_SetItem(plot_args, 1, yarray);
         PyTuple_SetItem(plot_args, 2, pystring);
 
         PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
@@ -2836,6 +2959,75 @@ struct plot_impl<std::false_type>
         return res;
     }
 };
+
+#else
+
+template<>
+struct plot_impl<std::false_type>
+{
+    template<typename IterableX, typename IterableY>
+    bool operator()(const IterableX& x, const IterableY& y, const std::string& format)
+    {
+	// pyassert(PyArray_API, "NumPy needed");
+
+        detail::_interpreter::get();
+
+        // 2-phase lookup for distance, begin, end
+        using std::distance;
+        using std::begin;
+        using std::end;
+
+        auto xs = distance(begin(x), end(x));
+        auto ys = distance(begin(y), end(y));
+
+        assert(ys%xs == 0 && "length of y must be a multiple of length of x!");
+
+	typedef typename IterableX::value_type NumberX;
+	typedef typename IterableY::value_type NumberY;
+
+	NPY_TYPES xtype=detail::select_npy_type<NumberX>::type;
+	NPY_TYPES ytype=detail::select_npy_type<NumberY>::type;
+
+	npy_intp xsize=xs;
+	npy_intp yrows=xsize, ycols=ys/yrows;
+	npy_intp ysize[]={yrows, ycols};   // ysize[0] must equal xsize
+
+	PyObject* xarray =
+	    PyArray_New(&PyArray_Type,
+			1, &xsize, xtype, nullptr, nullptr,
+			0, NPY_ARRAY_DEFAULT, nullptr);
+	PyObject* yarray =
+	    PyArray_New(&PyArray_Type,
+			2, ysize, ytype, nullptr, nullptr,
+			0, NPY_ARRAY_DEFAULT, nullptr);
+        PyObject* pystring = PyString_FromString(format.c_str());
+
+	// fill the data
+        auto itx = begin(x), ity = begin(y);
+	NumberX* xdata = (NumberX*) PyArray_DATA((PyArrayObject*)xarray);
+        for(decltype(xs) i = 0; i < xs; ++i)
+	    xdata[i]=*itx++;
+
+	NumberY* ydata = (NumberY*) PyArray_DATA((PyArrayObject*)yarray);
+        for(decltype(ys) i = 0; i < ys; ++i)
+	    ydata[i]=*ity++;
+
+        PyObject* plot_args = PyTuple_New(3);
+        PyTuple_SetItem(plot_args, 0, xarray);
+        PyTuple_SetItem(plot_args, 1, yarray);
+        PyTuple_SetItem(plot_args, 2, pystring);
+
+        PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_plot, plot_args);
+
+        Py_DECREF(plot_args);
+        if(res) Py_DECREF(res);
+
+        return res;
+    }
+};
+
+#endif
+
 
 template<>
 struct plot_impl<std::true_type>
@@ -2869,16 +3061,22 @@ bool plot(const A& a, const B& b, const std::string& format, Args... args)
  * This group of plot() functions is needed to support initializer lists, i.e. calling
  *    plot( {1,2,3,4} )
  */
-inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "") {
-    return plot<double,double>(x,y,format);
+inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::string& format = "")
+{
+#if __cplusplus >= CPP20
+    return plot<std::vector<double>, std::vector<double>>(x, y, format);
+#else
+    return plot<double>(x, y, format);
+#endif
 }
 
-inline bool plot(const std::vector<double>& y, const std::string& format = "") {
+inline bool plot(const std::vector<double>& y, const std::string& format = "")
+{
+#if __cplusplus >= CPP20
+    return plot<std::vector<double>>(y,format);
+#else
     return plot<double>(y,format);
-}
-
-inline bool plot(const std::vector<double>& x, const std::vector<double>& y, const std::map<std::string, std::string>& keywords) {
-    return plot<double>(x,y,keywords);
+#endif
 }
 
 /*
