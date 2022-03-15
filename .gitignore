@@ -36,3 +36,9 @@
 
 # vim temp files
 *.sw*
+
+/CMakeFiles
+CMakeCache.txt
+Makefile
+/bin
+*.cmake
