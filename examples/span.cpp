@@ -18,14 +18,7 @@ int main()
 	3, 3, 3, 3
     };
 
-    size_t n=sizeof(t)/sizeof(decltype(t[0]));
-    size_t m=sizeof(data)/sizeof(decltype(data[0]));
-
-    // Use std::span to pass data chunk to plot(), without copying it.
-    // Unfortunately, plt::plot() makes an internal copy of both x and y
-    // before passing them to python.
-    for (size_t offset=0; offset<m; offset+=n)
-	plt::plot(t, std::span {data+offset, n}, "");
+    plt::plot(span(t, 4), span(data, 12));
     plt::show();
 
     plt::detail::_interpreter::kill();
