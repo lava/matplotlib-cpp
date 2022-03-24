@@ -110,6 +110,11 @@ if(Python3_NumPy_FOUND)
   target_compile_features(ranges PRIVATE cxx_std_20)
   set_target_properties(ranges PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+  add_executable(timeseries examples/timeseries.cpp)
+  target_link_libraries(timeseries PRIVATE matplotlib_cpp)
+  target_compile_features(timeseries PRIVATE cxx_std_20)
+  set_target_properties(timeseries PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 endif()
 
 

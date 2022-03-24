@@ -3,6 +3,7 @@
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
 #include <Python.h>
+#include <datetime.h>
 
 #include <vector>
 #include <map>
@@ -11,11 +12,10 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
-#include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
-#include <string> // std::stod
-#include <span>
 #include <ranges>
+#include <chrono>
+#include <string>
 
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -595,6 +595,7 @@ bool plot(const ContainerY& y, const std::map<std::string, std::string>& keyword
     std::iota(x.begin(), x.end(), 0);
     return plot(x,y,keywords);
 }
+
 
 #else
 
@@ -2307,6 +2308,27 @@ inline void xticks(const std::vector<Numeric> &ticks, const std::map<std::string
     xticks(ticks, {}, keywords);
 }
 
+// options only, e.g. plt::xticks(rotation=20)
+inline void xticks(const std::map<std::string, std::string>& keywords)
+{
+    detail::_interpreter::get();
+
+    PyObject* args = PyTuple_New(0);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for (const auto& [k, v] : keywords)
+        PyDict_SetItemString(kwargs, k.c_str(), PyString_FromString(v.c_str()));
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_xticks, args, kwargs);
+
+    Py_DECREF(kwargs);
+    if(!res) throw std::runtime_error("Call to xticks() failed");
+
+    Py_DECREF(res);
+}
+
+
 template<typename Numeric>
 inline void yticks(const std::vector<Numeric> &ticks, const std::vector<std::string> &labels = {}, const std::map<std::string, std::string>& keywords = {})
 {
@@ -3227,4 +3249,7 @@ private:
     PyObject* set_data_fct = nullptr;
 };
 
+
 } // end namespace matplotlibcpp
+
+
