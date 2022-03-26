@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <map>
 #include <ranges>
+#include <chrono>
 
 // Convenience functions for converting C/C++ time objects to datetime.datetime
 // objects. These are outside the matplotlibcpp namespace because they do not
