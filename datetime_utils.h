@@ -50,8 +50,6 @@ PyObject* toPyDateTimeList(const Time_t* t, size_t nt)
     PyObject* tlist = PyList_New(nt);
     if(tlist == nullptr) return nullptr;
 
-    // Py_INCREF(tlist);
-
     if(!PyDateTimeAPI) { PyDateTime_IMPORT; }
 
     for(size_t i = 0; i < nt; i++) {

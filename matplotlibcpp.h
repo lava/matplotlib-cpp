@@ -37,7 +37,6 @@
 #if PY_MAJOR_VERSION >= 3
 #define PyString_FromString PyUnicode_FromString
 #define PyInt_FromLong      PyLong_FromLong
-#define PyString_FromString PyUnicode_FromString
 #endif
 
 #define CPP20 202002L
@@ -2418,6 +2417,46 @@ namespace matplotlibcpp
         PyObject* res = PyObject_Call(
             detail::_interpreter::get().s_python_function_legend,
             detail::_interpreter::get().s_python_empty_tuple, kwargs);
+        if(!res) throw std::runtime_error("Call to legend() failed.");
+
+        Py_DECREF(kwargs);
+        Py_DECREF(res);
+    }
+
+    template<std::ranges::contiguous_range Labels>
+    void legend(const Labels& labels, const std::map<std::string, std::string>& keywords={})
+    {
+        detail::_interpreter::get();
+
+	PyObject* llist = PyList_New(labels.size());
+	if(llist == nullptr)
+	    throw "Can't allocate labels list in legend() function.";
+
+	// iterate over labels, hopefully not too many!
+	size_t i=0;
+	for (const auto& l : labels) {
+	    PyObject* str = PyString_FromString(l.c_str());
+	    PyList_SET_ITEM(llist, i++, str);
+	}
+
+        // construct keyword args
+        PyObject* kwargs = PyDict_New();
+        for(std::map<std::string, std::string>::const_iterator it
+            = keywords.begin();
+            it != keywords.end(); ++it) {
+            PyDict_SetItemString(kwargs, it->first.c_str(),
+                                 PyString_FromString(it->second.c_str()));
+        }
+
+        PyObject* args = PyTuple_New(1);
+        PyTuple_SetItem(args, 0, llist);
+
+        PyObject* res = PyObject_Call(
+            detail::_interpreter::get().s_python_function_legend,
+	    args, kwargs);
+        // PyObject* res = PyObject_Call(
+        //     detail::_interpreter::get().s_python_function_legend,
+        //     detail::_interpreter::get().s_python_empty_tuple, kwargs);
         if(!res) throw std::runtime_error("Call to legend() failed.");
 
         Py_DECREF(kwargs);
