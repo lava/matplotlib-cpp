@@ -328,9 +328,9 @@ namespace matplotlibcpp {
     ///
     /// See also:
     /// https://matplotlib.org/2.0.2/api/matplotlib_configuration_api.html#matplotlib.use
-    inline void backend(const std::string& name) { detail::s_backend = name; }
+    void backend(const std::string& name) { detail::s_backend = name; }
 
-    inline bool annotate(std::string annotation, double x, double y)
+    bool annotate(std::string annotation, double x, double y)
     {
         detail::_interpreter::get();
 
@@ -362,51 +362,79 @@ namespace matplotlibcpp {
 
 #ifndef WITHOUT_NUMPY
         // Type selector for numpy array conversion
-        template<typename T> struct select_npy_type {
+        template<typename T>
+	struct select_npy_type {
             const static NPY_TYPES type = NPY_NOTYPE;
         }; // Default
-        template<> struct select_npy_type<double> {
+
+        template<>
+	struct select_npy_type<double> {
             const static NPY_TYPES type = NPY_DOUBLE;
         };
-        template<> struct select_npy_type<float> {
+
+        template<>
+	struct select_npy_type<float> {
             const static NPY_TYPES type = NPY_FLOAT;
         };
-        template<> struct select_npy_type<bool> {
+
+        template<>
+	struct select_npy_type<bool> {
             const static NPY_TYPES type = NPY_BOOL;
         };
-        template<> struct select_npy_type<int8_t> {
+
+        template<>
+	struct select_npy_type<int8_t> {
             const static NPY_TYPES type = NPY_INT8;
         };
-        template<> struct select_npy_type<int16_t> {
+
+        template<>
+	struct select_npy_type<int16_t> {
             const static NPY_TYPES type = NPY_SHORT;
         };
-        template<> struct select_npy_type<int32_t> {
+
+        template<>
+	struct select_npy_type<int32_t> {
             const static NPY_TYPES type = NPY_INT;
         };
-        template<> struct select_npy_type<int64_t> {
+
+        template<>
+	struct select_npy_type<int64_t> {
             const static NPY_TYPES type = NPY_INT64;
         };
-        template<> struct select_npy_type<uint8_t> {
+
+        template<>
+	struct select_npy_type<uint8_t> {
             const static NPY_TYPES type = NPY_UINT8;
         };
-        template<> struct select_npy_type<uint16_t> {
+
+        template<>
+	struct select_npy_type<uint16_t> {
             const static NPY_TYPES type = NPY_USHORT;
         };
-        template<> struct select_npy_type<uint32_t> {
+
+        template<>
+	struct select_npy_type<uint32_t> {
             const static NPY_TYPES type = NPY_ULONG;
         };
-        template<> struct select_npy_type<uint64_t> {
+
+        template<>
+	struct select_npy_type<uint64_t> {
             const static NPY_TYPES type = NPY_UINT64;
         };
 
         // Sanity checks; comment them out or change the numpy type below if
         // you're compiling on a platform where they don't apply
         static_assert(sizeof(long long) == 8);
-        template<> struct select_npy_type<long long> {
+
+        template<>
+	struct select_npy_type<long long> {
             const static NPY_TYPES type = NPY_INT64;
         };
+
         static_assert(sizeof(unsigned long long) == 8);
-        template<> struct select_npy_type<unsigned long long> {
+
+        template<>
+	struct select_npy_type<unsigned long long> {
             const static NPY_TYPES type = NPY_UINT64;
         };
 
@@ -470,7 +498,7 @@ namespace matplotlibcpp {
 #endif // WITHOUT_NUMPY
 
         // sometimes, for labels and such, we need string arrays
-        inline PyObject* get_array(const std::vector<std::string>& strings)
+        PyObject* get_array(const std::vector<std::string>& strings)
         {
             PyObject* list = PyList_New(strings.size());
             for(std::size_t i = 0; i < strings.size(); ++i) {
@@ -1244,7 +1272,7 @@ namespace matplotlibcpp {
 #ifndef WITHOUT_NUMPY
     namespace detail {
 
-        inline void imshow(void* ptr, const NPY_TYPES type, const int rows,
+        void imshow(void* ptr, const NPY_TYPES type, const int rows,
                            const int columns, const int colors,
                            const std::map<std::string, std::string>& keywords,
                            PyObject** out)
@@ -1284,7 +1312,7 @@ namespace matplotlibcpp {
 
     } // namespace detail
 
-    inline void imshow(const unsigned char* ptr, const int rows,
+    void imshow(const unsigned char* ptr, const int rows,
                        const int columns, const int colors,
                        const std::map<std::string, std::string>& keywords = {},
                        PyObject** out = nullptr)
@@ -1293,7 +1321,7 @@ namespace matplotlibcpp {
                        out);
     }
 
-    inline void imshow(const float* ptr, const int rows, const int columns,
+    void imshow(const float* ptr, const int rows, const int columns,
                        const int colors,
                        const std::map<std::string, std::string>& keywords = {},
                        PyObject** out = nullptr)
@@ -1671,7 +1699,7 @@ namespace matplotlibcpp {
         return res;
     }
 
-    inline bool subplots_adjust(const std::map<std::string, double>& keywords
+    bool subplots_adjust(const std::map<std::string, double>& keywords
                                 = {})
     {
         detail::_interpreter::get();
@@ -2057,9 +2085,10 @@ namespace matplotlibcpp {
         return res;
     }
 
-    template<typename Numeric> bool named_plot(const std::string& name,
-                                               const std::vector<Numeric>& y,
-                                               const std::string& format = "")
+    template<typename Numeric>
+    bool named_plot(const std::string& name,
+		    const std::vector<Numeric>& y,
+		    const std::string& format = "")
     {
         detail::_interpreter::get();
 
@@ -2240,7 +2269,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void colorbar(PyObject* mappable = NULL,
+    void colorbar(PyObject* mappable = NULL,
                          const std::map<std::string, float>& keywords = {})
     {
         if(mappable == NULL)
@@ -2270,7 +2299,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline long figure(long number = -1)
+    long figure(long number = -1)
     {
         detail::_interpreter::get();
 
@@ -2306,7 +2335,7 @@ namespace matplotlibcpp {
         return figureNumber;
     }
 
-    inline bool fignum_exists(long number)
+    bool fignum_exists(long number)
     {
         detail::_interpreter::get();
 
@@ -2323,7 +2352,7 @@ namespace matplotlibcpp {
         return ret;
     }
 
-    inline void figure_size(size_t w, size_t h)
+    void figure_size(size_t w, size_t h)
     {
         detail::_interpreter::get();
 
@@ -2346,7 +2375,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void legend()
+    void legend()
     {
         detail::_interpreter::get();
 
@@ -2358,7 +2387,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void legend(const std::map<std::string, std::string>& keywords)
+    void legend(const std::map<std::string, std::string>& keywords)
     {
         detail::_interpreter::get();
 
@@ -2380,7 +2409,8 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    template<typename Numeric> inline void set_aspect(Numeric ratio)
+    template<typename Numeric>
+    void set_aspect(Numeric ratio)
     {
         detail::_interpreter::get();
 
@@ -2408,7 +2438,7 @@ namespace matplotlibcpp {
         Py_DECREF(kwargs);
     }
 
-    inline void set_aspect_equal()
+    void set_aspect_equal()
     {
         // expect ratio == "equal". Leaving error handling to matplotlib.
         detail::_interpreter::get();
@@ -2456,7 +2486,8 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    template<typename Numeric> void xlim(Numeric left, Numeric right)
+    template<typename Numeric>
+    void xlim(Numeric left, Numeric right)
     {
         detail::_interpreter::get();
 
@@ -2475,7 +2506,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline std::array<double, 2> xlim()
+    std::array<double, 2> xlim()
     {
         PyObject* args = PyTuple_New(0);
         PyObject* res = PyObject_CallObject(
@@ -2490,7 +2521,7 @@ namespace matplotlibcpp {
         return {PyFloat_AsDouble(left), PyFloat_AsDouble(right)};
     }
 
-    inline std::array<double, 2> ylim()
+    std::array<double, 2> ylim()
     {
         PyObject* args = PyTuple_New(0);
         PyObject* res = PyObject_CallObject(
@@ -2506,7 +2537,7 @@ namespace matplotlibcpp {
     }
 
     template<typename Numeric>
-    inline void xticks(const std::vector<Numeric>& ticks,
+    void xticks(const std::vector<Numeric>& ticks,
                        const std::vector<std::string>& labels = {},
                        const std::map<std::string, std::string>& keywords = {})
     {
@@ -2556,14 +2587,14 @@ namespace matplotlibcpp {
     }
 
     template<typename Numeric>
-    inline void xticks(const std::vector<Numeric>& ticks,
+    void xticks(const std::vector<Numeric>& ticks,
                        const std::map<std::string, std::string>& keywords)
     {
         xticks(ticks, {}, keywords);
     }
 
     // options only, e.g. plt::xticks(rotation=20)
-    inline void xticks(const std::map<std::string, std::string>& keywords)
+    void xticks(const std::map<std::string, std::string>& keywords)
     {
         detail::_interpreter::get();
 
@@ -2585,7 +2616,7 @@ namespace matplotlibcpp {
     }
 
     template<typename Numeric>
-    inline void yticks(const std::vector<Numeric>& ticks,
+    void yticks(const std::vector<Numeric>& ticks,
                        const std::vector<std::string>& labels = {},
                        const std::map<std::string, std::string>& keywords = {})
     {
@@ -2635,13 +2666,14 @@ namespace matplotlibcpp {
     }
 
     template<typename Numeric>
-    inline void yticks(const std::vector<Numeric>& ticks,
+    void yticks(const std::vector<Numeric>& ticks,
                        const std::map<std::string, std::string>& keywords)
     {
         yticks(ticks, {}, keywords);
     }
 
-    template<typename Numeric> inline void margins(Numeric margin)
+    template<typename Numeric>
+    void margins(Numeric margin)
     {
         // construct positional args
         PyObject* args = PyTuple_New(1);
@@ -2656,7 +2688,7 @@ namespace matplotlibcpp {
     }
 
     template<typename Numeric>
-    inline void margins(Numeric margin_x, Numeric margin_y)
+    void margins(Numeric margin_x, Numeric margin_y)
     {
         // construct positional args
         PyObject* args = PyTuple_New(2);
@@ -2671,7 +2703,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void tick_params(const std::map<std::string, std::string>& keywords,
+    void tick_params(const std::map<std::string, std::string>& keywords,
                             const std::string axis = "both")
     {
         detail::_interpreter::get();
@@ -2701,7 +2733,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void subplot(long nrows, long ncols, long plot_number)
+    void subplot(long nrows, long ncols, long plot_number)
     {
         detail::_interpreter::get();
 
@@ -2719,7 +2751,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void subplot2grid(long nrows, long ncols, long rowid = 0,
+    void subplot2grid(long nrows, long ncols, long rowid = 0,
                              long colid = 0, long rowspan = 1, long colspan = 1)
     {
         detail::_interpreter::get();
@@ -2748,7 +2780,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void title(const std::string& titlestr,
+    void title(const std::string& titlestr,
                       const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
@@ -2772,7 +2804,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void suptitle(const std::string& suptitlestr,
+    void suptitle(const std::string& suptitlestr,
                          const std::map<std::string, std::string>& keywords
                          = {})
     {
@@ -2798,7 +2830,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void axis(const std::string& axisstr)
+    void axis(const std::string& axisstr)
     {
         detail::_interpreter::get();
 
@@ -2814,7 +2846,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void axhline(double y, double xmin = 0., double xmax = 1.,
+    void axhline(double y, double xmin = 0., double xmax = 1.,
                         const std::map<std::string, std::string>& keywords
                         = std::map<std::string, std::string>())
     {
@@ -2845,7 +2877,7 @@ namespace matplotlibcpp {
         if(res) Py_DECREF(res);
     }
 
-    inline void axvline(double x, double ymin = 0., double ymax = 1.,
+    void axvline(double x, double ymin = 0., double ymax = 1.,
                         const std::map<std::string, std::string>& keywords
                         = std::map<std::string, std::string>())
     {
@@ -2876,7 +2908,7 @@ namespace matplotlibcpp {
         if(res) Py_DECREF(res);
     }
 
-    inline void axvspan(double xmin, double xmax, double ymin = 0.,
+    void axvspan(double xmin, double xmax, double ymin = 0.,
                         double ymax = 1.,
                         const std::map<std::string, std::string>& keywords
                         = std::map<std::string, std::string>())
@@ -2910,7 +2942,7 @@ namespace matplotlibcpp {
         if(res) Py_DECREF(res);
     }
 
-    inline void xlabel(const std::string& str,
+    void xlabel(const std::string& str,
                        const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
@@ -2934,7 +2966,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void ylabel(const std::string& str,
+    void ylabel(const std::string& str,
                        const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
@@ -2958,7 +2990,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void set_zlabel(const std::string& str,
+    void set_zlabel(const std::string& str,
                            const std::map<std::string, std::string>& keywords
                            = {})
     {
@@ -3021,7 +3053,7 @@ namespace matplotlibcpp {
         if(res) Py_DECREF(res);
     }
 
-    inline void grid(bool flag)
+    void grid(bool flag)
     {
         detail::_interpreter::get();
 
@@ -3039,7 +3071,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void show(const bool block = true)
+    void show(const bool block = true)
     {
         detail::_interpreter::get();
 
@@ -3063,7 +3095,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void close()
+    void close()
     {
         detail::_interpreter::get();
 
@@ -3076,7 +3108,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void xkcd()
+    void xkcd()
     {
         detail::_interpreter::get();
 
@@ -3094,7 +3126,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void draw()
+    void draw()
     {
         detail::_interpreter::get();
 
@@ -3107,7 +3139,8 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    template<typename Numeric> inline void pause(Numeric interval)
+    template<typename Numeric>
+    void pause(Numeric interval)
     {
         detail::_interpreter::get();
 
@@ -3122,7 +3155,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void save(const std::string& filename, const int dpi = 0)
+    void save(const std::string& filename, const int dpi = 0)
     {
         detail::_interpreter::get();
 
@@ -3146,7 +3179,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void rcparams(const std::map<std::string, std::string>& keywords
+    void rcparams(const std::map<std::string, std::string>& keywords
                          = {})
     {
         detail::_interpreter::get();
@@ -3172,7 +3205,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void clf()
+    void clf()
     {
         detail::_interpreter::get();
 
@@ -3185,7 +3218,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void cla()
+    void cla()
     {
         detail::_interpreter::get();
 
@@ -3198,7 +3231,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline void ion()
+    void ion()
     {
         detail::_interpreter::get();
 
@@ -3211,7 +3244,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    inline std::vector<std::array<double, 2>>
+    std::vector<std::array<double, 2>>
     ginput(const int numClicks = 1,
            const std::map<std::string, std::string>& keywords = {})
     {
@@ -3253,7 +3286,7 @@ namespace matplotlibcpp {
 
     // Actually, is there any reason not to call this automatically for every
     // plot?
-    inline void tight_layout()
+    void tight_layout()
     {
         detail::_interpreter::get();
 
@@ -3455,7 +3488,7 @@ namespace matplotlibcpp {
      * This group of plot() functions is needed to support initializer lists,
      * i.e. calling plot( {1,2,3,4} )
      */
-    inline bool plot(const std::vector<double>& x, const std::vector<double>& y,
+    bool plot(const std::vector<double>& x, const std::vector<double>& y,
                      const std::string& format = "")
     {
 #if __cplusplus >= CPP20
@@ -3465,7 +3498,7 @@ namespace matplotlibcpp {
 #endif
     }
 
-    inline bool plot(const std::vector<double>& y,
+    bool plot(const std::vector<double>& y,
                      const std::string& format = "")
     {
 #if __cplusplus >= CPP20
