@@ -24,13 +24,13 @@ BitFieldColonSpacing: Both
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: false
-  AfterClass: false
+  AfterClass: true
   AfterFunction: true
   AfterControlStatement: false
   SplitEmptyFunction: false
   AfterEnum: false
-  AfterNamespace: false
-  AfterStruct: false
+  AfterNamespace: true
+  AfterStruct: true
   AfterUnion: false
   AfterExternBlock: false
   BeforeCatch: true
@@ -68,10 +68,10 @@ SpaceAroundPointerQualifiers: Default
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeCaseColon: false
 SpaceBeforeCpp11BracedList: false
-SpaceBeforeCtorInitializerColon: false
+SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: Never
-SpaceBeforeRangeBasedForLoopColon: false
+SpaceBeforeRangeBasedForLoopColon: true
 SpaceBeforeSquareBrackets: false
 SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false

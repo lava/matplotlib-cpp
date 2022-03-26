@@ -42,12 +42,14 @@
 
 #define CPP20 202002L
 
-namespace matplotlibcpp {
-    namespace detail {
-
+namespace matplotlibcpp
+{
+    namespace detail
+    {
         static std::string s_backend;
 
-        struct _interpreter {
+        struct _interpreter
+        {
             PyObject* s_python_function_arrow;
             PyObject* s_python_function_show;
             PyObject* s_python_function_close;
@@ -358,67 +360,79 @@ namespace matplotlibcpp {
         return res;
     }
 
-    namespace detail {
-
+    namespace detail
+    {
 #ifndef WITHOUT_NUMPY
         // Type selector for numpy array conversion
         template<typename T>
-	struct select_npy_type {
+        struct select_npy_type
+        {
             const static NPY_TYPES type = NPY_NOTYPE;
         }; // Default
 
         template<>
-	struct select_npy_type<double> {
+        struct select_npy_type<double>
+        {
             const static NPY_TYPES type = NPY_DOUBLE;
         };
 
         template<>
-	struct select_npy_type<float> {
+        struct select_npy_type<float>
+        {
             const static NPY_TYPES type = NPY_FLOAT;
         };
 
         template<>
-	struct select_npy_type<bool> {
+        struct select_npy_type<bool>
+        {
             const static NPY_TYPES type = NPY_BOOL;
         };
 
         template<>
-	struct select_npy_type<int8_t> {
+        struct select_npy_type<int8_t>
+        {
             const static NPY_TYPES type = NPY_INT8;
         };
 
         template<>
-	struct select_npy_type<int16_t> {
+        struct select_npy_type<int16_t>
+        {
             const static NPY_TYPES type = NPY_SHORT;
         };
 
         template<>
-	struct select_npy_type<int32_t> {
+        struct select_npy_type<int32_t>
+        {
             const static NPY_TYPES type = NPY_INT;
         };
 
         template<>
-	struct select_npy_type<int64_t> {
+        struct select_npy_type<int64_t>
+        {
             const static NPY_TYPES type = NPY_INT64;
         };
 
         template<>
-	struct select_npy_type<uint8_t> {
+        struct select_npy_type<uint8_t>
+        {
             const static NPY_TYPES type = NPY_UINT8;
         };
 
         template<>
-	struct select_npy_type<uint16_t> {
+        struct select_npy_type<uint16_t>
+        {
             const static NPY_TYPES type = NPY_USHORT;
         };
 
         template<>
-	struct select_npy_type<uint32_t> {
+        struct select_npy_type<uint32_t>
+        {
             const static NPY_TYPES type = NPY_ULONG;
         };
 
         template<>
-	struct select_npy_type<uint64_t> {
+        struct select_npy_type<uint64_t>
+        {
             const static NPY_TYPES type = NPY_UINT64;
         };
 
@@ -427,14 +441,16 @@ namespace matplotlibcpp {
         static_assert(sizeof(long long) == 8);
 
         template<>
-	struct select_npy_type<long long> {
+        struct select_npy_type<long long>
+        {
             const static NPY_TYPES type = NPY_INT64;
         };
 
         static_assert(sizeof(unsigned long long) == 8);
 
         template<>
-	struct select_npy_type<unsigned long long> {
+        struct select_npy_type<unsigned long long>
+        {
             const static NPY_TYPES type = NPY_UINT64;
         };
 
@@ -473,7 +489,7 @@ namespace matplotlibcpp {
 
             double* vd_begin = static_cast<double*>(PyArray_DATA(varray));
 
-            for(const ::std::vector<Numeric>& v_row: v) {
+            for(const ::std::vector<Numeric>& v_row : v) {
                 if(v_row.size() != static_cast<size_t>(vsize[1]))
                     throw std::runtime_error("Missmatched array size");
                 std::copy(v_row.begin(), v_row.end(), vd_begin);
@@ -1270,12 +1286,12 @@ namespace matplotlibcpp {
     }
 
 #ifndef WITHOUT_NUMPY
-    namespace detail {
-
+    namespace detail
+    {
         void imshow(void* ptr, const NPY_TYPES type, const int rows,
-                           const int columns, const int colors,
-                           const std::map<std::string, std::string>& keywords,
-                           PyObject** out)
+                    const int columns, const int colors,
+                    const std::map<std::string, std::string>& keywords,
+                    PyObject** out)
         {
             assert(type == NPY_UINT8 || type == NPY_FLOAT);
             assert(colors == 1 || colors == 3 || colors == 4);
@@ -1312,19 +1328,19 @@ namespace matplotlibcpp {
 
     } // namespace detail
 
-    void imshow(const unsigned char* ptr, const int rows,
-                       const int columns, const int colors,
-                       const std::map<std::string, std::string>& keywords = {},
-                       PyObject** out = nullptr)
+    void imshow(const unsigned char* ptr, const int rows, const int columns,
+                const int colors,
+                const std::map<std::string, std::string>& keywords = {},
+                PyObject** out = nullptr)
     {
         detail::imshow((void*)ptr, NPY_UINT8, rows, columns, colors, keywords,
                        out);
     }
 
     void imshow(const float* ptr, const int rows, const int columns,
-                       const int colors,
-                       const std::map<std::string, std::string>& keywords = {},
-                       PyObject** out = nullptr)
+                const int colors,
+                const std::map<std::string, std::string>& keywords = {},
+                PyObject** out = nullptr)
     {
         detail::imshow((void*)ptr, NPY_FLOAT, rows, columns, colors, keywords,
                        out);
@@ -1378,7 +1394,7 @@ namespace matplotlibcpp {
 
         PyObject* kwargs = PyDict_New();
         PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
-        for(const auto& it: keywords) {
+        for(const auto& it : keywords) {
             PyDict_SetItemString(kwargs, it.first.c_str(),
                                  PyString_FromString(it.second.c_str()));
         }
@@ -1398,12 +1414,13 @@ namespace matplotlibcpp {
         return res;
     }
 
-    template<typename NumericX, typename NumericY, typename NumericColors> bool
-    scatter_colored(const std::vector<NumericX>& x,
-                    const std::vector<NumericY>& y,
-                    const std::vector<NumericColors>& colors,
-                    const double s = 1.0, // The marker size in points**2
-                    const std::map<std::string, std::string>& keywords = {})
+    template<typename NumericX, typename NumericY, typename NumericColors>
+    bool scatter_colored(const std::vector<NumericX>& x,
+                         const std::vector<NumericY>& y,
+                         const std::vector<NumericColors>& colors,
+                         const double s = 1.0, // The marker size in points**2
+                         const std::map<std::string, std::string>& keywords
+                         = {})
     {
         detail::_interpreter::get();
 
@@ -1417,7 +1434,7 @@ namespace matplotlibcpp {
         PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
         PyDict_SetItemString(kwargs, "c", colors_array);
 
-        for(const auto& it: keywords) {
+        for(const auto& it : keywords) {
             PyDict_SetItemString(kwargs, it.first.c_str(),
                                  PyString_FromString(it.second.c_str()));
         }
@@ -1565,7 +1582,7 @@ namespace matplotlibcpp {
         }
 
         // take care of the remaining keywords
-        for(const auto& it: keywords) {
+        for(const auto& it : keywords) {
             PyDict_SetItemString(kwargs, it.first.c_str(),
                                  PyString_FromString(it.second.c_str()));
         }
@@ -1593,7 +1610,7 @@ namespace matplotlibcpp {
         PyTuple_SetItem(args, 0, vector);
 
         PyObject* kwargs = PyDict_New();
-        for(const auto& it: keywords) {
+        for(const auto& it : keywords) {
             PyDict_SetItemString(kwargs, it.first.c_str(),
                                  PyString_FromString(it.second.c_str()));
         }
@@ -1699,8 +1716,7 @@ namespace matplotlibcpp {
         return res;
     }
 
-    bool subplots_adjust(const std::map<std::string, double>& keywords
-                                = {})
+    bool subplots_adjust(const std::map<std::string, double>& keywords = {})
     {
         detail::_interpreter::get();
 
@@ -2086,9 +2102,8 @@ namespace matplotlibcpp {
     }
 
     template<typename Numeric>
-    bool named_plot(const std::string& name,
-		    const std::vector<Numeric>& y,
-		    const std::string& format = "")
+    bool named_plot(const std::string& name, const std::vector<Numeric>& y,
+                    const std::string& format = "")
     {
         detail::_interpreter::get();
 
@@ -2270,7 +2285,7 @@ namespace matplotlibcpp {
     }
 
     void colorbar(PyObject* mappable = NULL,
-                         const std::map<std::string, float>& keywords = {})
+                  const std::map<std::string, float>& keywords = {})
     {
         if(mappable == NULL)
             throw std::runtime_error(
@@ -2467,7 +2482,8 @@ namespace matplotlibcpp {
         Py_DECREF(kwargs);
     }
 
-    template<typename Numeric> void ylim(Numeric left, Numeric right)
+    template<typename Numeric>
+    void ylim(Numeric left, Numeric right)
     {
         detail::_interpreter::get();
 
@@ -2538,8 +2554,8 @@ namespace matplotlibcpp {
 
     template<typename Numeric>
     void xticks(const std::vector<Numeric>& ticks,
-                       const std::vector<std::string>& labels = {},
-                       const std::map<std::string, std::string>& keywords = {})
+                const std::vector<std::string>& labels = {},
+                const std::map<std::string, std::string>& keywords = {})
     {
         assert(labels.size() == 0 || ticks.size() == labels.size());
 
@@ -2588,7 +2604,7 @@ namespace matplotlibcpp {
 
     template<typename Numeric>
     void xticks(const std::vector<Numeric>& ticks,
-                       const std::map<std::string, std::string>& keywords)
+                const std::map<std::string, std::string>& keywords)
     {
         xticks(ticks, {}, keywords);
     }
@@ -2602,7 +2618,7 @@ namespace matplotlibcpp {
 
         // construct keyword args
         PyObject* kwargs = PyDict_New();
-        for(const auto& [k, v]: keywords)
+        for(const auto& [k, v] : keywords)
             PyDict_SetItemString(kwargs, k.c_str(),
                                  PyString_FromString(v.c_str()));
 
@@ -2617,8 +2633,8 @@ namespace matplotlibcpp {
 
     template<typename Numeric>
     void yticks(const std::vector<Numeric>& ticks,
-                       const std::vector<std::string>& labels = {},
-                       const std::map<std::string, std::string>& keywords = {})
+                const std::vector<std::string>& labels = {},
+                const std::map<std::string, std::string>& keywords = {})
     {
         assert(labels.size() == 0 || ticks.size() == labels.size());
 
@@ -2667,7 +2683,7 @@ namespace matplotlibcpp {
 
     template<typename Numeric>
     void yticks(const std::vector<Numeric>& ticks,
-                       const std::map<std::string, std::string>& keywords)
+                const std::map<std::string, std::string>& keywords)
     {
         yticks(ticks, {}, keywords);
     }
@@ -2704,7 +2720,7 @@ namespace matplotlibcpp {
     }
 
     void tick_params(const std::map<std::string, std::string>& keywords,
-                            const std::string axis = "both")
+                     const std::string axis = "both")
     {
         detail::_interpreter::get();
 
@@ -2751,8 +2767,8 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    void subplot2grid(long nrows, long ncols, long rowid = 0,
-                             long colid = 0, long rowspan = 1, long colspan = 1)
+    void subplot2grid(long nrows, long ncols, long rowid = 0, long colid = 0,
+                      long rowspan = 1, long colspan = 1)
     {
         detail::_interpreter::get();
 
@@ -2781,7 +2797,7 @@ namespace matplotlibcpp {
     }
 
     void title(const std::string& titlestr,
-                      const std::map<std::string, std::string>& keywords = {})
+               const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
 
@@ -2805,8 +2821,7 @@ namespace matplotlibcpp {
     }
 
     void suptitle(const std::string& suptitlestr,
-                         const std::map<std::string, std::string>& keywords
-                         = {})
+                  const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
 
@@ -2847,8 +2862,8 @@ namespace matplotlibcpp {
     }
 
     void axhline(double y, double xmin = 0., double xmax = 1.,
-                        const std::map<std::string, std::string>& keywords
-                        = std::map<std::string, std::string>())
+                 const std::map<std::string, std::string>& keywords
+                 = std::map<std::string, std::string>())
     {
         detail::_interpreter::get();
 
@@ -2878,8 +2893,8 @@ namespace matplotlibcpp {
     }
 
     void axvline(double x, double ymin = 0., double ymax = 1.,
-                        const std::map<std::string, std::string>& keywords
-                        = std::map<std::string, std::string>())
+                 const std::map<std::string, std::string>& keywords
+                 = std::map<std::string, std::string>())
     {
         detail::_interpreter::get();
 
@@ -2908,10 +2923,9 @@ namespace matplotlibcpp {
         if(res) Py_DECREF(res);
     }
 
-    void axvspan(double xmin, double xmax, double ymin = 0.,
-                        double ymax = 1.,
-                        const std::map<std::string, std::string>& keywords
-                        = std::map<std::string, std::string>())
+    void axvspan(double xmin, double xmax, double ymin = 0., double ymax = 1.,
+                 const std::map<std::string, std::string>& keywords
+                 = std::map<std::string, std::string>())
     {
         // construct positional args
         PyObject* args = PyTuple_New(4);
@@ -2943,7 +2957,7 @@ namespace matplotlibcpp {
     }
 
     void xlabel(const std::string& str,
-                       const std::map<std::string, std::string>& keywords = {})
+                const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
 
@@ -2967,7 +2981,7 @@ namespace matplotlibcpp {
     }
 
     void ylabel(const std::string& str,
-                       const std::map<std::string, std::string>& keywords = {})
+                const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
 
@@ -2991,8 +3005,7 @@ namespace matplotlibcpp {
     }
 
     void set_zlabel(const std::string& str,
-                           const std::map<std::string, std::string>& keywords
-                           = {})
+                    const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
 
@@ -3179,8 +3192,7 @@ namespace matplotlibcpp {
         Py_DECREF(res);
     }
 
-    void rcparams(const std::map<std::string, std::string>& keywords
-                         = {})
+    void rcparams(const std::map<std::string, std::string>& keywords = {})
     {
         detail::_interpreter::get();
         PyObject* args = PyTuple_New(0);
@@ -3301,30 +3313,41 @@ namespace matplotlibcpp {
 
     // Support for variadic plot() and initializer lists:
 
-    namespace detail {
-
-        template<typename T> using is_function = typename std::is_function<
+    namespace detail
+    {
+        template<typename T>
+        using is_function = typename std::is_function<
             std::remove_pointer<std::remove_reference<T>>>::type;
 
-        template<bool obj, typename T> struct is_callable_impl;
+        template<bool obj, typename T>
+        struct is_callable_impl;
 
-        template<typename T> struct is_callable_impl<false, T> {
+        template<typename T>
+        struct is_callable_impl<false, T>
+        {
             typedef is_function<T> type;
         }; // a non-object is callable iff it is a function
 
-        template<typename T> struct is_callable_impl<true, T> {
-            struct Fallback {
+        template<typename T>
+        struct is_callable_impl<true, T>
+        {
+            struct Fallback
+            {
                 void operator()();
             };
-            struct Derived : T, Fallback {};
+            struct Derived : T, Fallback
+            {};
 
-            template<typename U, U> struct Check;
+            template<typename U, U>
+            struct Check;
 
-            template<typename U> static std::true_type
+            template<typename U>
+            static std::true_type
             test(...); // use a variadic function to make sure (1) it accepts
                        // everything and (2) its always the worst match
 
-            template<typename U> static std::false_type
+            template<typename U>
+            static std::false_type
             test(Check<void (Fallback::*)(), &U::operator()>*);
         public:
             typedef decltype(test<Derived>(nullptr)) type;
@@ -3332,18 +3355,24 @@ namespace matplotlibcpp {
             static constexpr bool value = type::value;
         }; // an object is callable iff it defines operator()
 
-        template<typename T> struct is_callable {
+        template<typename T>
+        struct is_callable
+        {
             // dispatch to is_callable_impl<true, T> or is_callable_impl<false,
             // T> depending on whether T is of class type or not
             typedef typename is_callable_impl<std::is_class<T>::value, T>::type
                 type;
         };
 
-        template<typename IsYDataCallable> struct plot_impl {};
+        template<typename IsYDataCallable>
+        struct plot_impl
+        {};
 
 #ifdef WITHOUT_NUMPY
 
-        template<> struct plot_impl<std::false_type> {
+        template<>
+        struct plot_impl<std::false_type>
+        {
             template<typename IterableX, typename IterableY>
             bool operator()(const IterableX& x, const IterableY& y,
                             const std::string& format)
@@ -3391,7 +3420,9 @@ namespace matplotlibcpp {
 
 #else
 
-        template<> struct plot_impl<std::false_type> {
+        template<>
+        struct plot_impl<std::false_type>
+        {
             template<typename IterableX, typename IterableY>
             bool operator()(const IterableX& x, const IterableY& y,
                             const std::string& format)
@@ -3455,7 +3486,9 @@ namespace matplotlibcpp {
 
 #endif
 
-        template<> struct plot_impl<std::true_type> {
+        template<>
+        struct plot_impl<std::true_type>
+        {
             template<typename Iterable, typename Callable>
             bool operator()(const Iterable& ticks, const Callable& f,
                             const std::string& format)
@@ -3466,7 +3499,7 @@ namespace matplotlibcpp {
                 // correct element type of y, but all values have to be
                 // convertible to double anyways
                 std::vector<double> y;
-                for(auto x: ticks) y.push_back(f(x));
+                for(auto x : ticks) y.push_back(f(x));
                 return plot_impl<std::false_type>()(ticks, y, format);
             }
         };
@@ -3474,7 +3507,11 @@ namespace matplotlibcpp {
     } // end namespace detail
 
     // recursion stop for the above
-    template<typename... Args> bool plot() { return true; }
+    template<typename... Args>
+    bool plot()
+    {
+        return true;
+    }
 
     template<typename A, typename B, typename... Args>
     bool plot(const A& a, const B& b, const std::string& format, Args... args)
@@ -3489,7 +3526,7 @@ namespace matplotlibcpp {
      * i.e. calling plot( {1,2,3,4} )
      */
     bool plot(const std::vector<double>& x, const std::vector<double>& y,
-                     const std::string& format = "")
+              const std::string& format = "")
     {
 #if __cplusplus >= CPP20
         return plot<std::vector<double>, std::vector<double>>(x, y, format);
@@ -3498,8 +3535,7 @@ namespace matplotlibcpp {
 #endif
     }
 
-    bool plot(const std::vector<double>& y,
-                     const std::string& format = "")
+    bool plot(const std::vector<double>& y, const std::string& format = "")
     {
 #if __cplusplus >= CPP20
         return plot<std::vector<double>>(y, format);
@@ -3512,7 +3548,8 @@ namespace matplotlibcpp {
      * This class allows dynamic plots, ie changing the plotted data without
      * clearing and re-plotting
      */
-    class Plot {
+    class Plot
+    {
     public:
         // default initialization with plot label, some data and format
         template<typename Numeric>
@@ -3562,8 +3599,9 @@ namespace matplotlibcpp {
             : Plot(name, std::vector<double>(), std::vector<double>(), format)
         {}
 
-        template<typename Numeric> bool update(const std::vector<Numeric>& x,
-                                               const std::vector<Numeric>& y)
+        template<typename Numeric>
+        bool update(const std::vector<Numeric>& x,
+                    const std::vector<Numeric>& y)
         {
             assert(x.size() == y.size());
             if(set_data_fct) {

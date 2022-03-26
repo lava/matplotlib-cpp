@@ -25,7 +25,8 @@ PyObject* toPyDateTime(const TimePoint& t, int dummy = 0)
     return obj;
 }
 
-template<> PyObject* toPyDateTime(const time_t& t, int us)
+template<>
+PyObject* toPyDateTime(const time_t& t, int us)
 {
     tm tm{};
     gmtime_r(&t, &tm); // compatible with matlab, inverse of datenum.
@@ -43,7 +44,8 @@ template<> PyObject* toPyDateTime(const time_t& t, int us)
     return obj;
 }
 
-template<class Time_t> PyObject* toPyDateTimeList(const Time_t* t, size_t nt)
+template<class Time_t>
+PyObject* toPyDateTimeList(const Time_t* t, size_t nt)
 {
     PyObject* tlist = PyList_New(nt);
     if(tlist == nullptr) return nullptr;
@@ -60,7 +62,9 @@ template<class Time_t> PyObject* toPyDateTimeList(const Time_t* t, size_t nt)
     return tlist;
 }
 
-template<class Time_t> class DateTimeList {
+template<class Time_t>
+class DateTimeList
+{
 public:
     DateTimeList(const Time_t* t, size_t nt)
     {
@@ -80,7 +84,6 @@ private:
 
 namespace matplotlibcpp
 {
-
     // special purpose function to plot against python datetime objects.
     template<class Time_t, std::ranges::contiguous_range ContainerY>
     bool plot(const DateTimeList<Time_t>& t, const ContainerY& y,
