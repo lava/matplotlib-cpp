@@ -64,14 +64,24 @@ template<class Time_t>
 class DateTimeList
 {
 public:
+
+    DateTimeList() = default;
+
     DateTimeList(const Time_t* t, size_t nt)
     {
+        matplotlibcpp::detail::_interpreter::get();
         tlist = (PyListObject*)toPyDateTimeList(t, nt);
     }
 
     ~DateTimeList()
     {
         if(tlist) Py_DECREF((PyObject*)tlist);
+    }
+
+    DateTimeList& operator=(const DateTimeList& rhs) {
+        tlist=rhs.tlist;
+        Py_INCREF(tlist);
+        return *this;
     }
 
     PyListObject* get() const { return tlist; }
