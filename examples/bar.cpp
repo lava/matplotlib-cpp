@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o bar $(python-config --includes) bar.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 
 #include <iostream>
@@ -14,5 +18,6 @@ int main(int argc, char **argv) {
     plt::bar(test_data);
     plt::show();
 
+    plt::detail::_interpreter::kill();
     return (0);
 }

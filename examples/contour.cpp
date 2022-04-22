@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o contour $(python-config --includes) contour.cpp $(python-config --ldflags --embed)
+//
+
 #include "../matplotlibcpp.h"
 
 #include <cmath>
@@ -21,4 +25,7 @@ int main()
 
     plt::contour(x, y, z);
     plt::show();
+
+    plt::detail::_interpreter::kill();
+    return (0);
 }

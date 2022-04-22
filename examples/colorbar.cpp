@@ -1,3 +1,7 @@
+//
+// g++ -g -Wall -o colorbar $(python-config --includes) colorbar.cpp $(python-config --ldflags --embed)
+//
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
@@ -29,4 +33,7 @@ int main()
     plt::show();
     plt::close();
     Py_DECREF(mat);
+
+    plt::detail::_interpreter::kill();
+    return 0;
 }
