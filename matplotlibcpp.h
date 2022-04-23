@@ -57,6 +57,7 @@ struct _interpreter {
     PyObject *s_python_function_plot;
     PyObject *s_python_function_quiver;
     PyObject* s_python_function_contour;
+    PyObject* s_python_function_contourf;
     PyObject *s_python_function_semilogx;
     PyObject *s_python_function_semilogy;
     PyObject *s_python_function_loglog;
@@ -234,6 +235,7 @@ private:
         s_python_function_plot = safe_import(pymod, "plot");
         s_python_function_quiver = safe_import(pymod, "quiver");
         s_python_function_contour = safe_import(pymod, "contour");
+        s_python_function_contourf = safe_import(pymod, "contourf");
         s_python_function_semilogx = safe_import(pymod, "semilogx");
         s_python_function_semilogy = safe_import(pymod, "semilogy");
         s_python_function_loglog = safe_import(pymod, "loglog");
@@ -619,6 +621,48 @@ void contour(const std::vector<::std::vector<Numeric>> &x,
   PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contour, args, kwargs);
   if (!res)
     throw std::runtime_error("failed contour");
+
+  Py_DECREF(args);
+  Py_DECREF(kwargs);
+  if (res) Py_DECREF(res);
+}
+
+template <typename Numeric>
+void contourf(const std::vector<::std::vector<Numeric>> &x,
+             const std::vector<::std::vector<Numeric>> &y,
+             const std::vector<::std::vector<Numeric>> &z,
+             const std::map<std::string, std::string> &keywords = {})
+{
+  detail::_interpreter::get();
+
+  // using numpy arrays
+  PyObject *xarray = detail::get_2darray(x);
+  PyObject *yarray = detail::get_2darray(y);
+  PyObject *zarray = detail::get_2darray(z);
+
+  // construct positional args
+  PyObject *args = PyTuple_New(3);
+  PyTuple_SetItem(args, 0, xarray);
+  PyTuple_SetItem(args, 1, yarray);
+  PyTuple_SetItem(args, 2, zarray);
+
+  // Build up the kw args.
+  PyObject *kwargs = PyDict_New();
+
+  PyObject *python_colormap_coolwarm = PyObject_GetAttrString(
+      detail::_interpreter::get().s_python_colormap, "coolwarm");
+
+  PyDict_SetItemString(kwargs, "cmap", python_colormap_coolwarm);
+
+  for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
+       it != keywords.end(); ++it) {
+    PyDict_SetItemString(kwargs, it->first.c_str(),
+                         PyString_FromString(it->second.c_str()));
+  }
+
+  PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contourf, args, kwargs);
+  if (!res)
+    throw std::runtime_error("failed contourf");
 
   Py_DECREF(args);
   Py_DECREF(kwargs);
