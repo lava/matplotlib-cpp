@@ -103,6 +103,9 @@ struct _interpreter {
     PyObject *s_python_function_subplots_adjust;
     PyObject *s_python_function_rcparams;
     PyObject *s_python_function_spy;
+    PyObject *s_python_function_set_rticks;
+    PyObject *s_python_function_set_rmax;
+    PyObject *s_python_function_gcf;
 
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
@@ -277,7 +280,10 @@ private:
         s_python_function_colorbar = PyObject_GetAttrString(pymod, "colorbar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
         s_python_function_rcparams = PyObject_GetAttrString(pymod, "rcParams");
-	s_python_function_spy = PyObject_GetAttrString(pymod, "spy");
+	    s_python_function_spy = PyObject_GetAttrString(pymod, "spy");
+        s_python_function_set_rticks = safe_import(pymod, "yticks");
+        s_python_function_set_rmax = safe_import(pymod, "ylim");
+        s_python_function_gcf = safe_import(pymod, "gcf");
 #ifndef WITHOUT_NUMPY
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
@@ -1802,6 +1808,148 @@ bool named_loglog(const std::string& name, const std::vector<NumericX>& x, const
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
     if (res) Py_DECREF(res);
+
+    return res;
+}
+
+template<typename Numeric>
+inline void set_rticks(const std::vector<Numeric> &ticks, const std::vector<std::string> &labels = {}, const std::map<std::string, std::string>& keywords = {})
+{
+    assert(labels.size() == 0 || ticks.size() == labels.size());
+
+    detail::_interpreter::get();
+
+    // using numpy array
+    PyObject* ticksarray = detail::get_array(ticks);
+
+    PyObject* args;
+    if(labels.size() == 0) {
+        // construct positional args
+        args = PyTuple_New(1);
+        PyTuple_SetItem(args, 0, ticksarray);
+    } else {
+        // make tuple of tick labels
+        PyObject* labelstuple = PyTuple_New(labels.size());
+        for (size_t i = 0; i < labels.size(); i++)
+            PyTuple_SetItem(labelstuple, i, PyUnicode_FromString(labels[i].c_str()));
+
+        // construct positional args
+        args = PyTuple_New(2);
+        PyTuple_SetItem(args, 0, ticksarray);
+        PyTuple_SetItem(args, 1, labelstuple);
+    }
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_set_rticks, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    if(!res) throw std::runtime_error("Call to set_rticks() failed");
+
+    Py_DECREF(res);
+}
+
+template<typename Numeric>
+void set_rmax(Numeric right)
+{
+    detail::_interpreter::get();
+
+    PyObject* list = PyList_New(2);
+    PyList_SetItem(list, 0, PyFloat_FromDouble(0));
+    PyList_SetItem(list, 1, PyFloat_FromDouble(right));
+
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, list);
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_set_rmax, args);
+    if(!res) throw std::runtime_error("Call to set_rmax() failed.");
+
+    Py_DECREF(args);
+    Py_DECREF(res);
+}
+
+template<typename Numeric>
+void set_rlabel_position(Numeric value)
+{
+    detail::_interpreter::get();
+    // using gcf to get the figure
+    PyObject* fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_gcf, detail::_interpreter::get().s_python_empty_tuple);
+    if (!fig) throw std::runtime_error("Call to figure() failed.");
+
+    PyObject *gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("polar"));
+    // then gca to get the polar axis
+    PyObject *gca = PyObject_GetAttrString(fig, "gca");
+    if (!gca) throw std::runtime_error("No gca");
+    Py_INCREF(gca);
+    PyObject *axis = PyObject_Call(
+            gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
+    PyObject_CallMethod(axis, "set_rlabel_position", "f", value);
+    if (!axis) throw std::runtime_error("No axis");
+    Py_DECREF(gca);
+}
+
+template<typename Numeric>
+bool polar(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords = {})
+{
+    assert(x.size() == y.size());
+
+    //set up parameters
+    detail::_interpreter::get();
+
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
+
+    PyObject* plot_args = PyTuple_New(2);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject *fig =
+            PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
+                                detail::_interpreter::get().s_python_empty_tuple);
+    if (!fig) throw std::runtime_error("Call to figure() failed.");
+
+    // getting gca to do polar projection
+    PyObject *gca_kwargs = PyDict_New();
+    PyDict_SetItemString(gca_kwargs, "projection", PyString_FromString("polar"));
+
+    PyObject *gca = PyObject_GetAttrString(fig, "gca");
+    if (!gca) throw std::runtime_error("No gca");
+    Py_INCREF(gca);
+    PyObject *axis = PyObject_Call(
+            gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
+    if (!axis) throw std::runtime_error("No axis");
+
+    Py_INCREF(axis);
+
+    Py_DECREF(gca);
+    Py_DECREF(gca_kwargs);
+
+    // plot
+    PyObject *polar = PyObject_GetAttrString(axis, "plot");
+    if (!polar) throw std::runtime_error("No line plot");
+    Py_INCREF(polar);
+    PyObject* res = PyObject_Call(polar, plot_args, kwargs);
+    if (!res) throw std::runtime_error("Failed polar plot");
+    Py_DECREF(polar);
+    Py_DECREF(axis);
+    Py_DECREF(kwargs);
+    Py_DECREF(plot_args);
+    if (res)
+        Py_DECREF(res);
 
     return res;
 }
