@@ -57,6 +57,7 @@ struct _interpreter {
     PyObject *s_python_function_plot;
     PyObject *s_python_function_quiver;
     PyObject* s_python_function_contour;
+    PyObject* s_python_function_contourf;
     PyObject *s_python_function_semilogx;
     PyObject *s_python_function_semilogy;
     PyObject *s_python_function_loglog;
@@ -234,6 +235,7 @@ private:
         s_python_function_plot = safe_import(pymod, "plot");
         s_python_function_quiver = safe_import(pymod, "quiver");
         s_python_function_contour = safe_import(pymod, "contour");
+        s_python_function_contourf = safe_import(pymod, "contourf");
         s_python_function_semilogx = safe_import(pymod, "semilogx");
         s_python_function_semilogy = safe_import(pymod, "semilogy");
         s_python_function_loglog = safe_import(pymod, "loglog");
@@ -610,10 +612,9 @@ void contour(const std::vector<::std::vector<Numeric>> &x,
 
   PyDict_SetItemString(kwargs, "cmap", python_colormap_coolwarm);
 
-  for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
-       it != keywords.end(); ++it) {
-    PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+  for (const auto & keyword : keywords) {
+      PyDict_SetItemString(kwargs, keyword.first.c_str(),
+                           PyString_FromString(keyword.second.c_str()));
   }
 
   PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contour, args, kwargs);
@@ -623,6 +624,47 @@ void contour(const std::vector<::std::vector<Numeric>> &x,
   Py_DECREF(args);
   Py_DECREF(kwargs);
   if (res) Py_DECREF(res);
+}
+
+template <typename Numeric>
+void contourf(const std::vector<::std::vector<Numeric>> &x,
+              const std::vector<::std::vector<Numeric>> &y,
+              const std::vector<::std::vector<Numeric>> &z,
+              const std::map<std::string, std::string> &keywords = {})
+{
+    detail::_interpreter::get();
+
+    // using numpy arrays
+    PyObject *xarray = detail::get_2darray(x);
+    PyObject *yarray = detail::get_2darray(y);
+    PyObject *zarray = detail::get_2darray(z);
+
+    // construct positional args
+    PyObject *args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, xarray);
+    PyTuple_SetItem(args, 1, yarray);
+    PyTuple_SetItem(args, 2, zarray);
+
+    // Build up the kw args.
+    PyObject *kwargs = PyDict_New();
+
+    PyObject *python_colormap_coolwarm = PyObject_GetAttrString(
+        detail::_interpreter::get().s_python_colormap, "coolwarm");
+
+    PyDict_SetItemString(kwargs, "cmap", python_colormap_coolwarm);
+
+    for (const auto & keyword : keywords) {
+        PyDict_SetItemString(kwargs, keyword.first.c_str(),
+                             PyString_FromString(keyword.second.c_str()));
+    }
+
+    PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contourf, args, kwargs);
+    if (!res)
+        throw std::runtime_error("failed contourf");
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    if (res) Py_DECREF(res);
 }
 
 template <typename Numeric>
@@ -1396,13 +1438,44 @@ bool contour(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
 
     // construct keyword args
     PyObject* kwargs = PyDict_New();
-    for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
-         it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    for (const auto & keyword : keywords) {
+        PyDict_SetItemString(kwargs, keyword.first.c_str(), PyUnicode_FromString(keyword.second.c_str()));
     }
 
     PyObject* res =
             PyObject_Call(detail::_interpreter::get().s_python_function_contour, plot_args, kwargs);
+
+    Py_DECREF(kwargs);
+    Py_DECREF(plot_args);
+    if (res)
+        Py_DECREF(res);
+
+    return res;
+}
+
+template <typename NumericX, typename NumericY, typename NumericZ>
+bool contourf(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
+              const std::vector<NumericZ>& z,
+              const std::map<std::string, std::string>& keywords = {}) {
+    assert(x.size() == y.size() && x.size() == z.size());
+
+    PyObject* xarray = detail::get_array(x);
+    PyObject* yarray = detail::get_array(y);
+    PyObject* zarray = detail::get_array(z);
+
+    PyObject* plot_args = PyTuple_New(3);
+    PyTuple_SetItem(plot_args, 0, xarray);
+    PyTuple_SetItem(plot_args, 1, yarray);
+    PyTuple_SetItem(plot_args, 2, zarray);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for (const auto & keyword : keywords) {
+        PyDict_SetItemString(kwargs, keyword.first.c_str(), PyUnicode_FromString(keyword.second.c_str()));
+    }
+
+    PyObject* res =
+        PyObject_Call(detail::_interpreter::get().s_python_function_contourf, plot_args, kwargs);
 
     Py_DECREF(kwargs);
     Py_DECREF(plot_args);
