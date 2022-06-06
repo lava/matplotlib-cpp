@@ -37,70 +37,89 @@ install(
 
 
 # Examples
-add_executable(minimal examples/minimal.cpp)
-target_link_libraries(minimal PRIVATE matplotlib_cpp)
-set_target_properties(minimal PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-add_executable(basic examples/basic.cpp)
-target_link_libraries(basic PRIVATE matplotlib_cpp)
-set_target_properties(basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-add_executable(modern examples/modern.cpp)
-target_link_libraries(modern PRIVATE matplotlib_cpp)
-set_target_properties(modern PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
 add_executable(animation examples/animation.cpp)
 target_link_libraries(animation PRIVATE matplotlib_cpp)
 set_target_properties(animation PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-add_executable(nonblock examples/nonblock.cpp)
-target_link_libraries(nonblock PRIVATE matplotlib_cpp)
-set_target_properties(nonblock PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-add_executable(xkcd examples/xkcd.cpp)
-target_link_libraries(xkcd PRIVATE matplotlib_cpp)
-set_target_properties(xkcd PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 add_executable(bar examples/bar.cpp)
 target_link_libraries(bar PRIVATE matplotlib_cpp)
 set_target_properties(bar PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_executable(fill_inbetween examples/fill_inbetween.cpp)
-target_link_libraries(fill_inbetween PRIVATE matplotlib_cpp)
-set_target_properties(fill_inbetween PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_executable(basic examples/basic.cpp)
+target_link_libraries(basic PRIVATE matplotlib_cpp)
+set_target_properties(basic PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+if(Python3_NumPy_FOUND)
+  add_executable(colorbar examples/colorbar.cpp)
+  target_link_libraries(colorbar PRIVATE matplotlib_cpp)
+  set_target_properties(colorbar PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
+
+if(Python3_NumPy_FOUND)
+  add_executable(contour examples/contour.cpp)
+  target_link_libraries(contour PRIVATE matplotlib_cpp)
+  set_target_properties(contour PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
 
 add_executable(fill examples/fill.cpp)
 target_link_libraries(fill PRIVATE matplotlib_cpp)
 set_target_properties(fill PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_executable(update examples/update.cpp)
-target_link_libraries(update PRIVATE matplotlib_cpp)
-set_target_properties(update PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_executable(fill_inbetween examples/fill_inbetween.cpp)
+target_link_libraries(fill_inbetween PRIVATE matplotlib_cpp)
+set_target_properties(fill_inbetween PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_executable(subplot2grid examples/subplot2grid.cpp)
-target_link_libraries(subplot2grid PRIVATE matplotlib_cpp)
-set_target_properties(subplot2grid PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+add_executable(imshow examples/imshow.cpp)
+target_link_libraries(imshow PRIVATE matplotlib_cpp)
+set_target_properties(imshow PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 add_executable(lines3d examples/lines3d.cpp)
 target_link_libraries(lines3d PRIVATE matplotlib_cpp)
 set_target_properties(lines3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+add_executable(minimal examples/minimal.cpp)
+target_link_libraries(minimal PRIVATE matplotlib_cpp)
+set_target_properties(minimal PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_executable(modern examples/modern.cpp)
+target_link_libraries(modern PRIVATE matplotlib_cpp)
+set_target_properties(modern PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_executable(nonblock examples/nonblock.cpp)
+target_link_libraries(nonblock PRIVATE matplotlib_cpp)
+set_target_properties(nonblock PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_executable(quiver examples/quiver.cpp)
+target_link_libraries(quiver PRIVATE matplotlib_cpp)
+set_target_properties(quiver PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 if(Python3_NumPy_FOUND)
-  add_executable(surface examples/surface.cpp)
-  target_link_libraries(surface PRIVATE matplotlib_cpp)
-  set_target_properties(surface PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-  add_executable(colorbar examples/colorbar.cpp)
-  target_link_libraries(colorbar PRIVATE matplotlib_cpp)
-  set_target_properties(colorbar PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-  add_executable(contour examples/contour.cpp)
-  target_link_libraries(contour PRIVATE matplotlib_cpp)
-  set_target_properties(contour PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
   add_executable(spy examples/spy.cpp)
   target_link_libraries(spy PRIVATE matplotlib_cpp)
   set_target_properties(spy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endif()
+
+add_executable(subplot examples/subplot.cpp)
+target_link_libraries(subplot PRIVATE matplotlib_cpp)
+set_target_properties(subplot PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_executable(subplot2grid examples/subplot2grid.cpp)
+target_link_libraries(subplot2grid PRIVATE matplotlib_cpp)
+set_target_properties(subplot2grid PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+if(Python3_NumPy_FOUND)
+  add_executable(surface examples/surface.cpp)
+  target_link_libraries(surface PRIVATE matplotlib_cpp)
+  set_target_properties(surface PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
+
+add_executable(update examples/update.cpp)
+target_link_libraries(update PRIVATE matplotlib_cpp)
+set_target_properties(update PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
+add_executable(xkcd examples/xkcd.cpp)
+target_link_libraries(xkcd PRIVATE matplotlib_cpp)
+set_target_properties(xkcd PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 
 # Install headers
