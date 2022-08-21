@@ -36,3 +36,6 @@
 
 # vim temp files
 *.sw*
+
+# Clion Project Files
+.idea/
