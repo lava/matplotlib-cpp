@@ -2,7 +2,15 @@
 
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
+// Under the win32 platform and debug, python cannot find the matplotlib package
+// normally. It is recommended that the debug definition include python.h is not applicable in this case.
+#ifdef _DEBUG && defined(MS_WIN32)
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
 
 #include <vector>
 #include <map>
