@@ -18,12 +18,22 @@ target_compile_features(matplotlib_cpp INTERFACE
 )
 # TODO: Use `Development.Embed` component when requiring cmake >= 3.18
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+target_include_directories(matplotlib_cpp
+  INTERFACE
+  ${PYTHON3_INCLUDE_DIRS}
+)
 target_link_libraries(matplotlib_cpp INTERFACE
   Python3::Python
   Python3::Module
+  ${PYTHON3_LIBRARIES}
 )
+
 find_package(Python3 COMPONENTS NumPy)
 if(Python3_NumPy_FOUND)
+  target_include_directories(matplotlib_cpp
+  INTERFACE
+  ${PYTHON3_NumPy_INCLUDE_DIRS}
+  )
   target_link_libraries(matplotlib_cpp INTERFACE
     Python3::NumPy
   )
@@ -131,3 +141,5 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
   DESTINATION ${INSTALL_CONFIGDIR}
 )
+
+add_library(matplotlib_cpp::matplotlib_cpp ALIAS matplotlib_cpp)
