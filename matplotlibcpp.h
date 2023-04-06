@@ -2,7 +2,10 @@
 
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
-#include <Python.h>
+#pragma push_macro("slots")
+#undef slots
+#include "Python.h"
+#pragma pop_macro("slots")
 
 #include <vector>
 #include <map>
