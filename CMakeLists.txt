@@ -10,7 +10,7 @@ set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PACKAGE_NAME}/cmake)
 add_library(matplotlib_cpp INTERFACE)
 target_include_directories(matplotlib_cpp
   INTERFACE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/examples>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 target_compile_features(matplotlib_cpp INTERFACE
