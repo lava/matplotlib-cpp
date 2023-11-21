@@ -171,17 +171,36 @@ private:
 #else
         char name[] = "plotting";
 #endif
+#if PY_MINOR_VERSION < 11
         Py_SetProgramName(name);
         Py_Initialize();
 
         wchar_t const *dummy_args[] = {L"Python", NULL};  // const is needed because literals must not be modified
         wchar_t const **argv = dummy_args;
         int             argc = sizeof(dummy_args)/sizeof(dummy_args[0])-1;
-
-#if PY_MAJOR_VERSION >= 3
         PySys_SetArgv(argc, const_cast<wchar_t **>(argv));
-#else
-        PySys_SetArgv(argc, (char **)(argv));
+ #else
+        PyStatus status;
+        PyConfig config;
+        PyConfig_InitPythonConfig(&config);
+        wchar_t const* dummy_args[] = { L"Python", NULL };  // const is needed because literals must not be modified
+        wchar_t* const* argv = const_cast<wchar_t* const*>(dummy_args);
+        int             argc = sizeof(dummy_args) / sizeof(dummy_args[0]) - 1;
+        if (argc && argv) {
+            status = PyConfig_SetString(&config, &config.program_name, name);
+            if (PyStatus_Exception(status)) {
+                PyConfig_Clear(&config);
+            }
+            status = PyConfig_SetArgv(&config, argc, argv);
+            if (PyStatus_Exception(status)) {
+                PyConfig_Clear(&config);
+            }
+        }
+        status = Py_InitializeFromConfig(&config);
+        if (PyStatus_Exception(status)) {
+            PyConfig_Clear(&config);
+        }
+        PyConfig_Clear(&config);
 #endif
 
 #ifndef WITHOUT_NUMPY
@@ -351,9 +370,9 @@ template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY
 // Sanity checks; comment them out or change the numpy type below if you're compiling on
 // a platform where they don't apply
 static_assert(sizeof(long long) == 8);
-template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
+//template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
 static_assert(sizeof(unsigned long long) == 8);
-template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
+//template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
 
 template<typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
