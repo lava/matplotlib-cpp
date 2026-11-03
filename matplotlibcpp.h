@@ -71,6 +71,7 @@ struct _interpreter {
     PyObject *s_python_function_legend;
     PyObject *s_python_function_xlim;
     PyObject *s_python_function_ion;
+    PyObject *s_python_function_ioff;
     PyObject *s_python_function_ginput;
     PyObject *s_python_function_ylim;
     PyObject *s_python_function_title;
@@ -261,6 +262,7 @@ private:
         s_python_function_tick_params = safe_import(pymod, "tick_params");
         s_python_function_grid = safe_import(pymod, "grid");
         s_python_function_ion = safe_import(pymod, "ion");
+        s_python_function_ioff = safe_import(pymod, "ioff");
         s_python_function_ginput = safe_import(pymod, "ginput");
         s_python_function_save = safe_import(pylabmod, "savefig");
         s_python_function_annotate = safe_import(pymod,"annotate");
@@ -2697,6 +2699,18 @@ inline void ion() {
         detail::_interpreter::get().s_python_empty_tuple);
 
     if (!res) throw std::runtime_error("Call to ion() failed.");
+
+    Py_DECREF(res);
+}
+
+inline void ioff() {
+    detail::_interpreter::get();
+
+    PyObject *res = PyObject_CallObject(
+        detail::_interpreter::get().s_python_function_ioff,
+        detail::_interpreter::get().s_python_empty_tuple);
+
+    if (!res) throw std::runtime_error("Call to ioff() failed.");
 
     Py_DECREF(res);
 }
