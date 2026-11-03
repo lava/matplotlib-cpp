@@ -277,7 +277,7 @@ private:
         s_python_function_colorbar = PyObject_GetAttrString(pymod, "colorbar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
         s_python_function_rcparams = PyObject_GetAttrString(pymod, "rcParams");
-	    s_python_function_spy = PyObject_GetAttrString(pymod, "spy");
+        s_python_function_spy = PyObject_GetAttrString(pymod, "spy");
 #ifndef WITHOUT_NUMPY
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
@@ -1976,6 +1976,7 @@ inline void set_aspect(Numeric ratio)
 
     PyObject *res = PyObject_Call(set_aspect, args, kwargs);
     if (!res) throw std::runtime_error("Call to set_aspect() failed.");
+    Py_DECREF(res);
     Py_DECREF(set_aspect);
 
     Py_DECREF(ax);
