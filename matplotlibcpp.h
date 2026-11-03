@@ -279,7 +279,7 @@ private:
         s_python_function_colorbar = PyObject_GetAttrString(pymod, "colorbar");
         s_python_function_subplots_adjust = safe_import(pymod,"subplots_adjust");
         s_python_function_rcparams = PyObject_GetAttrString(pymod, "rcParams");
-	s_python_function_spy = PyObject_GetAttrString(pymod, "spy");
+        s_python_function_spy = PyObject_GetAttrString(pymod, "spy");
 #ifndef WITHOUT_NUMPY
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
@@ -562,19 +562,16 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
 
   PyObject *gca = PyObject_GetAttrString(fig, "gca");
   if (!gca) throw std::runtime_error("No gca");
-  Py_INCREF(gca);
   PyObject *axis = PyObject_Call(
       gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
 
   if (!axis) throw std::runtime_error("No axis");
-  Py_INCREF(axis);
 
   Py_DECREF(gca);
   Py_DECREF(gca_kwargs);
 
   PyObject *plot_surface = PyObject_GetAttrString(axis, "plot_surface");
   if (!plot_surface) throw std::runtime_error("No surface");
-  Py_INCREF(plot_surface);
   PyObject *res = PyObject_Call(plot_surface, args, kwargs);
   if (!res) throw std::runtime_error("failed surface");
   Py_DECREF(plot_surface);
@@ -730,19 +727,16 @@ void plot3(const std::vector<Numeric> &x,
 
   PyObject *gca = PyObject_GetAttrString(fig, "gca");
   if (!gca) throw std::runtime_error("No gca");
-  Py_INCREF(gca);
   PyObject *axis = PyObject_Call(
       gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
 
   if (!axis) throw std::runtime_error("No axis");
-  Py_INCREF(axis);
 
   Py_DECREF(gca);
   Py_DECREF(gca_kwargs);
 
   PyObject *plot3 = PyObject_GetAttrString(axis, "plot");
   if (!plot3) throw std::runtime_error("No 3D line plot");
-  Py_INCREF(plot3);
   PyObject *res = PyObject_Call(plot3, args, kwargs);
   if (!res) throw std::runtime_error("Failed 3D line plot");
   Py_DECREF(plot3);
@@ -1149,19 +1143,16 @@ bool scatter(const std::vector<NumericX>& x,
 
   PyObject *gca = PyObject_GetAttrString(fig, "gca");
   if (!gca) throw std::runtime_error("No gca");
-  Py_INCREF(gca);
   PyObject *axis = PyObject_Call(
       gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
 
   if (!axis) throw std::runtime_error("No axis");
-  Py_INCREF(axis);
 
   Py_DECREF(gca);
   Py_DECREF(gca_kwargs);
 
   PyObject *plot3 = PyObject_GetAttrString(axis, "scatter");
   if (!plot3) throw std::runtime_error("No 3D line plot");
-  Py_INCREF(plot3);
   PyObject *res = PyObject_Call(plot3, args, kwargs);
   if (!res) throw std::runtime_error("Failed 3D line plot");
   Py_DECREF(plot3);
@@ -1526,19 +1517,16 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
 
   PyObject *gca = PyObject_GetAttrString(fig, "gca");
   if (!gca) throw std::runtime_error("No gca");
-  Py_INCREF(gca);
   PyObject *axis = PyObject_Call(
       gca, detail::_interpreter::get().s_python_empty_tuple, gca_kwargs);
 
   if (!axis) throw std::runtime_error("No axis");
-  Py_INCREF(axis);
   Py_DECREF(gca);
   Py_DECREF(gca_kwargs);
   
   //plot our boys bravely, plot them strongly, plot them with a wink and clap
   PyObject *plot3 = PyObject_GetAttrString(axis, "quiver");
   if (!plot3) throw std::runtime_error("No 3D line plot");
-  Py_INCREF(plot3);
   PyObject* res = PyObject_Call(
           plot3, plot_args, kwargs);
   if (!res) throw std::runtime_error("Failed 3D plot");
@@ -2000,14 +1988,13 @@ inline void set_aspect(Numeric ratio)
     PyObject_CallObject(detail::_interpreter::get().s_python_function_gca,
       detail::_interpreter::get().s_python_empty_tuple);
     if (!ax) throw std::runtime_error("Call to gca() failed.");
-    Py_INCREF(ax);
 
     PyObject *set_aspect = PyObject_GetAttrString(ax, "set_aspect");
     if (!set_aspect) throw std::runtime_error("Attribute set_aspect not found.");
-    Py_INCREF(set_aspect);
 
     PyObject *res = PyObject_Call(set_aspect, args, kwargs);
     if (!res) throw std::runtime_error("Call to set_aspect() failed.");
+    Py_DECREF(res);
     Py_DECREF(set_aspect);
 
     Py_DECREF(ax);
@@ -2028,14 +2015,13 @@ inline void set_aspect_equal()
     PyObject_CallObject(detail::_interpreter::get().s_python_function_gca,
       detail::_interpreter::get().s_python_empty_tuple);
     if (!ax) throw std::runtime_error("Call to gca() failed.");
-    Py_INCREF(ax);
 
     PyObject *set_aspect = PyObject_GetAttrString(ax, "set_aspect");
     if (!set_aspect) throw std::runtime_error("Attribute set_aspect not found.");
-    Py_INCREF(set_aspect);
 
     PyObject *res = PyObject_Call(set_aspect, args, kwargs);
     if (!res) throw std::runtime_error("Call to set_aspect() failed.");
+    Py_DECREF(res);
     Py_DECREF(set_aspect);
 
     Py_DECREF(ax);
@@ -2524,11 +2510,9 @@ inline void set_zlabel(const std::string &str, const std::map<std::string, std::
     PyObject_CallObject(detail::_interpreter::get().s_python_function_gca,
       detail::_interpreter::get().s_python_empty_tuple);
     if (!ax) throw std::runtime_error("Call to gca() failed.");
-    Py_INCREF(ax);
 
     PyObject *zlabel = PyObject_GetAttrString(ax, "set_zlabel");
     if (!zlabel) throw std::runtime_error("Attribute set_zlabel not found.");
-    Py_INCREF(zlabel);
 
     PyObject *res = PyObject_Call(zlabel, args, kwargs);
     if (!res) throw std::runtime_error("Call to set_zlabel() failed.");
