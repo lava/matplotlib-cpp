@@ -913,7 +913,7 @@ namespace detail {
 
 inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords, PyObject** out, const std::vector<double>& extent = {})
 {
-    assert(type == NPY_UINT8 || type == NPY_FLOAT);
+    assert(type == NPY_UINT8 || type == NPY_FLOAT || type == NPY_DOUBLE);
     assert(colors == 1 || colors == 3 || colors == 4);
 
     detail::_interpreter::get();
@@ -967,6 +967,11 @@ inline void imshow(const unsigned char *ptr, const int rows, const int columns, 
 inline void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
     detail::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out, extent);
+}
+
+inline void imshow(const double *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
+{
+    detail::imshow((void *) ptr, NPY_DOUBLE, rows, columns, colors, keywords, out);
 }
 
 #ifdef WITH_OPENCV
