@@ -629,9 +629,9 @@ void contour(const std::vector<::std::vector<Numeric>> &x,
 
 template <typename Numeric>
 void contourf(const std::vector<::std::vector<Numeric>> &x,
-             const std::vector<::std::vector<Numeric>> &y,
-             const std::vector<::std::vector<Numeric>> &z,
-             const std::map<std::string, std::string> &keywords = {})
+              const std::vector<::std::vector<Numeric>> &y,
+              const std::vector<::std::vector<Numeric>> &z,
+              const std::map<std::string, std::string> &keywords = {})
 {
   detail::_interpreter::get();
 
@@ -653,6 +653,7 @@ void contourf(const std::vector<::std::vector<Numeric>> &x,
       detail::_interpreter::get().s_python_colormap, "coolwarm");
 
   PyDict_SetItemString(kwargs, "cmap", python_colormap_coolwarm);
+  Py_DECREF(python_colormap_coolwarm);
 
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
@@ -661,12 +662,12 @@ void contourf(const std::vector<::std::vector<Numeric>> &x,
   }
 
   PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contourf, args, kwargs);
+  Py_DECREF(args);
+  Py_DECREF(kwargs);
   if (!res)
     throw std::runtime_error("failed contourf");
 
-  Py_DECREF(args);
-  Py_DECREF(kwargs);
-  if (res) Py_DECREF(res);
+  Py_DECREF(res);
 }
 
 template <typename Numeric>
