@@ -112,6 +112,9 @@ if((USING_PYTHON3 AND Python3_NumPy_FOUND) OR (NOT USING_PYTHON3 AND Python2_Num
   add_executable(contour examples/contour.cpp)
   target_link_libraries(contour PRIVATE matplotlib_cpp)
   set_target_properties(contour PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+  add_executable(contourf examples/contourf.cpp)
+  target_link_libraries(contourf PRIVATE matplotlib_cpp)
+  set_target_properties(contourf PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
   add_executable(spy examples/spy.cpp)
   target_link_libraries(spy PRIVATE matplotlib_cpp)
