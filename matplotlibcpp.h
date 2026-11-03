@@ -917,7 +917,7 @@ bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
 #ifndef WITHOUT_NUMPY
 namespace detail {
 
-inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords, PyObject** out)
+inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords, PyObject** out, const std::vector<double>& extent = {})
 {
     assert(type == NPY_UINT8 || type == NPY_FLOAT);
     assert(colors == 1 || colors == 3 || colors == 4);
@@ -931,6 +931,20 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
 
     // construct keyword args
     PyObject* kwargs = PyDict_New();
+
+    // kwargs needs the extent
+    if (!extent.empty()) {
+        assert(extent.size() == 4 && "extent must contain exactly 4 values: left, right, bottom, top");
+        PyObject* extent_list = PyList_New(extent.size());
+        for(size_t i = 0; i < extent.size(); ++i) {
+            PyList_SetItem(extent_list, i, PyFloat_FromDouble(extent.at(i)));
+        }
+
+        PyDict_SetItemString(kwargs, "extent", extent_list);
+        Py_DECREF(extent_list);
+    }
+
+    // take care of the remaining keywords
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
         PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
@@ -949,18 +963,20 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
 
 } // namespace detail
 
-inline void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
+// `extent` is an optional {left, right, bottom, top} vector that is forwarded
+// to matplotlib's `extent` keyword argument.
+inline void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
-    detail::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords, out);
+    detail::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords, out, extent);
 }
 
-inline void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr)
+inline void imshow(const float *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
-    detail::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out);
+    detail::imshow((void *) ptr, NPY_FLOAT, rows, columns, colors, keywords, out, extent);
 }
 
 #ifdef WITH_OPENCV
-void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keywords = {})
+inline void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
     // Convert underlying type of matrix, if needed
     cv::Mat image2;
@@ -986,7 +1002,7 @@ void imshow(const cv::Mat &image, const std::map<std::string, std::string> &keyw
         cv::cvtColor(image2, image2, CV_BGRA2RGBA);
     }
 
-    detail::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords);
+    detail::imshow(image2.data, npy_type, image2.rows, image2.cols, image2.channels(), keywords, out, extent);
 }
 #endif // WITH_OPENCV
 #endif // WITHOUT_NUMPY
