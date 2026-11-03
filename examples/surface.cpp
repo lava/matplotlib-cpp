@@ -20,5 +20,6 @@ int main()
     }
 
     plt::plot_surface(x, y, z);
+    plt::set_zlim(-1.5, 1.5);
     plt::show();
 }

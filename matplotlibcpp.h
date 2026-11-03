@@ -2522,6 +2522,8 @@ inline void set_zlabel(const std::string &str, const std::map<std::string, std::
     if (res) Py_DECREF(res);
 }
 
+/// Set the z-axis view limits of the current 3D axes (wraps Axes3D.set_zlim).
+/// Call after a 3D plot such as plot_surface/plot3.
 inline void set_zlim(double left, double right)
 {
     detail::_interpreter::get();
@@ -2555,15 +2557,25 @@ inline void set_zlim(double left, double right)
     PyObject *ax =
     PyObject_CallObject(detail::_interpreter::get().s_python_function_gca,
       detail::_interpreter::get().s_python_empty_tuple);
-    if (!ax) throw std::runtime_error("Call to gca() failed.");
-    Py_INCREF(ax);
+    if (!ax) {
+        Py_DECREF(args);
+        throw std::runtime_error("Call to gca() failed.");
+    }
 
     PyObject *zlim = PyObject_GetAttrString(ax, "set_zlim");
-    if (!zlim) throw std::runtime_error("Attribute set_zlim not found.");
-    Py_INCREF(zlim);
+    if (!zlim) {
+        Py_DECREF(args);
+        Py_DECREF(ax);
+        throw std::runtime_error("Attribute set_zlim not found.");
+    }
 
-    PyObject *res = PyObject_Call(zlim, args, {});
-    if (!res) throw std::runtime_error("Call to set_zlim() failed.");
+    PyObject *res = PyObject_Call(zlim, args, nullptr);
+    if (!res) {
+        Py_DECREF(zlim);
+        Py_DECREF(ax);
+        Py_DECREF(args);
+        throw std::runtime_error("Call to set_zlim() failed.");
+    }
     Py_DECREF(zlim);
 
     Py_DECREF(ax);
