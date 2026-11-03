@@ -34,8 +34,8 @@ int main()
     // Add graph title
     plt::title("Sample figure");
 
-    // Enable legend.
-    plt::legend();
+    // Enable legend, with explicit labels for the three lines.
+    plt::legend(std::vector<std::string>{"sin(x)", "2", "log(x)"});
 
     // save figure
     const char* filename = "./basic.png";

@@ -1980,6 +1980,38 @@ inline void legend(const std::map<std::string, std::string>& keywords)
   Py_DECREF(res);
 }
 
+template<typename StringType>
+inline void legend(const std::vector<StringType>& labels, const std::map<std::string, std::string>& keywords = {})
+{
+    detail::_interpreter::get();
+
+    PyObject* llist = PyList_New(labels.size());
+    if(!llist) throw std::runtime_error("Couldn't allocate labels list in legend().");
+
+    for(size_t i = 0; i < labels.size(); ++i) {
+        PyList_SetItem(llist, i, PyString_FromString(std::string(labels[i]).c_str()));
+    }
+
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, llist);
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_legend, args, kwargs);
+
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if(!res) throw std::runtime_error("Call to legend() failed.");
+
+    Py_DECREF(res);
+}
+
 template<typename Numeric>
 inline void set_aspect(Numeric ratio)
 {
