@@ -65,6 +65,31 @@ int main()
 
 ![Basic example](./examples/basic.png)
 
+String x-axis labels with legend:
+```cpp
+#include "../matplotlibcpp.h"
+#include <string>
+#include <vector>
+
+namespace plt = matplotlibcpp;
+
+int main()
+{
+    std::vector<std::string> x = {"Jan 2021", "Feb 2021", "Mar 2021"};
+    std::vector<double> y = {58.4, 61.2, 63.9};
+
+    plt::named_plot("Vehicle speed (max)", x, y, "o-");
+    plt::legend();
+    plt::save("./string_xaxis_named_plot.png");
+}
+```
+    g++ examples/string_xaxis_named_plot.cpp -std=c++11 -I. -I/usr/include/python2.7 -lpython2.7
+
+Expected behavior and constraints:
+- `x` is a `std::vector<std::string>` and `y` is numeric with matching length.
+- String labels are mapped as categorical x values by matplotlib.
+- Use `plt::save(...)` for headless runs or `plt::show()` for interactive runs.
+
 Alternatively, matplotlib-cpp also supports some C++11-powered syntactic sugar:
 ```cpp
 #include <cmath>
