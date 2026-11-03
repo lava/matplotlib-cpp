@@ -239,6 +239,7 @@ so some caution is advised when using the bleeding edge.
 # CMake
 
 The C++ code is compatible to both python2 and python3. The `CMakeLists.txt` file uses python3 by default; pass `-DUSING_PYTHON3=OFF` to cmake to build against python2 instead.
+Pass `-DMATPLOTLIB_CPP_BUILD_EXAMPLES=OFF` or `-DMATPLOTLIB_CPP_BUILD_EXAMPLES=ON` to control whether the examples are built; they are off by default when matplotlib-cpp is used as a subproject.
 
 **NOTE**: By design (of python), only a single python interpreter can be created per
 process. When using this library, *no other* library that is spawning a python
