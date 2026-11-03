@@ -2,7 +2,11 @@
 
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
+// Qt defines 'slots' as a macro, which clashes with a struct member in Python.h; temporarily undefine it.
+#pragma push_macro("slots")
+#undef slots
 #include <Python.h>
+#pragma pop_macro("slots")
 
 #include <vector>
 #include <map>
