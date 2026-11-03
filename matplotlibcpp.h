@@ -366,26 +366,25 @@ inline bool annotate(std::string annotation, double x, double y)
 namespace detail {
 
 #ifndef WITHOUT_NUMPY
-// Type selector for numpy array conversion
+// Type selector for numpy array conversion.
+// Specialize on the distinct fundamental types, not on the fixed-width typedefs:
+// int64_t is `long` on some platforms and `long long` on others, so specializing
+// on both would be a redefinition there. numpy's C-type enums match the C types
+// on every platform, and int8_t...uint64_t resolve to one of these automatically.
 template <typename T> struct select_npy_type { const static NPY_TYPES type = NPY_NOTYPE; }; //Default
 template <> struct select_npy_type<double> { const static NPY_TYPES type = NPY_DOUBLE; };
 template <> struct select_npy_type<float> { const static NPY_TYPES type = NPY_FLOAT; };
 template <> struct select_npy_type<bool> { const static NPY_TYPES type = NPY_BOOL; };
-template <> struct select_npy_type<int8_t> { const static NPY_TYPES type = NPY_INT8; };
-template <> struct select_npy_type<int16_t> { const static NPY_TYPES type = NPY_SHORT; };
-template <> struct select_npy_type<int32_t> { const static NPY_TYPES type = NPY_INT; };
-template <> struct select_npy_type<int64_t> { const static NPY_TYPES type = NPY_INT64; };
-template <> struct select_npy_type<uint8_t> { const static NPY_TYPES type = NPY_UINT8; };
-template <> struct select_npy_type<uint16_t> { const static NPY_TYPES type = NPY_USHORT; };
-template <> struct select_npy_type<uint32_t> { const static NPY_TYPES type = NPY_ULONG; };
-template <> struct select_npy_type<uint64_t> { const static NPY_TYPES type = NPY_UINT64; };
-
-// Sanity checks; comment them out or change the numpy type below if you're compiling on
-// a platform where they don't apply
-static_assert(sizeof(long long) == 8, "long long is expected to be 8 bytes");
-template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_INT64; };
-static_assert(sizeof(unsigned long long) == 8, "unsigned long long is expected to be 8 bytes");
-template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_UINT64; };
+template <> struct select_npy_type<signed char> { const static NPY_TYPES type = NPY_BYTE; };
+template <> struct select_npy_type<short> { const static NPY_TYPES type = NPY_SHORT; };
+template <> struct select_npy_type<int> { const static NPY_TYPES type = NPY_INT; };
+template <> struct select_npy_type<long> { const static NPY_TYPES type = NPY_LONG; };
+template <> struct select_npy_type<long long> { const static NPY_TYPES type = NPY_LONGLONG; };
+template <> struct select_npy_type<unsigned char> { const static NPY_TYPES type = NPY_UBYTE; };
+template <> struct select_npy_type<unsigned short> { const static NPY_TYPES type = NPY_USHORT; };
+template <> struct select_npy_type<unsigned int> { const static NPY_TYPES type = NPY_UINT; };
+template <> struct select_npy_type<unsigned long> { const static NPY_TYPES type = NPY_ULONG; };
+template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES type = NPY_ULONGLONG; };
 
 template<typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
