@@ -280,7 +280,7 @@ probably merge a PR that restores support.
 
 Governance
 ----------
-This project is an experiment in automated open-source governance. Pull requests
+This project is currently using automated open-source governance. Pull requests
 are reviewed by an AI model against acceptance criteria written by the
 maintainer. Each pull request receives one of four verdicts:
 
