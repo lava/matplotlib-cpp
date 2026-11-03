@@ -176,6 +176,7 @@ private:
 #else
         char name[] = "plotting";
 #endif
+#if PY_VERSION_HEX < 0x030B0000
         Py_SetProgramName(name);
         Py_Initialize();
 
@@ -187,6 +188,30 @@ private:
         PySys_SetArgv(argc, const_cast<wchar_t **>(argv));
 #else
         PySys_SetArgv(argc, (char **)(argv));
+#endif
+#else
+        PyStatus status;
+        PyConfig config;
+        PyConfig_InitPythonConfig(&config);
+        wchar_t const* dummy_args[] = { L"Python", NULL };  // const is needed because literals must not be modified
+        wchar_t* const* argv = const_cast<wchar_t* const*>(dummy_args);
+        int             argc = sizeof(dummy_args) / sizeof(dummy_args[0]) - 1;
+        status = PyConfig_SetString(&config, &config.program_name, name);
+        if (PyStatus_Exception(status)) {
+            PyConfig_Clear(&config);
+            throw std::runtime_error("Failed to initialize Python interpreter");
+        }
+        status = PyConfig_SetArgv(&config, argc, argv);
+        if (PyStatus_Exception(status)) {
+            PyConfig_Clear(&config);
+            throw std::runtime_error("Failed to initialize Python interpreter");
+        }
+        status = Py_InitializeFromConfig(&config);
+        if (PyStatus_Exception(status)) {
+            PyConfig_Clear(&config);
+            throw std::runtime_error("Failed to initialize Python interpreter");
+        }
+        PyConfig_Clear(&config);
 #endif
 
 #ifndef WITHOUT_NUMPY
