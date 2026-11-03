@@ -150,3 +150,5 @@ install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
   DESTINATION ${INSTALL_CONFIGDIR}
 )
+
+add_library(matplotlib_cpp::matplotlib_cpp ALIAS matplotlib_cpp)
