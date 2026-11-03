@@ -1152,7 +1152,7 @@ bool scatter(const std::vector<NumericX>& x,
     PyObject* yarray = detail::get_array(y);
 
     PyObject* kwargs = PyDict_New();
-    PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
+    PyDict_SetItemString(kwargs, "s", PyFloat_FromDouble(s));
     for (const auto& it : keywords)
     {
         PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
@@ -1187,7 +1187,7 @@ template<typename NumericX, typename NumericY, typename NumericColors>
         PyObject* colors_array = detail::get_array(colors);
 
         PyObject* kwargs = PyDict_New();
-        PyDict_SetItemString(kwargs, "s", PyLong_FromLong(s));
+        PyDict_SetItemString(kwargs, "s", PyFloat_FromDouble(s));
         PyDict_SetItemString(kwargs, "c", colors_array);
 
         for (const auto& it : keywords)
