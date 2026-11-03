@@ -435,6 +435,33 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
   return listlist;
 }
 
+// build a kwargs dict for text properties; "rotation" and "fontsize" are
+// passed as floats if their value is entirely numeric, e.g. rotation = 45
+inline PyObject* text_kwargs(const std::map<std::string, std::string>& keywords)
+{
+  PyObject* kwargs = PyDict_New();
+  for (std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it) {
+    const std::string& key = it->first;
+    const std::string& v = it->second;
+    PyObject* value = nullptr;
+    if (key == "rotation" || key == "fontsize") {
+      try {
+        std::size_t pos;
+        double d = std::stod(v, &pos);
+        if (pos == v.size())
+          value = PyFloat_FromDouble(d);
+      } catch (const std::invalid_argument&) {
+      } catch (const std::out_of_range&) {
+      }
+    }
+    if (!value)
+      value = PyString_FromString(v.c_str());
+    PyDict_SetItemString(kwargs, key.c_str(), value);
+    Py_DECREF(value);
+  }
+  return kwargs;
+}
+
 } // namespace detail
 
 /// Plot a line through the given x and y data points..
@@ -2162,11 +2189,7 @@ inline void xticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     }
 
     // construct keyword args
-    PyObject* kwargs = PyDict_New();
-    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
-    {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
-    }
+    PyObject* kwargs = detail::text_kwargs(keywords);
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_xticks, args, kwargs);
 
@@ -2181,6 +2204,21 @@ template<typename Numeric>
 inline void xticks(const std::vector<Numeric> &ticks, const std::map<std::string, std::string>& keywords)
 {
     xticks(ticks, {}, keywords);
+}
+
+// keywords only, e.g. xticks({{"rotation", "45"}})
+inline void xticks(const std::map<std::string, std::string>& keywords)
+{
+    detail::_interpreter::get();
+
+    PyObject* kwargs = detail::text_kwargs(keywords);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_xticks, detail::_interpreter::get().s_python_empty_tuple, kwargs);
+
+    Py_DECREF(kwargs);
+    if(!res) throw std::runtime_error("Call to xticks() failed");
+
+    Py_DECREF(res);
 }
 
 template<typename Numeric>
@@ -2211,11 +2249,7 @@ inline void yticks(const std::vector<Numeric> &ticks, const std::vector<std::str
     }
 
     // construct keyword args
-    PyObject* kwargs = PyDict_New();
-    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
-    {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
-    }
+    PyObject* kwargs = detail::text_kwargs(keywords);
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_yticks, args, kwargs);
 
@@ -2230,6 +2264,21 @@ template<typename Numeric>
 inline void yticks(const std::vector<Numeric> &ticks, const std::map<std::string, std::string>& keywords)
 {
     yticks(ticks, {}, keywords);
+}
+
+// keywords only, e.g. yticks({{"rotation", "45"}})
+inline void yticks(const std::map<std::string, std::string>& keywords)
+{
+    detail::_interpreter::get();
+
+    PyObject* kwargs = detail::text_kwargs(keywords);
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_yticks, detail::_interpreter::get().s_python_empty_tuple, kwargs);
+
+    Py_DECREF(kwargs);
+    if(!res) throw std::runtime_error("Call to yticks() failed");
+
+    Py_DECREF(res);
 }
 
 template <typename Numeric> inline void margins(Numeric margin)

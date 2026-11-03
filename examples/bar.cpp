@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
     }
 
     plt::bar(test_data);
+    plt::xticks({{"rotation", "45"}});
     plt::show();
 
     return (0);
