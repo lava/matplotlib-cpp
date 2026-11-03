@@ -172,9 +172,9 @@ private:
 
         // optional but recommended
 #if PY_MAJOR_VERSION >= 3
-        wchar_t name[] = L"plotting";
+        static wchar_t name[] = L"plotting";
 #else
-        char name[] = "plotting";
+        static char name[] = "plotting";
 #endif
 #if PY_VERSION_HEX < 0x030B0000
         Py_SetProgramName(name);
