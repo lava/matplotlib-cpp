@@ -10,7 +10,7 @@ option(USING_PYTHON3 "Build against Python 3 (set OFF to use Python 2)" ON)
 add_library(matplotlib_cpp INTERFACE)
 target_include_directories(matplotlib_cpp
   INTERFACE
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/examples>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 target_compile_features(matplotlib_cpp INTERFACE
