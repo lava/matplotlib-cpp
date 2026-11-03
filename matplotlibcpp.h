@@ -2579,6 +2579,38 @@ inline void close()
     Py_DECREF(res);
 }
 
+inline void close(long number)
+{
+    detail::_interpreter::get();
+
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, PyLong_FromLong(number));
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_close, args);
+
+    Py_DECREF(args);
+
+    if (!res) throw std::runtime_error("Call to close() failed.");
+
+    Py_DECREF(res);
+}
+
+inline void close(const std::string& label)
+{
+    detail::_interpreter::get();
+
+    PyObject* args = PyTuple_New(1);
+    PyTuple_SetItem(args, 0, PyString_FromString(label.c_str()));
+
+    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_close, args);
+
+    Py_DECREF(args);
+
+    if (!res) throw std::runtime_error("Call to close() failed.");
+
+    Py_DECREF(res);
+}
+
 inline void xkcd() {
     detail::_interpreter::get();
 
