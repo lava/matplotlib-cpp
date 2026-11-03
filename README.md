@@ -255,6 +255,40 @@ probably merge a PR that restores support.
 
 
 
+Governance
+----------
+This project is an experiment in automated open-source governance. Pull requests
+are reviewed by an AI model against acceptance criteria written by the
+maintainer. Each pull request receives one of four verdicts:
+
+* **Merge**: the pull request is merged as-is.
+* **Merge with fix-ups**: the change is wanted but needs small adjustments. An AI
+  agent applies them, pushes the result, and merges.
+* **Reject without prejudice**: the pull request is closed in its current form, for
+  example because it is broken, outdated, or mixes unrelated changes. You are
+  welcome to reopen or resubmit it.
+* **Reject with prejudice**: the change is out of scope for the project and should
+  not be resubmitted.
+
+Every verdict comes with a comment explaining the decision. The acceptance criteria
+themselves are not published.
+
+The maintainer remains responsible for the project and can override any decision.
+
+### Using a version without AI-reviewed code
+
+If you prefer not to use code that was accepted through this process, use commit
+[`ef0383f`](https://github.com/lava/matplotlib-cpp/commit/ef0383f1315d32e0156335e10b82e90b334f6d9f)
+(2021-04-13). It is the last commit made before AI review was introduced. Every
+change before it was reviewed and merged by a human.
+
+    git clone https://github.com/lava/matplotlib-cpp.git
+    cd matplotlib-cpp
+    git checkout ef0383f1315d32e0156335e10b82e90b334f6d9f
+
+With CMake's `FetchContent`, set `GIT_TAG ef0383f1315d32e0156335e10b82e90b334f6d9f`.
+
+
 Why?
 ----
 I initially started this library during my diploma thesis. The usual approach of
