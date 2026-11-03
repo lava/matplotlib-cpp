@@ -2756,7 +2756,7 @@ inline void set_zlim(double left, double right)
     if (res) Py_DECREF(res);
 }
 
-inline void grid(bool flag)
+inline void grid(bool flag, const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
 {
     detail::_interpreter::get();
 
@@ -2766,10 +2766,16 @@ inline void grid(bool flag)
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, pyflag);
 
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_grid, args);
+    PyObject* kwargs = PyDict_New();
+    for (auto it = keywords.begin(); it != keywords.end(); ++it) {
+        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+    }
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_grid, args, kwargs);
     if(!res) throw std::runtime_error("Call to grid() failed.");
 
     Py_DECREF(args);
+    Py_DECREF(kwargs);
     Py_DECREF(res);
 }
 
