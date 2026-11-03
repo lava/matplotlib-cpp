@@ -464,28 +464,41 @@ PyObject* get_listlist(const std::vector<std::vector<Numeric>>& ll)
   return listlist;
 }
 
-// build a kwargs dict for text properties; "rotation" and "fontsize" are
-// passed as floats if their value is entirely numeric, e.g. rotation = 45
+// Keyword values are given as strings, but some matplotlib options only accept
+// numbers. For those keys, a value that is entirely numeric is passed as a
+// float, e.g. {"linewidth", "0.4"}; all other values are passed as strings,
+// so colors like "0.5", labels like "1" or fontsize "large" are unchanged.
+inline PyObject* keyword_value(const std::string& key, const std::string& value)
+{
+  static const char* const numeric_keys[] = {
+    "alpha", "linewidth", "lw", "linewidths", "markersize", "ms",
+    "markeredgewidth", "mew", "zorder", "width", "scale", "headwidth",
+    "headlength", "headaxislength", "capsize", "elinewidth", "rotation",
+    "fontsize"
+  };
+  for (std::size_t i = 0; i < sizeof(numeric_keys) / sizeof(numeric_keys[0]); ++i) {
+    if (key != numeric_keys[i])
+      continue;
+    try {
+      std::size_t pos;
+      double d = std::stod(value, &pos);
+      if (pos == value.size())
+        return PyFloat_FromDouble(d);
+    } catch (const std::invalid_argument&) {
+    } catch (const std::out_of_range&) {
+    }
+    break;
+  }
+  return PyString_FromString(value.c_str());
+}
+
+// build a kwargs dict for text properties, e.g. rotation = 45
 inline PyObject* text_kwargs(const std::map<std::string, std::string>& keywords)
 {
   PyObject* kwargs = PyDict_New();
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it) {
-    const std::string& key = it->first;
-    const std::string& v = it->second;
-    PyObject* value = nullptr;
-    if (key == "rotation" || key == "fontsize") {
-      try {
-        std::size_t pos;
-        double d = std::stod(v, &pos);
-        if (pos == v.size())
-          value = PyFloat_FromDouble(d);
-      } catch (const std::invalid_argument&) {
-      } catch (const std::out_of_range&) {
-      }
-    }
-    if (!value)
-      value = PyString_FromString(v.c_str());
-    PyDict_SetItemString(kwargs, key.c_str(), value);
+    PyObject* value = keyword_value(it->first, it->second);
+    PyDict_SetItemString(kwargs, it->first.c_str(), value);
     Py_DECREF(value);
   }
   return kwargs;
@@ -516,7 +529,7 @@ bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_plot, args, kwargs);
@@ -648,7 +661,7 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
         PyFloat_FromDouble(std::stod(it->second)));
     } else {
       PyDict_SetItemString(kwargs, it->first.c_str(),
-        PyString_FromString(it->second.c_str()));
+        detail::keyword_value(it->first, it->second));
     }
   }
 
@@ -712,7 +725,7 @@ void contour(const std::vector<::std::vector<Numeric>> &x,
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
     PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+                         detail::keyword_value(it->first, it->second));
   }
 
   PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contour, args, kwargs);
@@ -755,7 +768,7 @@ void contourf(const std::vector<::std::vector<Numeric>> &x,
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
     PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+                         detail::keyword_value(it->first, it->second));
   }
 
   PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_contourf, args, kwargs);
@@ -783,7 +796,7 @@ void spy(const std::vector<::std::vector<Numeric>> &x,
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
     PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+                         detail::keyword_value(it->first, it->second));
   }
 
   PyObject *plot_args = PyTuple_New(1);
@@ -848,7 +861,7 @@ void plot3(const std::vector<Numeric> &x,
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
     PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+                         detail::keyword_value(it->first, it->second));
   }
 
   PyObject *fig_args = PyTuple_New(1);
@@ -900,7 +913,7 @@ bool stem(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     for (std::map<std::string, std::string>::const_iterator it =
             keywords.begin(); it != keywords.end(); ++it) {
         PyDict_SetItemString(kwargs, it->first.c_str(),
-                PyString_FromString(it->second.c_str()));
+                detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(
@@ -933,7 +946,7 @@ bool fill(const std::vector<Numeric>& x, const std::vector<Numeric>& y, const st
     // construct keyword args
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_fill, args, kwargs);
@@ -968,7 +981,7 @@ bool fill_between(const std::vector<Numeric>& x, const std::vector<Numeric>& y1,
     // construct keyword args
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_fill_between, args, kwargs);
@@ -1073,7 +1086,7 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
     // take care of the remaining keywords
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject *res = PyObject_Call(detail::_interpreter::get().s_python_function_imshow, args, kwargs);
@@ -1258,7 +1271,7 @@ bool scatter(const std::vector<NumericX>& x,
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
     PyDict_SetItemString(kwargs, it->first.c_str(),
-                         PyString_FromString(it->second.c_str()));
+                         detail::keyword_value(it->first, it->second));
   }
   PyObject *fig_args = PyTuple_New(1);
   PyObject* fig = nullptr;
@@ -1376,7 +1389,7 @@ bool bar(const std::vector<Numeric> &               x,
        it != keywords.end();
        ++it) {
     PyDict_SetItemString(
-      kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+      kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
   }
 
   PyObject * plot_args = PyTuple_New(2);
@@ -1423,7 +1436,7 @@ bool barh(const std::vector<Numeric> &x, const std::vector<Numeric> &y, std::str
     PyDict_SetItemString(kwargs, "lw", PyFloat_FromDouble(lw));
 
     for (std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject *plot_args = PyTuple_New(2);
@@ -1533,7 +1546,7 @@ bool contour(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
     PyObject* kwargs = PyDict_New();
     for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
          it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res =
@@ -1569,7 +1582,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(
@@ -1629,7 +1642,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
   PyObject* kwargs = PyDict_New();
   for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
   {
-      PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+      PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
   }
 
   //get figure gca to enable 3d projection
@@ -1773,7 +1786,7 @@ bool errorbar(const std::vector<NumericX> &x, const std::vector<NumericY> &y, co
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyDict_SetItemString(kwargs, "yerr", yerrarray);
@@ -2081,7 +2094,7 @@ inline void legend(const std::map<std::string, std::string>& keywords)
   PyObject* kwargs = PyDict_New();
   for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
   {
-    PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
   }
 
   PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_legend, detail::_interpreter::get().s_python_empty_tuple, kwargs);
@@ -2110,7 +2123,7 @@ inline void legend(const std::vector<StringType>& labels, const std::map<std::st
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_legend, args, kwargs);
@@ -2410,7 +2423,7 @@ inline void tick_params(const std::map<std::string, std::string>& keywords, cons
   PyObject* kwargs = PyDict_New();
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
   {
-    PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+    PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
   }
 
 
@@ -2477,7 +2490,7 @@ inline void title(const std::string &titlestr, const std::map<std::string, std::
 
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_title, args, kwargs);
@@ -2498,7 +2511,7 @@ inline void suptitle(const std::string &suptitlestr, const std::map<std::string,
 
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_suptitle, args, kwargs);
@@ -2538,7 +2551,7 @@ inline void axhline(double y, double xmin = 0., double xmax = 1., const std::map
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axhline, args, kwargs);
@@ -2563,7 +2576,7 @@ inline void axvline(double x, double ymin = 0., double ymax = 1., const std::map
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_axvline, args, kwargs);
@@ -2591,7 +2604,7 @@ inline void axvspan(double xmin, double xmax, double ymin = 0., double ymax = 1.
           PyFloat_FromDouble(std::stod(it->second)));
       } else {
         PyDict_SetItemString(kwargs, it->first.c_str(),
-          PyString_FromString(it->second.c_str()));
+          detail::keyword_value(it->first, it->second));
       }
     }
 
@@ -2612,7 +2625,7 @@ inline void xlabel(const std::string &str, const std::map<std::string, std::stri
 
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_xlabel, args, kwargs);
@@ -2633,7 +2646,7 @@ inline void ylabel(const std::string &str, const std::map<std::string, std::stri
 
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_ylabel, args, kwargs);
@@ -2673,7 +2686,7 @@ inline void set_zlabel(const std::string &str, const std::map<std::string, std::
 
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject *ax =
@@ -2767,7 +2780,7 @@ inline void grid(bool flag, const std::map<std::string, std::string>& keywords =
 
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_grid, args, kwargs);
@@ -2995,7 +3008,7 @@ inline std::vector<std::array<double, 2>> ginput(const int numClicks = 1, const 
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+        PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
     }
 
     PyObject* res = PyObject_Call(
