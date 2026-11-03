@@ -4,7 +4,7 @@ project(matplotlib_cpp LANGUAGES CXX)
 include(GNUInstallDirs)
 set(PACKAGE_NAME matplotlib_cpp)
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PACKAGE_NAME}/cmake)
-set(USING_PYTHON3 True)
+option(USING_PYTHON3 "Build against Python 3 (set OFF to use Python 2)" ON)
 
 # Library target
 add_library(matplotlib_cpp INTERFACE)
@@ -46,8 +46,6 @@ else()
     target_compile_definitions(matplotlib_cpp INTERFACE WITHOUT_NUMPY)
   endif()
 endif()
-
-
 install(
   TARGETS matplotlib_cpp
   EXPORT install_targets
@@ -103,7 +101,7 @@ add_executable(lines3d examples/lines3d.cpp)
 target_link_libraries(lines3d PRIVATE matplotlib_cpp)
 set_target_properties(lines3d PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-if(Python3_NumPy_FOUND)
+if((USING_PYTHON3 AND Python3_NumPy_FOUND) OR (NOT USING_PYTHON3 AND Python2_NumPy_FOUND))
   add_executable(surface examples/surface.cpp)
   target_link_libraries(surface PRIVATE matplotlib_cpp)
   set_target_properties(surface PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

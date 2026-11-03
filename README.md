@@ -238,10 +238,7 @@ so some caution is advised when using the bleeding edge.
 
 # CMake
 
-The C++ code is compatible to both python2 and python3. However, the `CMakeLists.txt`
-file is currently set up to use python3 by default, so if python2 is required this
-has to be changed manually. (a PR that adds a cmake option for this would be highly
-welcomed)
+The C++ code is compatible to both python2 and python3. The `CMakeLists.txt` file uses python3 by default; pass `-DUSING_PYTHON3=OFF` to cmake to build against python2 instead.
 
 **NOTE**: By design (of python), only a single python interpreter can be created per
 process. When using this library, *no other* library that is spawning a python
