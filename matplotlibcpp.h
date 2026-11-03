@@ -21,16 +21,15 @@
 
 #  ifdef WITH_OPENCV
 #    include <opencv2/opencv.hpp>
-#  endif // WITH_OPENCV
-
 /*
  * A bunch of constants were removed in OpenCV 4 in favour of enum classes, so
  * define the ones we need here.
  */
-#  if CV_MAJOR_VERSION > 3
-#    define CV_BGR2RGB cv::COLOR_BGR2RGB
-#    define CV_BGRA2RGBA cv::COLOR_BGRA2RGBA
-#  endif
+#    if CV_MAJOR_VERSION > 3
+#      define CV_BGR2RGB cv::COLOR_BGR2RGB
+#      define CV_BGRA2RGBA cv::COLOR_BGRA2RGBA
+#    endif
+#  endif // WITH_OPENCV
 #endif // WITHOUT_NUMPY
 
 #if PY_MAJOR_VERSION >= 3
@@ -332,7 +331,7 @@ inline bool annotate(std::string annotation, double x, double y)
 
     if(res) Py_DECREF(res);
 
-    return res;
+    return bool(res);
 }
 
 namespace detail {
@@ -362,7 +361,7 @@ template <> struct select_npy_type<unsigned long long> { const static NPY_TYPES 
 template<typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
 {
-    npy_intp vsize = v.size();
+    npy_intp vsize = static_cast<npy_intp>(v.size());
     NPY_TYPES type = select_npy_type<Numeric>::type;
     if (type == NPY_NOTYPE) {
         size_t memsize = v.size()*sizeof(double);
@@ -419,9 +418,9 @@ PyObject* get_array(const std::vector<Numeric>& v)
 // sometimes, for labels and such, we need string arrays
 inline PyObject * get_array(const std::vector<std::string>& strings)
 {
-  PyObject* list = PyList_New(strings.size());
+  PyObject* list = PyList_New(static_cast<Py_ssize_t>(strings.size()));
   for (std::size_t i = 0; i < strings.size(); ++i) {
-    PyList_SetItem(list, i, PyString_FromString(strings[i].c_str()));
+    PyList_SetItem(list, static_cast<Py_ssize_t>(i), PyString_FromString(strings[i].c_str()));
   }
   return list;
 }
@@ -498,7 +497,7 @@ bool plot(const std::vector<Numeric> &x, const std::vector<Numeric> &y, const st
     Py_DECREF(kwargs);
     if(res) Py_DECREF(res);
 
-    return res;
+    return bool(res);
 }
 
 // TODO - it should be possible to make this work by implementing
@@ -1411,7 +1410,7 @@ inline bool subplots_adjust(const std::map<std::string, double>& keywords = {})
     Py_DECREF(kwargs);
     if(res) Py_DECREF(res);
 
-    return res;
+    return bool(res);
 }
 
 template< typename Numeric>
@@ -1462,7 +1461,7 @@ bool plot(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const 
     Py_DECREF(plot_args);
     if(res) Py_DECREF(res);
 
-    return res;
+    return bool(res);
 }
 
 template <typename NumericX, typename NumericY, typename NumericZ>
@@ -1893,7 +1892,7 @@ template<typename Numeric>
 bool plot(const std::vector<Numeric>& y, const std::string& format = "")
 {
     std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = static_cast<Numeric>(i);
     return plot(x,y,format);
 }
 
@@ -1901,7 +1900,7 @@ template<typename Numeric>
 bool plot(const std::vector<Numeric>& y, const std::map<std::string, std::string>& keywords)
 {
     std::vector<Numeric> x(y.size());
-    for(size_t i=0; i<x.size(); ++i) x.at(i) = i;
+    for(size_t i=0; i<x.size(); ++i) x.at(i) = static_cast<Numeric>(i);
     return plot(x,y,keywords);
 }
 
@@ -1909,7 +1908,7 @@ template<typename Numeric>
 bool stem(const std::vector<Numeric>& y, const std::string& format = "")
 {
     std::vector<Numeric> x(y.size());
-    for (size_t i = 0; i < x.size(); ++i) x.at(i) = i;
+    for (size_t i = 0; i < x.size(); ++i) x.at(i) = static_cast<Numeric>(i);
     return stem(x, y, format);
 }
 
@@ -1995,7 +1994,7 @@ inline bool fignum_exists(long number)
     PyObject *res = PyObject_CallObject(detail::_interpreter::get().s_python_function_fignum_exists, args);
     if(!res) throw std::runtime_error("Call to fignum_exists() failed.");
 
-    bool ret = PyObject_IsTrue(res);
+    bool ret = bool(PyObject_IsTrue(res));
     Py_DECREF(res);
     Py_DECREF(args);
 
@@ -2188,7 +2187,7 @@ inline std::array<double, 2> xlim()
 
     PyObject* left = PyTuple_GetItem(res,0);
     PyObject* right = PyTuple_GetItem(res,1);
-    return { PyFloat_AsDouble(left), PyFloat_AsDouble(right) };
+    return { {PyFloat_AsDouble(left), PyFloat_AsDouble(right)} };
 }
 
 
@@ -2203,7 +2202,7 @@ inline std::array<double, 2> ylim()
 
     PyObject* left = PyTuple_GetItem(res,0);
     PyObject* right = PyTuple_GetItem(res,1);
-    return { PyFloat_AsDouble(left), PyFloat_AsDouble(right) };
+    return { {PyFloat_AsDouble(left), PyFloat_AsDouble(right)} };
 }
 
 template<typename Numeric>
@@ -2960,11 +2959,11 @@ inline std::vector<std::array<double, 2>> ginput(const int numClicks = 1, const 
     Py_DECREF(args);
     if (!res) throw std::runtime_error("Call to ginput() failed.");
 
-    const size_t len = PyList_Size(res);
+    const size_t len = static_cast<size_t>(PyList_Size(res));
     std::vector<std::array<double, 2>> out;
     out.reserve(len);
     for (size_t i = 0; i < len; i++) {
-        PyObject *current = PyList_GetItem(res, i);
+        PyObject *current = PyList_GetItem(res, static_cast<Py_ssize_t>(i));
         std::array<double, 2> position;
         position[0] = PyFloat_AsDouble(PyTuple_GetItem(current, 0));
         position[1] = PyFloat_AsDouble(PyTuple_GetItem(current, 1));
@@ -3182,7 +3181,7 @@ public:
 
             PyObject* res = PyObject_CallObject(set_data_fct, plot_args);
             if (res) Py_DECREF(res);
-            return res;
+            return bool(res);
         }
         return false;
     }
