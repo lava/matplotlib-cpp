@@ -820,14 +820,15 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
     PyObject* kwargs = PyDict_New();
 
     // kwargs needs the extent
-    if (!extent.empty() && extent.size() == 4) {
-        PyObject* extentList = PyList_New(extent.size());
+    if (!extent.empty()) {
+        assert(extent.size() == 4 && "extent must contain exactly 4 values: left, right, bottom, top");
+        PyObject* extent_list = PyList_New(extent.size());
         for(size_t i = 0; i < extent.size(); ++i) {
-            PyList_SetItem(extentList, i, PyFloat_FromDouble(extent.at(i)));
+            PyList_SetItem(extent_list, i, PyFloat_FromDouble(extent.at(i)));
         }
 
-        PyDict_SetItemString(kwargs, "extent", extentList);
-        Py_DECREF(extentList);
+        PyDict_SetItemString(kwargs, "extent", extent_list);
+        Py_DECREF(extent_list);
     }
 
     // take care of the remaining keywords
@@ -849,6 +850,8 @@ inline void imshow(void *ptr, const NPY_TYPES type, const int rows, const int co
 
 } // namespace detail
 
+// `extent` is an optional {left, right, bottom, top} vector that is forwarded
+// to matplotlib's `extent` keyword argument.
 inline void imshow(const unsigned char *ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string> &keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
     detail::imshow((void *) ptr, NPY_UINT8, rows, columns, colors, keywords, out, extent);
