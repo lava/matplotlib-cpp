@@ -472,7 +472,7 @@ inline PyObject* keyword_value(const std::string& key, const std::string& value)
 {
   static const char* const numeric_keys[] = {
     "alpha", "linewidth", "lw", "linewidths", "markersize", "ms",
-    "markeredgewidth", "mew", "zorder", "width", "scale", "headwidth",
+    "markeredgewidth", "mew", "zorder", "width", "widths", "scale", "headwidth",
     "headlength", "headaxislength", "capsize", "elinewidth", "rotation",
     "fontsize", "s"
   };
@@ -1168,7 +1168,9 @@ bool scatter(const std::vector<NumericX>& x,
     PyDict_SetItemString(kwargs, "s", PyFloat_FromDouble(s));
     for (const auto& it : keywords)
     {
-        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+        PyObject* value = detail::keyword_value(it.first, it.second);
+        PyDict_SetItemString(kwargs, it.first.c_str(), value);
+        Py_DECREF(value);
     }
 
     PyObject* plot_args = PyTuple_New(2);
@@ -1205,7 +1207,9 @@ template<typename NumericX, typename NumericY, typename NumericColors>
 
         for (const auto& it : keywords)
         {
-            PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+            PyObject* value = detail::keyword_value(it.first, it.second);
+            PyDict_SetItemString(kwargs, it.first.c_str(), value);
+            Py_DECREF(value);
         }
 
         PyObject* plot_args = PyTuple_New(2);
@@ -1329,7 +1333,9 @@ bool boxplot(const std::vector<std::vector<Numeric>>& data,
     // take care of the remaining keywords
     for (const auto& it : keywords)
     {
-        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+        PyObject* value = detail::keyword_value(it.first, it.second);
+        PyDict_SetItemString(kwargs, it.first.c_str(), value);
+        Py_DECREF(value);
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_boxplot, args, kwargs);
@@ -1355,7 +1361,9 @@ bool boxplot(const std::vector<Numeric>& data,
     PyObject* kwargs = PyDict_New();
     for (const auto& it : keywords)
     {
-        PyDict_SetItemString(kwargs, it.first.c_str(), PyString_FromString(it.second.c_str()));
+        PyObject* value = detail::keyword_value(it.first, it.second);
+        PyDict_SetItemString(kwargs, it.first.c_str(), value);
+        Py_DECREF(value);
     }
 
     PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_boxplot, args, kwargs);
@@ -2938,9 +2946,9 @@ inline void rcparams(const std::map<std::string, std::string>& keywords = {}) {
     PyObject* args = PyTuple_New(0);
     PyObject* kwargs = PyDict_New();
     for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-        if ("text.usetex" == it->first)
-          PyDict_SetItemString(kwargs, it->first.c_str(), PyLong_FromLong(std::stoi(it->second.c_str())));
-        else PyDict_SetItemString(kwargs, it->first.c_str(), PyString_FromString(it->second.c_str()));
+        PyObject* value = detail::keyword_value(it->first, it->second);
+        PyDict_SetItemString(kwargs, it->first.c_str(), value);
+        Py_DECREF(value);
     }
     
     PyObject * update = PyObject_GetAttrString(detail::_interpreter::get().s_python_function_rcparams, "update");
@@ -3194,8 +3202,11 @@ public:
         assert(x.size() == y.size());
 
         PyObject* kwargs = PyDict_New();
-        if(name != "")
-            PyDict_SetItemString(kwargs, "label", PyString_FromString(name.c_str()));
+        if(name != "") {
+            PyObject* label = detail::keyword_value("label", name);
+            PyDict_SetItemString(kwargs, "label", label);
+            Py_DECREF(label);
+        }
 
         PyObject* xarray = detail::get_array(x);
         PyObject* yarray = detail::get_array(y);
