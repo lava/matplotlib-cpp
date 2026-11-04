@@ -17,7 +17,7 @@ int main() {
     plt::show();
 }
 ```
-    g++ minimal.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+    g++ minimal.cpp -std=c++11 $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
 
 **Result:**
 
@@ -59,7 +59,7 @@ int main()
     plt::save("./basic.png");
 }
 ```
-    g++ basic.cpp -I/usr/include/python2.7 -lpython2.7
+    g++ basic.cpp -std=c++11 $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
 
 **Result:**
 
@@ -83,7 +83,7 @@ int main()
     plt::save("./string_xaxis_named_plot.png");
 }
 ```
-    g++ examples/string_xaxis_named_plot.cpp -std=c++11 -I. -I/usr/include/python2.7 -lpython2.7
+    g++ examples/string_xaxis_named_plot.cpp -std=c++11 -I. $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
 
 Expected behavior and constraints:
 - `x` is a `std::vector<std::string>` and `y` is numeric with matching length.
@@ -119,7 +119,7 @@ int main()
     plt::show();
 }
 ```
-    g++ modern.cpp -std=c++11 -I/usr/include/python2.7 -lpython
+    g++ modern.cpp -std=c++11 $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
 
 **Result:**
 
@@ -149,7 +149,7 @@ int main() {
 }
 
 ```
-    g++ xkcd.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+    g++ xkcd.cpp -std=c++11 $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
 
 **Result:**
 
@@ -178,7 +178,7 @@ int main()
     plt::show();
 }
 ```
-    g++ quiver.cpp -std=c++11 -I/usr/include/python2.7 -lpython2.7
+    g++ quiver.cpp -std=c++11 $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
 
 **Result:**
 
@@ -221,7 +221,7 @@ matplotlib-cpp works by wrapping the popular python plotting library matplotlib.
 This means you have to have a working python installation, including development headers.
 On Ubuntu:
 
-    sudo apt-get install python-matplotlib python-numpy python2.7-dev
+    sudo apt-get install python3-matplotlib python3-numpy python3-dev
 
 If, for some reason, you're unable to get a working installation of numpy on your system,
 you can define the macro `WITHOUT_NUMPY` before including the header file to erase this
@@ -248,7 +248,10 @@ interpreter internally can be used.
 To compile the code without using cmake, the compiler invocation should look like
 this:
 
-    g++ example.cpp -I/usr/include/python2.7 -lpython2.7
+    g++ example.cpp -std=c++11 $(python3-config --includes) $(python3 -c 'import numpy; print("-I"+numpy.get_include())') $(python3-config --ldflags --embed)
+
+`python3-config` prints the include and linker flags of your Python installation.
+`--embed` is needed for Python 3.8 and newer; leave it out for older versions.
 
 This can also be used for linking against a custom build of python
 
@@ -265,6 +268,38 @@ You can download and install matplotlib-cpp using the [vcpkg](https://github.com
     ./vcpkg install matplotlib-cpp
   
 The matplotlib-cpp port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
+
+# Setup notes
+
+matplotlib-cpp embeds a Python interpreter. The Python you compile and link
+against must be the one that has matplotlib and numpy installed, and the program
+must find that same Python again at runtime.
+
+**Windows / Visual Studio**
+
+* The simplest setup is CMake: link your target against
+  `matplotlib_cpp::matplotlib_cpp` (via `add_subdirectory` or `FetchContent`), or
+  install matplotlib-cpp with vcpkg as shown above.
+* Build for the same architecture as your Python: a 64-bit Python needs an x64
+  build. Use the Release configuration unless you have Python's debug libraries
+  (`pythonXY_d.lib`).
+* The Python DLL (e.g. `python311.dll`) must be on `PATH` or next to the executable.
+* With Anaconda or conda, set `PYTHONHOME` to the environment root (e.g.
+  `C:\Miniconda3\envs\myenv`) if the program fails with
+  `No module named 'encodings'` or cannot find matplotlib.
+* If Qt reports that it could not load the platform plugin, copy the `platforms`
+  folder from `<Anaconda>\Library\plugins` next to the executable, or select a
+  non-Qt backend with `plt::backend("TkAgg")` before the first plot command.
+
+**macOS**
+
+* Link against `Python3::Python`, which the `matplotlib_cpp` CMake target does.
+  `Python3::Module` alone leaves the Python symbols unresolved and fails with
+  errors like `symbol not found in flat namespace`.
+* A conda or framework Python is loaded through `@rpath`, so add the directory
+  containing `libpython3.X.dylib` as an rpath, e.g.
+  `-Wl,-rpath,/path/to/env/lib`.
 
 
 # C++11
