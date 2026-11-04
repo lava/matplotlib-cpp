@@ -3231,14 +3231,31 @@ public:
 
         if(res)
         {
-            line= PyList_GetItem(res, 0);
+            // PyList_GetItem returns a borrowed reference; keep our own.
+            line = PyList_GetItem(res, 0);
 
-            if(line)
+            if(line) {
+                Py_INCREF(line);
                 set_data_fct = PyObject_GetAttrString(line,"set_data");
-            else
-                Py_DECREF(line);
+            }
             Py_DECREF(res);
         }
+    }
+
+    Plot(const Plot& other) : line(other.line), set_data_fct(other.set_data_fct) {
+        Py_XINCREF(line);
+        Py_XINCREF(set_data_fct);
+    }
+
+    Plot& operator=(const Plot& other) {
+        if (this != &other) {
+            Py_XINCREF(other.line);
+            Py_XINCREF(other.set_data_fct);
+            decref();
+            line = other.line;
+            set_data_fct = other.set_data_fct;
+        }
+        return *this;
     }
 
     // shorter initialization with name or format only
@@ -3259,6 +3276,7 @@ public:
             PyTuple_SetItem(plot_args, 1, yarray);
 
             PyObject* res = PyObject_CallObject(set_data_fct, plot_args);
+            Py_DECREF(plot_args);
             if (res) Py_DECREF(res);
             return bool(res);
         }
@@ -3274,10 +3292,12 @@ public:
     void remove() {
         if(line)
         {
-            auto remove_fct = PyObject_GetAttrString(line,"remove");
-            PyObject* args = PyTuple_New(0);
-            PyObject* res = PyObject_CallObject(remove_fct, args);
-            if (res) Py_DECREF(res);
+            PyObject* remove_fct = PyObject_GetAttrString(line,"remove");
+            if (remove_fct) {
+                PyObject* res = PyObject_CallObject(remove_fct, detail::_interpreter::get().s_python_empty_tuple);
+                Py_DECREF(remove_fct);
+                if (res) Py_DECREF(res);
+            }
         }
         decref();
     }
@@ -3287,11 +3307,12 @@ public:
     }
 private:
 
+    // Releases our references; safe to call more than once.
     void decref() {
-        if(line)
-            Py_DECREF(line);
-        if(set_data_fct)
-            Py_DECREF(set_data_fct);
+        Py_XDECREF(line);
+        line = nullptr;
+        Py_XDECREF(set_data_fct);
+        set_data_fct = nullptr;
     }
 
 
