@@ -552,7 +552,11 @@ inline PyObject* keyword_value(const std::string& key, const std::string& value)
     "alpha", "linewidth", "lw", "linewidths", "markersize", "ms",
     "markeredgewidth", "mew", "zorder", "width", "widths", "scale", "headwidth",
     "headlength", "headaxislength", "capsize", "elinewidth", "rotation",
-    "fontsize", "s", "shrink", "aspect", "fraction", "pad"
+    "fontsize", "s", "shrink", "aspect", "fraction", "pad",
+    "length", "arrow_length_ratio", "minshaft", "minlength", "capthick",
+    "labelpad", "labelrotation", "linespacing", "vmin", "vmax", "bottom",
+    "framealpha", "borderpad", "labelspacing", "handlelength", "handleheight",
+    "handletextpad", "borderaxespad", "columnspacing", "markerscale"
   };
   for (std::size_t i = 0; i < sizeof(numeric_keys) / sizeof(numeric_keys[0]); ++i) {
     if (key != numeric_keys[i])
