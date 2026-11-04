@@ -485,7 +485,7 @@ inline PyObject* keyword_value(const std::string& key, const std::string& value)
     "alpha", "linewidth", "lw", "linewidths", "markersize", "ms",
     "markeredgewidth", "mew", "zorder", "width", "widths", "scale", "headwidth",
     "headlength", "headaxislength", "capsize", "elinewidth", "rotation",
-    "fontsize", "s"
+    "fontsize", "s", "shrink", "aspect", "fraction", "pad"
   };
   for (std::size_t i = 0; i < sizeof(numeric_keys) / sizeof(numeric_keys[0]); ++i) {
     if (key != numeric_keys[i])
@@ -1999,28 +1999,67 @@ void text(Numeric x, Numeric y, const std::string& s = "")
     Py_DECREF(res);
 }
 
-inline void colorbar(PyObject* mappable = NULL, const std::map<std::string, float>& keywords = {})
+namespace detail {
+
+// Calls pyplot.colorbar(mappable, **kwargs). The caller keeps its reference to
+// mappable; kwargs is consumed.
+inline void colorbar(PyObject* mappable, PyObject* kwargs)
 {
-    if (mappable == NULL)
+    if (mappable == NULL) {
+        Py_DECREF(kwargs);
         throw std::runtime_error("Must call colorbar with PyObject* returned from an image, contour, surface, etc.");
+    }
 
-    detail::_interpreter::get();
-
+    // PyTuple_SetItem steals a reference, but the caller still owns mappable.
+    Py_INCREF(mappable);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, mappable);
+
+    PyObject* res = PyObject_Call(_interpreter::get().s_python_function_colorbar, args, kwargs);
+    Py_DECREF(args);
+    Py_DECREF(kwargs);
+    if(!res) throw std::runtime_error("Call to colorbar() failed.");
+
+    Py_DECREF(res);
+}
+
+} // namespace detail
+
+/// Add a colorbar for `mappable`, e.g. the image returned through the `out`
+/// parameter of imshow(). The caller keeps ownership of `mappable`.
+inline void colorbar(PyObject* mappable = NULL, const std::map<std::string, float>& keywords = {})
+{
+    detail::_interpreter::get();
 
     PyObject* kwargs = PyDict_New();
     for(std::map<std::string, float>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
     {
-        PyDict_SetItemString(kwargs, it->first.c_str(), PyFloat_FromDouble(it->second));
+        PyObject* value = PyFloat_FromDouble(it->second);
+        PyDict_SetItemString(kwargs, it->first.c_str(), value);
+        Py_DECREF(value);
     }
 
-    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_colorbar, args, kwargs);
-    if(!res) throw std::runtime_error("Call to colorbar() failed.");
+    detail::colorbar(mappable, kwargs);
+}
 
-    Py_DECREF(args);
-    Py_DECREF(kwargs);
-    Py_DECREF(res);
+/// Like colorbar() above, but with string keywords such as
+/// {{"label", "Intensity"}, {"shrink", "0.8"}}, converted by
+/// detail::keyword_value(). This is a template only so that colorbar(m, {})
+/// keeps selecting the non-template overload above instead of being ambiguous.
+template <typename Dummy = void>
+inline void colorbar(PyObject* mappable, const std::map<std::string, std::string>& keywords)
+{
+    detail::_interpreter::get();
+
+    PyObject* kwargs = PyDict_New();
+    for(std::map<std::string, std::string>::const_iterator it = keywords.begin(); it != keywords.end(); ++it)
+    {
+        PyObject* value = detail::keyword_value(it->first, it->second);
+        PyDict_SetItemString(kwargs, it->first.c_str(), value);
+        Py_DECREF(value);
+    }
+
+    detail::colorbar(mappable, kwargs);
 }
 
 

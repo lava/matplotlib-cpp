@@ -21,9 +21,11 @@ int main()
     const int colors = 1;
 
     plt::title("My matrix");
+    // imshow() hands out a new reference to the image; we own it and
+    // release it below. colorbar() does not take it over.
     PyObject* mat;
     plt::imshow(zptr, nrows, ncols, colors, {}, &mat);
-    plt::colorbar(mat);
+    plt::colorbar(mat, {{"label", "Intensity"}});
 
     // Show plots
     plt::show();
