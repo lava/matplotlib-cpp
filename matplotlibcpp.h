@@ -245,15 +245,24 @@ private:
 
         PyObject* pymod = PyImport_Import(pyplotname);
         Py_DECREF(pyplotname);
-        if (!pymod) { throw std::runtime_error("Error loading module matplotlib.pyplot!"); }
+        if (!pymod) {
+            PyErr_Print();
+            throw std::runtime_error("Error loading module matplotlib.pyplot!");
+        }
 
         s_python_colormap = PyImport_Import(cmname);
         Py_DECREF(cmname);
-        if (!s_python_colormap) { throw std::runtime_error("Error loading module matplotlib.cm!"); }
+        if (!s_python_colormap) {
+            PyErr_Print();
+            throw std::runtime_error("Error loading module matplotlib.cm!");
+        }
 
         PyObject* pylabmod = PyImport_Import(pylabname);
         Py_DECREF(pylabname);
-        if (!pylabmod) { throw std::runtime_error("Error loading module pylab!"); }
+        if (!pylabmod) {
+            PyErr_Print();
+            throw std::runtime_error("Error loading module pylab!");
+        }
 
         s_python_function_arrow = safe_import(pymod, "arrow");
         s_python_function_show = safe_import(pymod, "show");
