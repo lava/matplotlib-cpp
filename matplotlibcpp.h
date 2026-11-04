@@ -2532,8 +2532,6 @@ inline void subplot2grid(long nrows, long ncols, long rowid=0, long colid=0, lon
     PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_subplot2grid, args);
     if(!res) detail::fail("Call to subplot2grid() failed.");
 
-    Py_DECREF(shape);
-    Py_DECREF(loc);
     Py_DECREF(args);
     Py_DECREF(res);
 }
