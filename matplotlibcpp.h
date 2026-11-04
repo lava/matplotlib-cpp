@@ -18,6 +18,7 @@
 #include <cstdint> // <cstdint> requires c++11 support
 #include <functional>
 #include <string> // std::stod
+#include <cstdio> // std::sscanf
 
 #ifndef WITHOUT_NUMPY
 #  define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -110,6 +111,10 @@ struct _interpreter {
     PyObject *s_python_function_rcparams;
     PyObject *s_python_function_spy;
 
+    // matplotlib 3.9 renamed boxplot's `labels` keyword to `tick_labels`,
+    // and matplotlib 3.11 removed `labels`.
+    const char *s_boxplot_labels_keyword;
+
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
        or starting a separate process for each. [1]
@@ -168,6 +173,25 @@ private:
 
 #  endif
 #endif
+
+    // Returns the keyword that matplotlib.pyplot.boxplot() expects for the
+    // tick labels: `tick_labels` from matplotlib 3.9 on, `labels` before.
+    static const char* boxplot_labels_keyword(PyObject* matplotlib) {
+        int major = 0, minor = 0;
+        PyObject* version = PyObject_GetAttrString(matplotlib, "__version__");
+        if (version) {
+#if PY_MAJOR_VERSION >= 3
+            const char* s = PyUnicode_AsUTF8(version);
+#else
+            const char* s = PyString_AsString(version);
+#endif
+            if (!s || std::sscanf(s, "%d.%d", &major, &minor) != 2)
+                major = minor = 0;
+            Py_DECREF(version);
+        }
+        PyErr_Clear();
+        return (major > 3 || (major == 3 && minor >= 9)) ? "tick_labels" : "labels";
+    }
 
     _interpreter() {
 
@@ -234,6 +258,8 @@ private:
             PyErr_Print();
             throw std::runtime_error("Error loading module matplotlib!");
         }
+
+        s_boxplot_labels_keyword = boxplot_labels_keyword(matplotlib);
 
         // matplotlib.use() must be called *before* pylab, matplotlib.pyplot,
         // or matplotlib.backends is imported for the first time
@@ -1333,7 +1359,7 @@ bool boxplot(const std::vector<std::vector<Numeric>>& data,
 
     // kwargs needs the labels, if there are (the correct number of) labels
     if (!labels.empty() && labels.size() == data.size()) {
-        PyDict_SetItemString(kwargs, "labels", detail::get_array(labels));
+        PyDict_SetItemString(kwargs, detail::_interpreter::get().s_boxplot_labels_keyword, detail::get_array(labels));
     }
 
     // take care of the remaining keywords
