@@ -1628,7 +1628,7 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
 }
 
 template<typename NumericX, typename NumericY, typename NumericZ, typename NumericU, typename NumericW, typename NumericV>
-bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericZ>& z, const std::vector<NumericU>& u, const std::vector<NumericW>& w, const std::vector<NumericV>& v, const std::map<std::string, std::string>& keywords = {})
+bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, const std::vector<NumericZ>& z, const std::vector<NumericU>& u, const std::vector<NumericW>& w, const std::vector<NumericV>& v, const std::map<std::string, std::string>& keywords = {}, const long fig_number = 0)
 {
   //set up 3d axes stuff
   static PyObject *mpl_toolkitsmod = nullptr, *axis3dmod = nullptr;
@@ -1676,13 +1676,9 @@ bool quiver(const std::vector<NumericX>& x, const std::vector<NumericY>& y, cons
       PyDict_SetItemString(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
   }
 
-  //get figure gca to enable 3d projection
-  PyObject *fig =
-      PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-                          detail::_interpreter::get().s_python_empty_tuple);
-  if (!fig) detail::fail("Call to figure() failed.");
-
+  PyObject *fig = detail::get_3d_figure(fig_number);
   PyObject *axis = detail::init_3d_axis(fig);
+  Py_DECREF(fig);
 
   //plot our boys bravely, plot them strongly, plot them with a wink and clap
   PyObject *plot3 = PyObject_GetAttrString(axis, "quiver");
