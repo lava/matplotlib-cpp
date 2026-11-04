@@ -57,6 +57,7 @@ struct _interpreter {
     PyObject *s_python_function_save;
     PyObject *s_python_function_figure;
     PyObject *s_python_function_fignum_exists;
+    PyObject *s_python_function_gcf;
     PyObject *s_python_function_plot;
     PyObject *s_python_function_quiver;
     PyObject* s_python_function_contour;
@@ -261,6 +262,7 @@ private:
         s_python_function_pause = safe_import(pymod, "pause");
         s_python_function_figure = safe_import(pymod, "figure");
         s_python_function_fignum_exists = safe_import(pymod, "fignum_exists");
+        s_python_function_gcf = safe_import(pymod, "gcf");
         s_python_function_plot = safe_import(pymod, "plot");
         s_python_function_quiver = safe_import(pymod, "quiver");
         s_python_function_contour = safe_import(pymod, "contour");
@@ -594,6 +596,41 @@ inline PyObject* init_3d_axis(PyObject* fig)
     return axis;
 }
 
+// Get the figure that a 3D plot function draws into. A fig_number of 0 means
+// the current figure (pyplot's gcf(), which creates one if none exists).
+// Otherwise the given figure is used if it exists, and a new figure is
+// created if it does not. Returns a new reference to the figure.
+inline PyObject* get_3d_figure(const long fig_number)
+{
+    PyObject *fig = nullptr;
+    if (fig_number == 0) {
+        fig = PyObject_CallObject(_interpreter::get().s_python_function_gcf,
+          _interpreter::get().s_python_empty_tuple);
+        if (!fig) throw std::runtime_error("Call to gcf() failed.");
+        return fig;
+    }
+
+    PyObject *fig_args = PyTuple_New(1);
+    PyTuple_SetItem(fig_args, 0, PyLong_FromLong(fig_number));
+    PyObject *fig_exists =
+      PyObject_CallObject(_interpreter::get().s_python_function_fignum_exists, fig_args);
+    if (!fig_exists) {
+        Py_DECREF(fig_args);
+        throw std::runtime_error("Call to fignum_exists() failed.");
+    }
+    if (!PyObject_IsTrue(fig_exists)) {
+        fig = PyObject_CallObject(_interpreter::get().s_python_function_figure,
+          _interpreter::get().s_python_empty_tuple);
+    } else {
+        fig = PyObject_CallObject(_interpreter::get().s_python_function_figure,
+          fig_args);
+    }
+    Py_DECREF(fig_exists);
+    Py_DECREF(fig_args);
+    if (!fig) throw std::runtime_error("Call to figure() failed.");
+    return fig;
+}
+
 } // namespace detail
 
 // TODO - it should be possible to make this work by implementing
@@ -665,23 +702,9 @@ void plot_surface(const std::vector<::std::vector<Numeric>> &x,
     }
   }
 
-  PyObject *fig_args = PyTuple_New(1);
-  PyObject* fig = nullptr;
-  PyTuple_SetItem(fig_args, 0, PyLong_FromLong(fig_number));
-  PyObject *fig_exists =
-    PyObject_CallObject(
-    detail::_interpreter::get().s_python_function_fignum_exists, fig_args);
-  if (!PyObject_IsTrue(fig_exists)) {
-    fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-      detail::_interpreter::get().s_python_empty_tuple);
-  } else {
-    fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-      fig_args);
-  }
-  Py_DECREF(fig_exists);
-  if (!fig) throw std::runtime_error("Call to figure() failed.");
-
+  PyObject *fig = detail::get_3d_figure(fig_number);
   PyObject *axis = detail::init_3d_axis(fig);
+  Py_DECREF(fig);
 
   PyObject *plot_surface = PyObject_GetAttrString(axis, "plot_surface");
   if (!plot_surface) throw std::runtime_error("No surface");
@@ -864,21 +887,9 @@ void plot3(const std::vector<Numeric> &x,
                          detail::keyword_value(it->first, it->second));
   }
 
-  PyObject *fig_args = PyTuple_New(1);
-  PyObject* fig = nullptr;
-  PyTuple_SetItem(fig_args, 0, PyLong_FromLong(fig_number));
-  PyObject *fig_exists =
-    PyObject_CallObject(detail::_interpreter::get().s_python_function_fignum_exists, fig_args);
-  if (!PyObject_IsTrue(fig_exists)) {
-    fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-      detail::_interpreter::get().s_python_empty_tuple);
-  } else {
-    fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-      fig_args);
-  }
-  if (!fig) throw std::runtime_error("Call to figure() failed.");
-
+  PyObject *fig = detail::get_3d_figure(fig_number);
   PyObject *axis = detail::init_3d_axis(fig);
+  Py_DECREF(fig);
 
   PyObject *plot3 = PyObject_GetAttrString(axis, "plot");
   if (!plot3) throw std::runtime_error("No 3D line plot");
@@ -1280,22 +1291,9 @@ bool scatter(const std::vector<NumericX>& x,
     PyDict_SetItemString(kwargs, it->first.c_str(),
                          detail::keyword_value(it->first, it->second));
   }
-  PyObject *fig_args = PyTuple_New(1);
-  PyObject* fig = nullptr;
-  PyTuple_SetItem(fig_args, 0, PyLong_FromLong(fig_number));
-  PyObject *fig_exists =
-    PyObject_CallObject(detail::_interpreter::get().s_python_function_fignum_exists, fig_args);
-  if (!PyObject_IsTrue(fig_exists)) {
-    fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-      detail::_interpreter::get().s_python_empty_tuple);
-  } else {
-    fig = PyObject_CallObject(detail::_interpreter::get().s_python_function_figure,
-      fig_args);
-  }
-  Py_DECREF(fig_exists);
-  if (!fig) throw std::runtime_error("Call to figure() failed.");
-
+  PyObject *fig = detail::get_3d_figure(fig_number);
   PyObject *axis = detail::init_3d_axis(fig);
+  Py_DECREF(fig);
 
   PyObject *plot3 = PyObject_GetAttrString(axis, "scatter");
   if (!plot3) throw std::runtime_error("No 3D line plot");
@@ -1306,7 +1304,6 @@ bool scatter(const std::vector<NumericX>& x,
   Py_DECREF(axis);
   Py_DECREF(args);
   Py_DECREF(kwargs);
-  Py_DECREF(fig);
   if (res) Py_DECREF(res);
   return res;
 
