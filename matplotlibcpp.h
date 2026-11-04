@@ -2287,33 +2287,33 @@ void xlim(Numeric left, Numeric right)
 }
 
 
+namespace detail {
+
+// Calls a pyplot limits getter such as xlim() and returns its (left, right)
+// result. The values are read before the result tuple is released.
+inline std::array<double, 2> get_limits(PyObject* function, const std::string& name)
+{
+    PyObject* res = PyObject_CallObject(function, _interpreter::get().s_python_empty_tuple);
+    if(!res) fail("Call to " + name + "() failed.");
+
+    std::array<double, 2> limits = { {PyFloat_AsDouble(PyTuple_GetItem(res, 0)),
+                                      PyFloat_AsDouble(PyTuple_GetItem(res, 1))} };
+    Py_DECREF(res);
+    if (PyErr_Occurred()) fail(name + "() did not return two numbers.");
+    return limits;
+}
+
+} // namespace detail
+
 inline std::array<double, 2> xlim()
 {
-    PyObject* args = PyTuple_New(0);
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_xlim, args);
-
-    if(!res) detail::fail("Call to xlim() failed.");
-
-    Py_DECREF(res);
-
-    PyObject* left = PyTuple_GetItem(res,0);
-    PyObject* right = PyTuple_GetItem(res,1);
-    return { {PyFloat_AsDouble(left), PyFloat_AsDouble(right)} };
+    return detail::get_limits(detail::_interpreter::get().s_python_function_xlim, "xlim");
 }
 
 
 inline std::array<double, 2> ylim()
 {
-    PyObject* args = PyTuple_New(0);
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_ylim, args);
-
-    if(!res) detail::fail("Call to ylim() failed.");
-
-    Py_DECREF(res);
-
-    PyObject* left = PyTuple_GetItem(res,0);
-    PyObject* right = PyTuple_GetItem(res,1);
-    return { {PyFloat_AsDouble(left), PyFloat_AsDouble(right)} };
+    return detail::get_limits(detail::_interpreter::get().s_python_function_ylim, "ylim");
 }
 
 template<typename Numeric>
