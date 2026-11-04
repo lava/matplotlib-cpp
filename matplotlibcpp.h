@@ -474,7 +474,7 @@ inline PyObject* keyword_value(const std::string& key, const std::string& value)
     "alpha", "linewidth", "lw", "linewidths", "markersize", "ms",
     "markeredgewidth", "mew", "zorder", "width", "scale", "headwidth",
     "headlength", "headaxislength", "capsize", "elinewidth", "rotation",
-    "fontsize"
+    "fontsize", "s"
   };
   for (std::size_t i = 0; i < sizeof(numeric_keys) / sizeof(numeric_keys[0]); ++i) {
     if (key != numeric_keys[i])
@@ -1267,6 +1267,9 @@ bool scatter(const std::vector<NumericX>& x,
 
   // Build up the kw args.
   PyObject *kwargs = PyDict_New();
+  PyObject *size = PyFloat_FromDouble(s);
+  PyDict_SetItemString(kwargs, "s", size);
+  Py_DECREF(size);
 
   for (std::map<std::string, std::string>::const_iterator it = keywords.begin();
        it != keywords.end(); ++it) {
