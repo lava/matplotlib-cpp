@@ -2005,6 +2005,32 @@ void text(Numeric x, Numeric y, const std::string& s = "")
     Py_DECREF(res);
 }
 
+template<typename Numeric>
+void text(Numeric x, Numeric y, const std::string& s = "", const std::map<std::string, std::string>& keywords = {})
+{
+    detail::_interpreter::get();
+
+    PyObject* args = PyTuple_New(3);
+    PyTuple_SetItem(args, 0, PyFloat_FromDouble(x));
+    PyTuple_SetItem(args, 1, PyFloat_FromDouble(y));
+    PyTuple_SetItem(args, 2, PyString_FromString(s.c_str()));
+
+    // construct keyword args
+    PyObject* kwargs = PyDict_New();
+    if(kwargs){
+            //PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+            for (auto it = keywords.begin(); it != keywords.end(); ++it) {
+            detail::set_kwarg(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
+            }
+            PyObject* res_with = PyObject_Call(detail::_interpreter::get().s_python_function_text, args, kwargs);
+            if(!res_with){
+                std::cout << "Call to overloaded text() with kwargs map failed." << std::endl;
+            }
+        if (res_with) Py_DECREF(res_with);
+        Py_DECREF(kwargs);
+    }
+    Py_DECREF(args);
+}
 namespace detail {
 
 // Calls pyplot.colorbar(mappable, **kwargs). The caller keeps its reference to
