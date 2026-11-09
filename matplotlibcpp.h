@@ -23,6 +23,7 @@
 #include <functional>
 #include <string> // std::stod
 #include <cstdio> // std::sscanf
+#include <cstring> // std::memcpy
 #include <csignal> // SIGINT
 
 #ifndef WITHOUT_NUMPY
@@ -552,22 +553,23 @@ struct select_npy_type<unsigned long long> {
     const static NPY_TYPES type = NPY_ULONGLONG;
 };
 
+// Returns a new numpy array with a copy of v; types that numpy has no
+// equivalent for are converted to double. The array must not refer to the
+// vector's memory: matplotlib can keep the arrays it is given, and the vector
+// may be a temporary, as in plot({1, 2, 3}) (#188, #350).
 template <typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
 {
     npy_intp vsize = static_cast<npy_intp>(v.size());
     NPY_TYPES type = select_npy_type<Numeric>::type;
-    if (type == NPY_NOTYPE) {
-        size_t memsize = v.size() * sizeof(double);
-        double* dp = static_cast<double*>(::malloc(memsize));
-        for (size_t i = 0; i < v.size(); ++i)
-            dp[i] = v[i];
-        PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, NPY_DOUBLE, dp);
-        PyArray_UpdateFlags(reinterpret_cast<PyArrayObject*>(varray), NPY_ARRAY_OWNDATA);
-        return varray;
-    }
+    PyObject* varray = PyArray_SimpleNew(1, &vsize, type == NPY_NOTYPE ? NPY_DOUBLE : type);
+    if (!varray) fail("Couldn't create numpy array");
 
-    PyObject* varray = PyArray_SimpleNewFromData(1, &vsize, type, (void*)(v.data()));
+    void* data = PyArray_DATA(reinterpret_cast<PyArrayObject*>(varray));
+    if (type == NPY_NOTYPE)
+        std::copy(v.begin(), v.end(), static_cast<double*>(data));
+    else
+        std::copy(v.begin(), v.end(), static_cast<Numeric*>(data));
     return varray;
 }
 
@@ -1223,10 +1225,16 @@ inline void imshow(void* ptr, const NPY_TYPES type, const int nrows, const int n
 
     detail::_interpreter::get();
 
-    // construct args
+    // construct args, with a copy of the image: the AxesImage, which the
+    // caller can get through `out`, may keep the array after the caller
+    // has freed its buffer.
     npy_intp dims[3] = {nrows, ncols, colors};
+    PyObject* image = PyArray_SimpleNew(colors == 1 ? 2 : 3, dims, type);
+    if (!image) detail::fail("Couldn't create numpy array");
+    std::memcpy(PyArray_DATA(reinterpret_cast<PyArrayObject*>(image)), ptr,
+        PyArray_NBYTES(reinterpret_cast<PyArrayObject*>(image)));
     PyObject* args = PyTuple_New(1);
-    PyTuple_SetItem(args, 0, PyArray_SimpleNewFromData(colors == 1 ? 2 : 3, dims, type, ptr));
+    PyTuple_SetItem(args, 0, image);
 
     // construct keyword args
     PyObject* kwargs = PyDict_New();
