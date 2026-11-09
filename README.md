@@ -249,6 +249,12 @@ Pass `-DMATPLOTLIB_CPP_BUILD_EXAMPLES=OFF` or `-DMATPLOTLIB_CPP_BUILD_EXAMPLES=O
 process. When using this library, *no other* library that is spawning a python
 interpreter internally can be used.
 
+The interpreter is never shut down by default; the operating system reclaims it
+when the program exits. If Python must shut down cleanly, e.g. so that its
+atexit handlers run or for leak checkers, call `plt::finalize()` at the end of
+`main()`. No plotting functions can be called after that; they throw
+`std::runtime_error`.
+
 To compile the code without using cmake, the compiler invocation should look like
 this:
 

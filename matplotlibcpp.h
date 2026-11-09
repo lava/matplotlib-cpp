@@ -25,6 +25,7 @@
 #include <cstdio> // std::sscanf
 #include <cstring> // std::memcpy
 #include <csignal> // SIGINT
+#include <atomic>
 
 #ifndef WITHOUT_NUMPY
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -189,32 +190,54 @@ struct _interpreter {
     /* For now, _interpreter is implemented as a singleton since its currently not possible to have
        multiple independent embedded python interpreters without patching the python source code
        or starting a separate process for each. [1]
-       Furthermore, many python objects expect that they are destructed in the same thread as they
-       were constructed. [2] So for advanced usage, a `kill()` function is provided so that library
-       users can manually ensure that the interpreter is constructed and destroyed within the
-       same thread.
+
+       The interpreter is started by the first call to `get()` and, by default, never finalized:
+       the operating system reclaims everything when the program exits. Finalizing it from a
+       static destructor crashes with some backends, e.g. Qt, whose global state may already be
+       gone by then (#268). Programs that need Python to shut down cleanly, e.g. to run atexit
+       handlers or for leak checkers, call `matplotlibcpp::finalize()` at a time of their choosing.
+       Since many python objects expect that they are destructed in the same thread as they were
+       constructed [2], call it in the thread that plotted. Restarting the interpreter afterwards
+       is not supported, because numpy cannot reliably be imported again, so `get()` throws
+       once it has been finalized.
 
          1: http://bytes.com/topic/python/answers/793370-multiple-independent-python-interpreters-c-c-program
          2: https://github.com/lava/matplotlib-cpp/pull/202#issue-436220256
        */
 
+    // Returns the interpreter, starting it on the first call. Throws
+    // std::runtime_error if it has been finalized.
     static _interpreter& get()
     {
-        return interkeeper(false);
+        if (state() == finalized)
+            throw std::runtime_error("matplotlibcpp: the Python interpreter was finalized by "
+                                     "matplotlibcpp::finalize(); plotting afterwards is not supported");
+        return instance();
     }
 
-    static _interpreter& kill()
+    // Finalizes the interpreter; see matplotlibcpp::finalize().
+    static void finalize()
     {
-        return interkeeper(true);
+        // Mark the interpreter as finalized even if it was never started, so
+        // that plotting after finalize() always fails the same way.
+        if (state().exchange(finalized) != running)
+            return;
+        instance().release();
+        Py_Finalize();
     }
 
-    // Stores the actual singleton object referenced by `get()` and `kill()`.
-    static _interpreter& interkeeper(bool should_kill)
+    // Kept for compatibility; the same as finalize(). It used to return the
+    // destroyed interpreter, which could not be used anyway.
+    static void kill()
     {
-        static _interpreter ctx;
-        if (should_kill)
-            ctx.~_interpreter();
-        return ctx;
+        finalize();
+    }
+
+    // Whether finalize() has been called. Objects that hold Python references
+    // must not touch them any more once it returns true.
+    static bool is_finalized()
+    {
+        return state() == finalized;
     }
 
     PyObject* safe_import(PyObject* module, std::string fname)
@@ -231,6 +254,101 @@ struct _interpreter {
     }
 
 private:
+    enum {
+        not_started,
+        running,
+        finalized,
+    };
+
+    // The lifecycle of the interpreter. A function-local static in an inline
+    // function, so that the whole program shares one (#178).
+    static std::atomic<int>& state()
+    {
+        static std::atomic<int> s(not_started);
+        return s;
+    }
+
+    // The singleton. Its initialization is thread-safe. It has no destructor
+    // that finalizes Python, since that would run during static destruction.
+    static _interpreter& instance()
+    {
+        static _interpreter ctx;
+        return ctx;
+    }
+
+    // Releases the cached Python objects, before Python is finalized.
+    void release()
+    {
+        PyObject** objects[] = {
+            &s_python_function_arrow,
+            &s_python_function_show,
+            &s_python_function_close,
+            &s_python_function_draw,
+            &s_python_function_pause,
+            &s_python_function_save,
+            &s_python_function_figure,
+            &s_python_function_fignum_exists,
+            &s_python_function_gcf,
+            &s_python_function_plot,
+            &s_python_function_quiver,
+            &s_python_function_contour,
+            &s_python_function_contourf,
+            &s_python_function_semilogx,
+            &s_python_function_semilogy,
+            &s_python_function_loglog,
+            &s_python_function_fill,
+            &s_python_function_fill_between,
+            &s_python_function_hist,
+            &s_python_function_scatter,
+            &s_python_function_boxplot,
+            &s_python_function_subplot,
+            &s_python_function_subplot2grid,
+            &s_python_function_legend,
+            &s_python_function_xlim,
+            &s_python_function_ion,
+            &s_python_function_ioff,
+            &s_python_function_ginput,
+            &s_python_function_ylim,
+            &s_python_function_title,
+            &s_python_function_axis,
+            &s_python_function_axhline,
+            &s_python_function_axvline,
+            &s_python_function_axvspan,
+            &s_python_function_xlabel,
+            &s_python_function_ylabel,
+            &s_python_function_gca,
+            &s_python_function_xticks,
+            &s_python_function_yticks,
+            &s_python_function_margins,
+            &s_python_function_tick_params,
+            &s_python_function_grid,
+            &s_python_function_cla,
+            &s_python_function_clf,
+            &s_python_function_errorbar,
+            &s_python_function_annotate,
+            &s_python_function_tight_layout,
+            &s_python_colormap,
+            &s_python_empty_tuple,
+            &s_python_function_stem,
+            &s_python_function_xkcd,
+            &s_python_function_text,
+            &s_python_function_suptitle,
+            &s_python_function_bar,
+            &s_python_function_barh,
+            &s_python_function_colorbar,
+            &s_python_function_subplots_adjust,
+            &s_python_function_rcparams,
+            &s_python_function_spy,
+#ifndef WITHOUT_NUMPY
+            &s_python_function_imshow,
+#endif
+        };
+        for (PyObject** object : objects) {
+            Py_XDECREF(*object);
+            *object = nullptr;
+        }
+    }
+
     // Returns the keyword that matplotlib.pyplot.boxplot() expects for the
     // tick labels: `tick_labels` from matplotlib 3.9 on, `labels` before.
     static const char* boxplot_labels_keyword(PyObject* matplotlib)
@@ -444,11 +562,8 @@ private:
         s_python_function_imshow = safe_import(pymod, "imshow");
 #endif
         s_python_empty_tuple = PyTuple_New(0);
-    }
 
-    ~_interpreter()
-    {
-        Py_Finalize();
+        state() = running;
     }
 };
 
@@ -466,6 +581,22 @@ private:
 inline void backend(const std::string& name)
 {
     detail::backend_name() = name;
+}
+
+/// Shut down the embedded Python interpreter
+///
+/// By default, the interpreter is never shut down: the operating system
+/// reclaims its resources when the program exits. Call finalize() when
+/// Python must shut down cleanly, e.g. at the end of main() so that Python's
+/// atexit handlers run, or so that leak checkers see the memory released.
+///
+/// **NOTE:** No plotting function may be called afterwards; they throw
+/// std::runtime_error, even if nothing was plotted before. Call it in the
+/// thread that plotted. Calling it again does nothing, and it does not start
+/// the interpreter just to finalize it.
+inline void finalize()
+{
+    detail::_interpreter::finalize();
 }
 
 inline bool annotate(std::string annotation, double x, double y)
@@ -3388,15 +3519,23 @@ public:
         detail::print_error();
     }
 
-    Plot(const Plot& other) : line(other.line), set_data_fct(other.set_data_fct)
+    Plot(const Plot& other)
     {
-        Py_XINCREF(line);
-        Py_XINCREF(set_data_fct);
+        if (!detail::_interpreter::is_finalized()) {
+            line = other.line;
+            set_data_fct = other.set_data_fct;
+            Py_XINCREF(line);
+            Py_XINCREF(set_data_fct);
+        }
     }
 
     Plot& operator=(const Plot& other)
     {
         if (this != &other) {
+            if (detail::_interpreter::is_finalized()) {
+                decref();
+                return *this;
+            }
             Py_XINCREF(other.line);
             Py_XINCREF(other.set_data_fct);
             decref();
@@ -3416,6 +3555,7 @@ public:
     {
         assert(x.size() == y.size());
         if (set_data_fct) {
+            detail::_interpreter::get();
             PyObject* xarray = detail::get_array(x);
             PyObject* yarray = detail::get_array(y);
 
@@ -3440,6 +3580,7 @@ public:
     void remove()
     {
         if (line) {
+            detail::_interpreter::get();
             PyObject* remove_fct = PyObject_GetAttrString(line, "remove");
             if (remove_fct) {
                 PyObject* res = PyObject_CallObject(remove_fct, detail::_interpreter::get().s_python_empty_tuple);
@@ -3458,9 +3599,15 @@ public:
     }
 
 private:
-    // Releases our references; safe to call more than once.
+    // Releases our references; safe to call more than once. After
+    // finalize(), the objects are gone and are only forgotten.
     void decref()
     {
+        if (detail::_interpreter::is_finalized()) {
+            line = nullptr;
+            set_data_fct = nullptr;
+            return;
+        }
         Py_XDECREF(line);
         line = nullptr;
         Py_XDECREF(set_data_fct);
