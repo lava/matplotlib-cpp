@@ -95,7 +95,30 @@ inline void set_kwarg(PyObject* kwargs, const char* key, PyObject* value)
     Py_DECREF(value);
 }
 
-static std::string s_backend;
+// The backend selected with backend(). A function-local static in an inline
+// function, so that the whole program shares one, unlike a namespace-scope
+// static, of which every translation unit would have its own (#178).
+inline std::string& backend_name()
+{
+    static std::string name;
+    return name;
+}
+
+#ifndef WITHOUT_NUMPY
+// Initializes numpy's C API for the calling translation unit, if that has not
+// happened yet. Call it before any other numpy function. The function table,
+// PyArray_API, is a static variable in numpy's headers, so every translation
+// unit that includes this header has its own copy, and each one must be
+// filled in before that unit uses numpy (#178). This function is static, so
+// each translation unit also gets its own copy of it, which fills in its own
+// table. The interpreter must be initialized.
+static inline void import_numpy()
+{
+    if (PyArray_API) return;
+    if (_import_array() < 0)
+        fail("Couldn't import numpy's C API");
+}
+#endif
 
 struct _interpreter {
     PyObject* s_python_function_arrow;
@@ -208,25 +231,6 @@ struct _interpreter {
     }
 
 private:
-#ifndef WITHOUT_NUMPY
-#if PY_MAJOR_VERSION >= 3
-
-    void* import_numpy()
-    {
-        import_array(); // initialize C-API
-        return NULL;
-    }
-
-#else
-
-    void import_numpy()
-    {
-        import_array(); // initialize C-API
-    }
-
-#endif
-#endif
-
     // Returns the keyword that matplotlib.pyplot.boxplot() expects for the
     // tick labels: `tick_labels` from matplotlib 3.9 on, `labels` before.
     static const char* boxplot_labels_keyword(PyObject* matplotlib)
@@ -328,7 +332,7 @@ private:
         restore_default_sigint();
 
 #ifndef WITHOUT_NUMPY
-        import_numpy(); // initialize numpy C-API
+        import_numpy();
 #endif
 
         PyObject* matplotlibname = PyString_FromString("matplotlib");
@@ -351,8 +355,8 @@ private:
 
         // matplotlib.use() must be called *before* pylab, matplotlib.pyplot,
         // or matplotlib.backends is imported for the first time
-        if (!s_backend.empty()) {
-            PyObject* res = PyObject_CallMethod(matplotlib, const_cast<char*>("use"), const_cast<char*>("s"), s_backend.c_str());
+        if (!backend_name().empty()) {
+            PyObject* res = PyObject_CallMethod(matplotlib, const_cast<char*>("use"), const_cast<char*>("s"), backend_name().c_str());
             check_result(res);
         }
 
@@ -461,7 +465,7 @@ private:
 /// See also: https://matplotlib.org/2.0.2/api/matplotlib_configuration_api.html#matplotlib.use
 inline void backend(const std::string& name)
 {
-    detail::s_backend = name;
+    detail::backend_name() = name;
 }
 
 inline bool annotate(std::string annotation, double x, double y)
@@ -560,6 +564,8 @@ struct select_npy_type<unsigned long long> {
 template <typename Numeric>
 PyObject* get_array(const std::vector<Numeric>& v)
 {
+    import_numpy();
+
     npy_intp vsize = static_cast<npy_intp>(v.size());
     NPY_TYPES type = select_npy_type<Numeric>::type;
     PyObject* varray = PyArray_SimpleNew(1, &vsize, type == NPY_NOTYPE ? NPY_DOUBLE : type);
@@ -578,6 +584,8 @@ template <typename Numeric>
 PyObject* get_2darray(const std::vector<::std::vector<Numeric>>& v)
 {
     if (v.size() < 1) throw std::runtime_error("get_2d_array v too small");
+
+    import_numpy();
 
     npy_intp vsize[2] = {static_cast<npy_intp>(v.size()),
         static_cast<npy_intp>(v[0].size())};
@@ -1228,6 +1236,7 @@ inline void imshow(void* ptr, const NPY_TYPES type, const int nrows, const int n
     // construct args, with a copy of the image: the AxesImage, which the
     // caller can get through `out`, may keep the array after the caller
     // has freed its buffer.
+    detail::import_numpy();
     npy_intp dims[3] = {nrows, ncols, colors};
     PyObject* image = PyArray_SimpleNew(colors == 1 ? 2 : 3, dims, type);
     if (!image) detail::fail("Couldn't create numpy array");
