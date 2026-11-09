@@ -23,6 +23,7 @@
 #include <functional>
 #include <string> // std::stod
 #include <cstdio> // std::sscanf
+#include <csignal> // SIGINT
 
 #ifndef WITHOUT_NUMPY
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -245,6 +246,32 @@ private:
         return (major > 3 || (major == 3 && minor >= 9)) ? "tick_labels" : "labels";
     }
 
+    // Even if the interpreter installs no signal handlers, the first import
+    // of the signal module, e.g. by matplotlib, installs Python's SIGINT
+    // handler if SIGINT has its default action. Import it now and restore
+    // the default action, so later imports find the module already loaded.
+    static void restore_default_sigint()
+    {
+        PyObject* signal = PyImport_ImportModule(const_cast<char*>("signal"));
+        if (!signal) {
+            print_error();
+            return;
+        }
+        PyObject* current = PyObject_CallMethod(signal, const_cast<char*>("getsignal"), const_cast<char*>("i"), SIGINT);
+        PyObject* python_handler = PyObject_GetAttrString(signal, "default_int_handler");
+        if (current && current == python_handler) {
+            PyObject* sig_dfl = PyObject_GetAttrString(signal, "SIG_DFL");
+            if (sig_dfl) {
+                check_result(PyObject_CallMethod(signal, const_cast<char*>("signal"), const_cast<char*>("iO"), SIGINT, sig_dfl));
+                Py_DECREF(sig_dfl);
+            }
+        }
+        Py_XDECREF(python_handler);
+        Py_XDECREF(current);
+        Py_DECREF(signal);
+        print_error();
+    }
+
     _interpreter()
     {
 
@@ -254,9 +281,13 @@ private:
 #else
         static char name[] = "plotting";
 #endif
+        // Python's SIGINT handler only raises KeyboardInterrupt the next
+        // time Python code runs, so a program that has used matplotlib
+        // would no longer stop on Ctrl-C (#183). Leave the signal handlers
+        // to the embedding program; see also restore_default_sigint().
 #if PY_VERSION_HEX < 0x030B0000
         Py_SetProgramName(name);
-        Py_Initialize();
+        Py_InitializeEx(0);
 
         wchar_t const* dummy_args[] = {L"Python", NULL}; // const is needed because literals must not be modified
         wchar_t const** argv = dummy_args;
@@ -271,6 +302,7 @@ private:
         PyStatus status;
         PyConfig config;
         PyConfig_InitPythonConfig(&config);
+        config.install_signal_handlers = 0;
         wchar_t const* dummy_args[] = {L"Python", NULL}; // const is needed because literals must not be modified
         wchar_t* const* argv = const_cast<wchar_t* const*>(dummy_args);
         int argc = sizeof(dummy_args) / sizeof(dummy_args[0]) - 1;
@@ -291,6 +323,8 @@ private:
         }
         PyConfig_Clear(&config);
 #endif
+
+        restore_default_sigint();
 
 #ifndef WITHOUT_NUMPY
         import_numpy(); // initialize numpy C-API
