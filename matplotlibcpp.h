@@ -1122,6 +1122,8 @@ template <typename Numeric>
 bool arrow(Numeric x, Numeric y, Numeric end_x, Numeric end_y, const std::string& fc = "r",
     const std::string ec = "k", Numeric head_length = 0.25, Numeric head_width = 0.1625)
 {
+    detail::_interpreter::get();
+
     PyObject* obj_x = PyFloat_FromDouble(x);
     PyObject* obj_y = PyFloat_FromDouble(y);
     PyObject* obj_end_x = PyFloat_FromDouble(end_x);
@@ -1529,6 +1531,8 @@ bool bar(const std::vector<Numeric>& y,
 template <typename Numeric>
 bool barh(const std::vector<Numeric>& x, const std::vector<Numeric>& y, std::string ec = "black", std::string ls = "-", double lw = 1.0, const std::map<std::string, std::string>& keywords = {})
 {
+    detail::_interpreter::get();
+
     PyObject* xarray = detail::get_array(x);
     PyObject* yarray = detail::get_array(y);
 
@@ -1627,6 +1631,8 @@ bool contour(const std::vector<NumericX>& x, const std::vector<NumericY>& y,
     const std::map<std::string, std::string>& keywords = {})
 {
     assert(x.size() == y.size() && x.size() == z.size());
+
+    detail::_interpreter::get();
 
     PyObject* xarray = detail::get_array(x);
     PyObject* yarray = detail::get_array(y);
@@ -2476,6 +2482,8 @@ inline void yticks(const std::map<std::string, std::string>& keywords)
 template <typename Numeric>
 inline void margins(Numeric margin)
 {
+    detail::_interpreter::get();
+
     // construct positional args
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(margin));
@@ -2491,6 +2499,8 @@ inline void margins(Numeric margin)
 template <typename Numeric>
 inline void margins(Numeric margin_x, Numeric margin_y)
 {
+    detail::_interpreter::get();
+
     // construct positional args
     PyObject* args = PyTuple_New(2);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(margin_x));
@@ -2679,6 +2689,8 @@ inline void axvline(double x, double ymin = 0., double ymax = 1., const std::map
 
 inline void axvspan(double xmin, double xmax, double ymin = 0., double ymax = 1., const std::map<std::string, std::string>& keywords = std::map<std::string, std::string>())
 {
+    detail::_interpreter::get();
+
     // construct positional args
     PyObject* args = PyTuple_New(4);
     PyTuple_SetItem(args, 0, PyFloat_FromDouble(xmin));
