@@ -1988,24 +1988,7 @@ bool stem(const std::vector<Numeric>& y, const std::string& format = "")
     return stem(x, y, format);
 }
 
-template<typename Numeric>
-void text(Numeric x, Numeric y, const std::string& s = "")
-{
-    detail::_interpreter::get();
-
-    PyObject* args = PyTuple_New(3);
-    PyTuple_SetItem(args, 0, PyFloat_FromDouble(x));
-    PyTuple_SetItem(args, 1, PyFloat_FromDouble(y));
-    PyTuple_SetItem(args, 2, PyString_FromString(s.c_str()));
-
-    PyObject* res = PyObject_CallObject(detail::_interpreter::get().s_python_function_text, args);
-    if(!res) detail::fail("Call to text() failed.");
-
-    Py_DECREF(args);
-    Py_DECREF(res);
-}
-
-template<typename Numeric>
+template <typename Numeric>
 void text(Numeric x, Numeric y, const std::string& s = "", const std::map<std::string, std::string>& keywords = {})
 {
     detail::_interpreter::get();
@@ -2015,22 +1998,19 @@ void text(Numeric x, Numeric y, const std::string& s = "", const std::map<std::s
     PyTuple_SetItem(args, 1, PyFloat_FromDouble(y));
     PyTuple_SetItem(args, 2, PyString_FromString(s.c_str()));
 
-    // construct keyword args
     PyObject* kwargs = PyDict_New();
-    if(kwargs){
-            //PyDict_SetItemString(kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
-            for (auto it = keywords.begin(); it != keywords.end(); ++it) {
-            detail::set_kwarg(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
-            }
-            PyObject* res_with = PyObject_Call(detail::_interpreter::get().s_python_function_text, args, kwargs);
-            if(!res_with){
-                std::cout << "Call to overloaded text() with kwargs map failed." << std::endl;
-            }
-        if (res_with) Py_DECREF(res_with);
-        Py_DECREF(kwargs);
-    }
+    for (auto it = keywords.begin(); it != keywords.end(); ++it)
+        detail::set_kwarg(kwargs, it->first.c_str(), detail::keyword_value(it->first, it->second));
+
+    PyObject* res = PyObject_Call(detail::_interpreter::get().s_python_function_text, args, kwargs);
+
     Py_DECREF(args);
+    Py_DECREF(kwargs);
+
+    if (!res) detail::fail("Call to text() failed.");
+    Py_DECREF(res);
 }
+
 namespace detail {
 
 // Calls pyplot.colorbar(mappable, **kwargs). The caller keeps its reference to

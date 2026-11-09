@@ -24,7 +24,7 @@ int main()
 
     // Text Annotation using some optional keyword args.
     double txt_offset = 0.1;
-    plt::text((450.0*450.0), 1+txt_offset, "Peak at (450^2, 1)", 
+    plt::text((450.0*450.0), 1+txt_offset, "Peak at (450^2, 1)",
         {{"fontsize","8"},{"backgroundcolor","lightgrey"},{"color","#3C7DBE"},{"verticalalignment","bottom"},{"horizontalalignment","center"}});
 
     // Plot a red dashed line from given x and y data.
