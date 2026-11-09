@@ -1,0 +1,35 @@
+# Chosen to stay as close as possible to the existing style of matplotlibcpp.h.
+BasedOnStyle: WebKit
+IndentWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 0
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  AfterClass: false
+  AfterControlStatement: Never
+  BeforeElse: false
+NamespaceIndentation: None
+FixNamespaceComments: false
+AccessModifierOffset: -4
+IndentCaseLabels: true
+IndentPPDirectives: None
+PointerAlignment: Left
+SpaceBeforeParens: ControlStatements
+Cpp11BracedListStyle: true
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: All
+AlwaysBreakTemplateDeclarations: MultiLine
+AlignAfterOpenBracket: DontAlign
+AlignOperands: DontAlign
+AlignTrailingComments: false
+SpacesBeforeTrailingComments: 1
+BreakConstructorInitializers: BeforeColon
+KeepEmptyLinesAtTheStartOfBlocks: true
+MaxEmptyLinesToKeep: 3
+ReflowComments: false
+SortIncludes: Never
+SortUsingDeclarations: Never
