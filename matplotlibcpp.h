@@ -3,9 +3,13 @@
 // Python headers must be included before any system headers, since
 // they define _POSIX_C_SOURCE
 // Qt defines 'slots' as a macro, which clashes with a struct member in Python.h; temporarily undefine it.
+// So does <term.h> with 'lines' (#216).
 #pragma push_macro("slots")
+#pragma push_macro("lines")
 #undef slots
+#undef lines
 #include <Python.h>
+#pragma pop_macro("lines")
 #pragma pop_macro("slots")
 
 #include <vector>
@@ -1178,7 +1182,7 @@ bool hist(const std::vector<Numeric>& y, long bins = 10, std::string color = "b"
 #ifndef WITHOUT_NUMPY
 namespace detail {
 
-inline void imshow(void* ptr, const NPY_TYPES type, const int rows, const int columns, const int colors, const std::map<std::string, std::string>& keywords, PyObject** out, const std::vector<double>& extent = {})
+inline void imshow(void* ptr, const NPY_TYPES type, const int nrows, const int ncols, const int colors, const std::map<std::string, std::string>& keywords, PyObject** out, const std::vector<double>& extent = {})
 {
     assert(type == NPY_UINT8 || type == NPY_FLOAT || type == NPY_DOUBLE);
     assert(colors == 1 || colors == 3 || colors == 4);
@@ -1186,7 +1190,7 @@ inline void imshow(void* ptr, const NPY_TYPES type, const int rows, const int co
     detail::_interpreter::get();
 
     // construct args
-    npy_intp dims[3] = {rows, columns, colors};
+    npy_intp dims[3] = {nrows, ncols, colors};
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyArray_SimpleNewFromData(colors == 1 ? 2 : 3, dims, type, ptr));
 
@@ -1225,19 +1229,19 @@ inline void imshow(void* ptr, const NPY_TYPES type, const int rows, const int co
 
 // `extent` is an optional {left, right, bottom, top} vector that is forwarded
 // to matplotlib's `extent` keyword argument.
-inline void imshow(const unsigned char* ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string>& keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
+inline void imshow(const unsigned char* ptr, const int nrows, const int ncols, const int colors, const std::map<std::string, std::string>& keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
-    detail::imshow((void*)ptr, NPY_UINT8, rows, columns, colors, keywords, out, extent);
+    detail::imshow((void*)ptr, NPY_UINT8, nrows, ncols, colors, keywords, out, extent);
 }
 
-inline void imshow(const float* ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string>& keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
+inline void imshow(const float* ptr, const int nrows, const int ncols, const int colors, const std::map<std::string, std::string>& keywords = {}, PyObject** out = nullptr, const std::vector<double>& extent = {})
 {
-    detail::imshow((void*)ptr, NPY_FLOAT, rows, columns, colors, keywords, out, extent);
+    detail::imshow((void*)ptr, NPY_FLOAT, nrows, ncols, colors, keywords, out, extent);
 }
 
-inline void imshow(const double* ptr, const int rows, const int columns, const int colors, const std::map<std::string, std::string>& keywords = {}, PyObject** out = nullptr)
+inline void imshow(const double* ptr, const int nrows, const int ncols, const int colors, const std::map<std::string, std::string>& keywords = {}, PyObject** out = nullptr)
 {
-    detail::imshow((void*)ptr, NPY_DOUBLE, rows, columns, colors, keywords, out);
+    detail::imshow((void*)ptr, NPY_DOUBLE, nrows, ncols, colors, keywords, out);
 }
 
 #ifdef WITH_OPENCV
